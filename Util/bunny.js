@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import axios from "axios";
 const { BUNNY_HOSTNAME, BUNNY_STORAGE_ACCESS_KEY } = process.env;
 

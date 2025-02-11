@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import jwt from "jsonwebtoken";
 import { User } from "../Model/User/Profile/userModel.js";
 import { Admin } from "../Model/Admin/adminModel.js";
@@ -16,9 +19,9 @@ const verifyUserJWT = async (req, res, next) => {
 
     const user = await User.findOne(
       { _id: decode._id },
-      "_id name email mobileNumber role isProfileVisible profilePic"
+      "_id name email mobileNumber role isProfileVisible profilePic refreshToken"
     );
-    if (!user) {
+    if (!user || !user._doc.refreshToken) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized!",

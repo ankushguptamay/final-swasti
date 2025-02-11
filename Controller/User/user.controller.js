@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
 import { deleteSingleFile } from "../../Helper/fs.helper.js";
 import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
@@ -34,6 +37,7 @@ const {
   SPRINT_AADHAR_PARTNER_ID,
 } = process.env;
 import fs from "fs";
+import jwt from "jsonwebtoken";
 const bunnyFolderName = "inst-doc";
 
 // Helper
@@ -72,8 +76,8 @@ function transformUserDetails(user) {
     email: user.email,
     mobileNumber: user.mobileNumber,
     role: user.role,
-    profilePic: user.profilePic ? user.profilePic.url : null,
-    userCode: user.profilePic,
+    profilePic: user.profilePic ? user.profilePic.url || null : null,
+    userCode: user.userCode,
   };
   if (user.role.toLowerCase() === "instructor") {
     data.language = user.language || [];
@@ -114,7 +118,7 @@ async function generateUserCode(preFix) {
   if (!isUserCode) {
     lastDigits = 1;
   } else {
-    lastDigits = parseInt(isUserCode.userCode.substring(10)) + 1;
+    lastDigits = parseInt(isUserCode.userCode.substring(9)) + 1;
   }
   userCode = `${startWith}${lastDigits}`;
   while (await User.findOne({ userCode })) {
@@ -337,7 +341,7 @@ const myDetails = async (req, res) => {
       return sendError(res, 401, "User is not present!");
     }
     // TransForm data
-    const data = transformUserDetails(user);
+    const data = transformUserDetails(user._doc);
     // Send final success response
     res
       .status(200)
@@ -377,7 +381,7 @@ const rolePage = async (req, res) => {
     res.status(201).send({
       success: true,
       message: `You are successfully register as ${message}!`,
-      data: { ...req.user, role },
+      data: { ...req.user._doc, role },
     });
   } catch (err) {
     res.status(500).send({
@@ -498,7 +502,7 @@ const deleteProfilePic = async (req, res) => {
       });
     }
     // Change
-    await User.updateOne({ _id: req.user._id }, { profilePic: undefined });
+    await User.updateOne({ _id: req.user._id }, { profilePic: null });
     // Final response
     res.status(200).send({
       success: true,
@@ -571,7 +575,7 @@ const refreshAccessToken = async (req, res) => {
 
     const token = createUserAccessToken({ _id: user._id });
 
-    res.status(200).json({ success: true, AccessToken: token, refreshToken });
+    res.status(200).json({ success: true, accessToken: token, refreshToken });
   } catch (err) {
     res.status(403).send({ success: false, message: err.message });
   }
@@ -579,7 +583,7 @@ const refreshAccessToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    await User.updateOne({ _id: req.user._id }, { refreshToken: undefined });
+    await User.updateOne({ _id: req.user._id }, { refreshToken: null });
     res.status(200).json({ success: true, message: "Loged out successfully" });
   } catch (err) {
     res.status(403).send({ success: false, message: err.message });

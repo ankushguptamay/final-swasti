@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import joi from "joi";
 
 const validateUserRegistration = (data) => {
@@ -33,7 +36,7 @@ const validateVerifyMobileOTP = (data) => {
       .length(10)
       .pattern(/^[0-9]+$/)
       .required(),
-    otp: joi.string().length(process.env.OTP_DIGITS_LENGTH).required(),
+    otp: joi.string().length(parseInt(process.env.OTP_DIGITS_LENGTH)).required(),
   });
   return schema.validate(data);
 };

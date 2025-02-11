@@ -21,7 +21,7 @@ const schema = new Schema(
         message: "{VALUE} is not supported",
       },
     },
-    userCode: { type: String, unique: true },
+    userCode: { type: String },
     referralCode: { type: String },
     chakraBreakNumber: { type: Number },
     averageRating: {

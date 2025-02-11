@@ -1,6 +1,6 @@
 const sendError = (res, statusCode, msg, resData) => {
   const code = statusCode || 500;
-  const message = message || "Internal Server Error";
+  const message = msg || "Internal Server Error";
   const data = resData || null; // Include additional data if present
 
   res.status(code).json({

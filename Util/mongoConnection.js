@@ -1,5 +1,7 @@
-import mongoose from "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
 
+import mongoose from "mongoose";
 const connectDB = (uri) => {
   mongoose
     .connect(uri, { dbName: process.env.DB_NAME })
