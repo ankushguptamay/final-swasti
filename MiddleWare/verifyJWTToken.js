@@ -9,7 +9,6 @@ const { JWT_SECRET_KEY_USER, JWT_SECRET_KEY_Admin } = process.env;
 const verifyUserJWT = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    // console.log('JWT Verif MW');
     if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
     const token = authHeader.split(" ")[1];
 
@@ -40,7 +39,6 @@ const verifyUserJWT = async (req, res, next) => {
 const verifyAdminJWT = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    // console.log('JWT Verif MW');
     if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
     const token = authHeader.split(" ")[1];
 
