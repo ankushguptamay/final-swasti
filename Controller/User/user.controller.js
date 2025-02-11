@@ -1,11 +1,11 @@
-import { capitalizeFirstLetter } from "../../Helper/formatChange";
-import { deleteSingleFile } from "../../Helper/fs.helper.";
-import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP";
+import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
+import { deleteSingleFile } from "../../Helper/fs.helper.js";
+import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
 import {
   createUserAccessToken,
   createUserRefreshToken,
-} from "../../Helper/jwtToken";
-import { sendError } from "../../MiddleWare/erroeMiddleware";
+} from "../../Helper/jwtToken.js";
+import { sendError } from "../../MiddleWare/erroeMiddleware.js";
 import {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -14,13 +14,13 @@ import {
   validateUpdateInstructor,
   validateProfileVisible,
   validateAadharVerification,
-} from "../../MiddleWare/Validation/userProfile";
-import { OTP } from "../../Model/User/otpModel";
-import { UserChakras } from "../../Model/User/Profile/chakrasModel";
-import { InstructorUpdateHistory } from "../../Model/User/Profile/instructorUpdateHistoryModel";
-import { User } from "../../Model/User/Profile/userModel";
-import { uploadFileToBunny } from "../../Util/bunny";
-import { sendOTPToNumber } from "../../Util/sendOTP";
+} from "../../MiddleWare/Validation/userProfile.js";
+import { OTP } from "../../Model/User/otpModel.js";
+import { UserChakras } from "../../Model/User/Profile/chakrasModel.js";
+import { InstructorUpdateHistory } from "../../Model/User/Profile/instructorUpdateHistoryModel.js";
+import { User } from "../../Model/User/Profile/userModel.js";
+import { uploadFileToBunny } from "../../Util/bunny.js";
+import { sendOTPToNumber } from "../../Util/sendOTP.js";
 import axios from "axios";
 const {
   OTP_DIGITS_LENGTH,

@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 const {
   JWT_SECRET_KEY_USER,
   JWT_SECRET_REFRESH_KEY_USER,

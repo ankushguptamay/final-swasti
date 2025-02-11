@@ -1,4 +1,4 @@
-const otpGenerator = require("otp-generator");
+import otpGenerator from "otp-generator";
 
 export const generateFixedLengthRandomNumber = (numberOfDigits) => {
   return otpGenerator.generate(numberOfDigits, {

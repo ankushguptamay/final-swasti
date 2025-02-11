@@ -1,4 +1,4 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
 import {
@@ -8,10 +8,10 @@ import {
   refreshAccessToken,
   logout,
   rolePage,
-} from "../../Controller/User/user.controller";
+} from "../../Controller/User/user.controller.js";
 
 // Middle
-const { verifyUserJWT } = require("../../Middleware/verifyJWTToken");
+import { verifyUserJWT } from "../../MiddleWare/verifyJWTToken.js";
 
 router.post("/register", register);
 router.post("/loginByMobile", loginByMobile);

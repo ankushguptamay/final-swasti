@@ -1,5 +1,5 @@
-const path = require("path");
-const multer = require("multer");
+import path from "path";
+import multer from "multer";
 
 const imageFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image")) {

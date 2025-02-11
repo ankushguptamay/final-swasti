@@ -1,13 +1,17 @@
 import dotenv from "dotenv";
 import express from "express";
 import bodyParser from "body-parser";
+import { createServer } from "node:http";
+import cors from "cors";
 
 // Routes
 import authUser from "./Route/User/authUser.js";
 
-dotenv.config({ path: resolve(process.cwd(), ".env") });
+dotenv.config();
 
 const app = express();
+const server = createServer(app);
+
 const corsOptions = {
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],

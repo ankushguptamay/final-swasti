@@ -1,4 +1,4 @@
-const joi = require("joi");
+import joi from "joi";
 
 const validateUserRegistration = (data) => {
   const schema = joi.object().keys({
@@ -62,11 +62,19 @@ const validateProfileVisible = (data) => {
   return schema.validate(data);
 };
 
+const validateAadharVerification = (data) => {
+  const schema = joi.object().keys({
+    client_id: joi.string().required(),
+    aadharOTP: joi.string().length(6).required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateUserRegistration,
   validateUserMobileLogin,
   validateVerifyMobileOTP,
   validateRolePage,
   validateUpdateInstructor,
-  validateProfileVisible,
+  validateProfileVisible,validateAadharVerification
 };
