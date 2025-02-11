@@ -458,10 +458,6 @@ const addUpdateProfilePic = async (req, res) => {
         message: "Please..upload a profile image!",
       });
     }
-    // Find record
-    const isProfilePic = await User.findOne({ _id: req.user._id }).select(
-      "profilePic"
-    );
     // Upload file to bunny
     const fileStream = fs.createReadStream(req.file.path);
     await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
@@ -472,16 +468,16 @@ const addUpdateProfilePic = async (req, res) => {
     };
     // Check is profile pic already present
     let message = "Profile pic added successfully!";
-    if (isProfilePic?.profilePic?.fileName) {
+    if (req.user?.profilePic?.fileName) {
       message = "Profile pic updated successfully!";
       // Save updates if profile
       await InstructorUpdateHistory.create({
-        profilePic: isProfilePic.profilePic,
+        profilePic: req.user.profilePic,
         instructor: req.user._id,
       });
     }
     // Update
-    await isProfilePic.updateOne({ profilePic });
+    await User.updateOne({ _id: req.user._id }, { profilePic });
     // Final response
     res.status(201).send({ success: true, message });
   } catch (err) {
@@ -494,20 +490,15 @@ const addUpdateProfilePic = async (req, res) => {
 
 const deleteProfilePic = async (req, res) => {
   try {
-    // Find
-    const isProfilePic = await User.findOne({ _id: req.user._id }).select(
-      "_id profilePic"
-    );
-    if (isProfilePic?.profilePic?.fileName) {
+    if (req.user?.profilePic?.fileName) {
       // Save updates if profile
       await InstructorUpdateHistory.create({
-        profilePic: isProfilePic.profilePic,
+        profilePic: req.user.profilePic,
         instructor: req.user._id,
       });
     }
     // Change
-    isProfilePic.profilePic = undefined;
-    isProfilePic.save();
+    await User.updateOne({ _id: req.user._id }, { profilePic: undefined });
     // Final response
     res.status(200).send({
       success: true,

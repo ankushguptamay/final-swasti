@@ -6,6 +6,7 @@ import cors from "cors";
 
 // Routes
 import authUser from "./Route/User/authUser.js";
+import instructor from "./Route/User/Instructor/instructorRoute.js";
 
 dotenv.config();
 
@@ -23,7 +24,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 
 // Routes
-app.use("/authUser", authUser);
+app.use("api/auth", authUser);
+// 1.Instructor
+app.use("api/instructor", instructor);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
