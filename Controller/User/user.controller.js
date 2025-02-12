@@ -1,8 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import mongoose from "mongoose";
 import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
-import { deleteSingleFile } from "../../Helper/fs.helper.js";
+import {
+  compressImageFile,
+  deleteSingleFile,
+} from "../../Helper/fileHelper.js";
 import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
 import {
   createUserAccessToken,
@@ -441,13 +445,21 @@ const addUpdateProfilePic = async (req, res) => {
     // File should be exist
     if (!req.file)
       return failureResponse(res, 400, "Please..upload a profile image!", null);
+    // Compress File
+    const buffer = fs.readFileSync(req.file.path);
+    const compressedImagePath = await compressImageFile(buffer, req.file);
     // Upload file to bunny
-    const fileStream = fs.createReadStream(req.file.path);
-    await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
-    deleteSingleFile(req.file.path);
+    const fileStream = fs.createReadStream(compressedImagePath.imagePath);
+    await uploadFileToBunny(
+      bunnyFolderName,
+      fileStream,
+      compressedImagePath.imageName
+    );
+    // Delete file from server
+    deleteSingleFile(compressedImagePath.imagePath);
     const profilePic = {
-      fileName: req.file.filename,
-      url: `${SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
+      fileName: compressedImagePath.imageName,
+      url: `${SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`,
     };
     // Check is profile pic already present
     let message = "Profile pic added successfully!";
@@ -652,6 +664,87 @@ const verifyAadharOTP = async (req, res) => {
   }
 };
 
+const getMyChakra = async (req, res) => {
+  try {
+    const [chakras, totalUnredemedChakras] = await Promise.all([
+      UserChakras.aggregate([
+        {
+          $match: {
+            isRedeemed: false,
+            referrer: new mongoose.Types.ObjectId(req.user._id),
+          },
+        },
+        {
+          $group: {
+            _id: "$chakraNumber",
+            chakraName: { $first: "$chakraName" },
+            totalChakras: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            chakraNumber: "$_id",
+            _id: 0,
+            chakraName: 1,
+            totalChakras: 1,
+          },
+        },
+      ]),
+      UserChakras.countDocuments({
+        isRedeemed: false,
+        referrer: req.user._id,
+      }),
+    ]);
+    // Count completed set
+    const completedSet =
+      chakras.length === 7
+        ? Math.min(...chakras.map(({ totalChakras }) => totalChakras))
+        : 0;
+    // Final Response
+    return successResponse(res, 200, "Fetched successfully!", {
+      totalUnredemedChakras,
+      completedSet,
+      chakras,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+const chakraDetails = async (req, res) => {
+  try {
+    const chakraNumber = req.params.chakraNumber;
+    const chakra = await UserChakras.find({
+      chakraNumber: parseInt(chakraNumber),
+      isRedeemed: false,
+      referrer: req.user._id,
+    })
+      .populate("joiner", "_id name profilePic")
+      .select("chakraName createdAt");
+    // Transform data
+    const transform = chakra.map(({ chakraName, joiner, createdAt }) => {
+      return {
+        chakraName,
+        createdAt,
+        joiner: {
+          _id: joiner._id,
+          name: joiner.name,
+          profilePic: joiner.profilePic ? joiner.profilePic.url || null : null,
+        },
+      };
+    });
+    // Final Response
+    return successResponse(res, 200, "Fetched successfully!", {
+      totalChakra: chakra.length,
+      chakraNumber,
+      chakra: transform,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -666,4 +759,6 @@ export {
   logout,
   sendAadharOTP,
   verifyAadharOTP,
+  getMyChakra,
+  chakraDetails,
 };

@@ -9,6 +9,8 @@ import {
   sendAadharOTP,
   verifyAadharOTP,
   isProfileVisible,
+  getMyChakra,
+  chakraDetails,
 } from "../../../Controller/User/user.controller.js";
 
 // Middleware
@@ -22,6 +24,9 @@ router.delete("/pic", deleteProfilePic);
 
 router.put("/sendAadharOTP", sendAadharOTP);
 router.put("/verifyAadharOTP", verifyAadharOTP);
-router.put("/isProfileVisible", isProfileVisible);
+router.put("/publish", isProfileVisible);
+
+router.get("/chakra", getMyChakra);
+router.get("/chakra/:chakraNumber", chakraDetails);
 
 export default router;
