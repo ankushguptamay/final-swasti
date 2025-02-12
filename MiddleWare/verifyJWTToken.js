@@ -4,6 +4,7 @@ dotenv.config();
 import jwt from "jsonwebtoken";
 import { User } from "../Model/User/Profile/userModel.js";
 import { Admin } from "../Model/Admin/adminModel.js";
+import { failureResponse } from "./responseMiddleware.js";
 const { JWT_SECRET_KEY_USER, JWT_SECRET_KEY_Admin } = process.env;
 
 const verifyUserJWT = async (req, res, next) => {
@@ -21,18 +22,12 @@ const verifyUserJWT = async (req, res, next) => {
       "_id name email mobileNumber role isProfileVisible profilePic refreshToken"
     );
     if (!user || !user._doc.refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized!",
-      });
+      return failureResponse(res, 401, "Unauthorized!", null);
     }
     req.user = user;
     return next();
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    return failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -51,18 +46,12 @@ const verifyAdminJWT = async (req, res, next) => {
       "_id name email mobileNumber"
     );
     if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized!",
-      });
+      return failureResponse(res, 401, "Unauthorized!", null);
     }
     req.admin = decode;
     return next();
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    return failureResponse(res, 500, err.message, null);
   }
 };
 

@@ -8,7 +8,10 @@ import {
   createUserAccessToken,
   createUserRefreshToken,
 } from "../../Helper/jwtToken.js";
-import { sendError } from "../../MiddleWare/erroeMiddleware.js";
+import {
+  failureResponse,
+  successResponse,
+} from "../../MiddleWare/responseMiddleware.js";
 import {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -133,7 +136,7 @@ const register = async (req, res) => {
     // Body Validation
     const { error } = validateUserRegistration(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { email, mobileNumber, referralCode } = req.body;
     // Capital First Letter
@@ -141,7 +144,11 @@ const register = async (req, res) => {
     // Is user already present
     const isUser = await User.findOne({ $or: [{ email }, { mobileNumber }] });
     if (isUser) {
-      return sendError(res, 400, "These credentials are already present!");
+      return failureResponse(
+        res,
+        400,
+        "These credentials are already present!"
+      );
     }
     // Create in database
     const chakraBreakNumber = getRandomInt(7) + 1;
@@ -163,18 +170,16 @@ const register = async (req, res) => {
       receiverId: user._id,
     });
     // Send final success response
-    res.status(201).send({
-      success: true,
-      message: `OTP send successfully! Valid for ${
+    return successResponse(
+      res,
+      201,
+      `OTP send successfully! Valid for ${
         OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
       } minutes!`,
-      data: { mobileNumber: mobileNumber },
-    });
+      { mobileNumber }
+    );
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -183,7 +188,7 @@ const loginByMobile = async (req, res) => {
     // Body Validation
     const { error } = validateUserMobileLogin(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { mobileNumber, referralCode } = req.body;
     // Find User in collection
@@ -193,7 +198,7 @@ const loginByMobile = async (req, res) => {
     }
     const isUser = await User.findOne({ mobileNumber });
     if (!isUser) {
-      return sendError(res, 401, "NOTPRESENT", data);
+      return failureResponse(res, 401, "NOTPRESENT", data);
     }
 
     // Testing
@@ -202,13 +207,14 @@ const loginByMobile = async (req, res) => {
       mobileNumber === TEST_NUMBER_2 || // Amit
       mobileNumber === TEST_NUMBER_3 // Laxmi
     ) {
-      return res.status(200).send({
-        success: true,
-        message: `OTP send successfully! Valid for ${
+      return successResponse(
+        res,
+        201,
+        `OTP send successfully! Valid for ${
           OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
         } minutes!`,
-        data: { mobileNumber },
-      });
+        { mobileNumber }
+      );
     }
 
     // Generate OTP for Email
@@ -221,20 +227,18 @@ const loginByMobile = async (req, res) => {
       otp: otp,
       receiverId: isUser._id,
     });
-
+    console.log(otp);
     // Send final success response
-    res.status(201).send({
-      success: true,
-      message: `OTP send successfully! Valid for ${
+    return successResponse(
+      res,
+      201,
+      `OTP send successfully! Valid for ${
         OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
       } minutes!`,
-      data: { mobileNumber },
-    });
+      { mobileNumber }
+    );
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -243,13 +247,13 @@ const verifyMobileOTP = async (req, res) => {
     // Validate body
     const { error } = validateVerifyMobileOTP(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { mobileNumber, otp } = req.body;
     // Is Email Otp exist
     const isOtp = await OTP.findOne({ otp });
     if (!isOtp) {
-      return sendError(res, 401, `Invalid OTP!`, null);
+      return failureResponse(res, 401, `Invalid OTP!`, null);
     }
     // Checking is user present or not
     const user = await User.findOne(
@@ -257,7 +261,7 @@ const verifyMobileOTP = async (req, res) => {
       "_id name email mobileNumber role lastLogin isEmailVerified isMobileNumberVerified referralCode"
     );
     if (!user) {
-      return sendError(res, 401, `Invalid OTP!`, null);
+      return failureResponse(res, 401, `Invalid OTP!`, null);
     }
     // Testing Credentials
     if (
@@ -271,7 +275,7 @@ const verifyMobileOTP = async (req, res) => {
       const isOtpExpired = new Date().getTime() > parseInt(isOtp.validTill);
       await OTP.deleteMany({ receiverId: isOtp.receiverId });
       if (isOtpExpired) {
-        return sendError(res, 403, `OTP expired!`, null);
+        return failureResponse(res, 403, `OTP expired!`, null);
       }
     }
     const updateData = { lastLogin: new Date() };
@@ -317,18 +321,13 @@ const verifyMobileOTP = async (req, res) => {
     updateData.refreshToken = refreshToken;
     await user.updateOne(updateData);
     // Final Response
-    res.status(201).json({
-      success: true,
+    return successResponse(res, 201, `Welcome, ${user.name}`, {
       accessToken,
       refreshToken,
       user,
-      message: `Welcome, ${user.name}`,
     });
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      err: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -338,19 +337,14 @@ const myDetails = async (req, res) => {
       "_id name email mobileNumber role profilePic language dateOfBirth experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
     );
     if (!user) {
-      return sendError(res, 401, "User is not present!");
+      return failureResponse(res, 401, "User is not present!");
     }
     // TransForm data
     const data = transformUserDetails(user._doc);
     // Send final success response
-    res
-      .status(200)
-      .send({ success: true, message: "Fetched successfully!", data });
+    return successResponse(res, 200, "Fetched successfully!", data);
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -359,7 +353,7 @@ const rolePage = async (req, res) => {
     // Body Validation
     const { error } = validateRolePage(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { role } = req.body;
     // Define code prefix and message
@@ -371,23 +365,21 @@ const rolePage = async (req, res) => {
       message = "user";
       codePreFix = "SWL";
     } else {
-      return sendError(res, 403, "This role is not supported!");
+      return failureResponse(res, 403, "This role is not supported!");
     }
     // generate User code
     const userCode = await generateUserCode(codePreFix);
     // Update user
     await User.findOneAndUpdate({ _id: req.user._id }, { role, userCode });
     // Final response
-    res.status(201).send({
-      success: true,
-      message: `You are successfully register as ${message}!`,
-      data: { ...req.user._doc, role },
-    });
+    return successResponse(
+      res,
+      201,
+      `You are successfully register as ${message}!`,
+      { ...req.user._doc, role }
+    );
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -396,17 +388,14 @@ const updateInstructor = async (req, res) => {
     // Validate Body
     const { error } = validateUpdateInstructor(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     // Check perticular instructor present in database
     const instructor = await User.findOne({
       $and: [{ _id: req.user._id }, { role: req.user.role.toLowerCase() }],
     });
     if (!instructor) {
-      return res.status(400).send({
-        success: false,
-        message: "Instructor is not present!",
-      });
+      return failureResponse(res, 400, "Instructor is not present!", null);
     }
     const { bio, language, experience_year } = req.body;
     const name = capitalizeFirstLetter(req.body.name);
@@ -441,27 +430,17 @@ const updateInstructor = async (req, res) => {
     // Update
     await instructor.updateOne(changedData);
     // Send final success response
-    res.status(201).send({
-      success: true,
-      message: `Profile updated successfully!`,
-    });
+    return successResponse(res, 201, `Profile updated successfully!`);
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
 const addUpdateProfilePic = async (req, res) => {
   try {
     // File should be exist
-    if (!req.file) {
-      return res.status(400).send({
-        success: false,
-        message: "Please..upload a profile image!",
-      });
-    }
+    if (!req.file)
+      return failureResponse(res, 400, "Please..upload a profile image!", null);
     // Upload file to bunny
     const fileStream = fs.createReadStream(req.file.path);
     await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
@@ -483,12 +462,9 @@ const addUpdateProfilePic = async (req, res) => {
     // Update
     await User.updateOne({ _id: req.user._id }, { profilePic });
     // Final response
-    res.status(201).send({ success: true, message });
+    return successResponse(res, 201, message);
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -504,15 +480,9 @@ const deleteProfilePic = async (req, res) => {
     // Change
     await User.updateOne({ _id: req.user._id }, { profilePic: null });
     // Final response
-    res.status(200).send({
-      success: true,
-      message: "Profile pic deleted successfully!",
-    });
+    return successResponse(res, 200, "Profile pic deleted successfully!");
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -521,7 +491,7 @@ const isProfileVisible = async (req, res) => {
     // Body Validation
     const { error } = validateProfileVisible(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { isProfileVisible } = req.body;
     const user = await User.findOne({ _id: req.user._id }).select(
@@ -533,11 +503,11 @@ const isProfileVisible = async (req, res) => {
       message = "Your profile is now live and visible to users.";
       // Education
       if (user.education.length < 1) {
-        return sendError(res, 400, "NOEDUCATION!", null);
+        return failureResponse(res, 400, "NOEDUCATION!", null);
       }
       // Aadhar verification
       if (!user.isAadharVerified) {
-        return sendError(res, 400, "NOAADHARVERIFIED!", null);
+        return failureResponse(res, 400, "NOAADHARVERIFIED!", null);
       }
     }
     // Storing When user changed their profile visibility
@@ -548,45 +518,44 @@ const isProfileVisible = async (req, res) => {
     // Update user
     await User.findOneAndUpdate({ _id: req.user._id }, { isProfileVisible });
     // Final response
-    res.status(200).send({ success: true, message });
+    return successResponse(res, 200, message);
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
 const refreshAccessToken = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken)
-    return sendError(res, 401, "Refresh token required!", null);
-
+    return failureResponse(res, 401, "Refresh token required!", null);
   try {
     const decoded = jwt.verify(
       refreshToken,
       process.env.JWT_SECRET_REFRESH_KEY_USER
     );
+    // Find valid user
     const user = await User.findById(decoded._id);
-
     if (!user || user?.refreshToken !== refreshToken) {
-      return sendError(res, 403, "Unauthorized!", null);
+      return failureResponse(res, 403, "Unauthorized!", null);
     }
-
+    // Generate access token
     const token = createUserAccessToken({ _id: user._id });
-
-    res.status(200).json({ success: true, accessToken: token, refreshToken });
+    // Final response
+    return successResponse(res, 200, message, {
+      accessToken: token,
+      refreshToken,
+    });
   } catch (err) {
-    res.status(403).send({ success: false, message: err.message });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
 const logout = async (req, res) => {
   try {
     await User.updateOne({ _id: req.user._id }, { refreshToken: null });
-    res.status(200).json({ success: true, message: "Loged out successfully" });
+    return successResponse(res, 200, "Loged out successfully");
   } catch (err) {
-    res.status(403).send({ success: false, message: err.message });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -594,7 +563,7 @@ const sendAadharOTP = async (req, res) => {
   try {
     const aadharNumber = req.body.aadharNumber;
     if (!aadharNumber || aadharNumber.length != 12) {
-      return sendError(res, 400, "Aadhar number is required!", null);
+      return failureResponse(res, 400, "Aadhar number is required!", null);
     }
 
     // Send Aadhar OTP
@@ -616,23 +585,15 @@ const sendAadharOTP = async (req, res) => {
 
     if (aadhar.data.status) {
       // Final response
-      res.status(200).send({
-        success: true,
-        message: "OTP sent successfully",
-        data: { client_id: aadhar.data.data.client_id },
+      return successResponse(res, 200, "OTP sent successfully", {
+        client_id: aadhar.data.data.client_id,
       });
     } else {
       // Final response
-      res.status(400).send({
-        success: false,
-        message: aadhar.data.message,
-      });
+      return failureResponse(res, 400, aadhar.data.message, null);
     }
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
@@ -641,7 +602,7 @@ const verifyAadharOTP = async (req, res) => {
     // Body Validation
     const { error } = validateAadharVerification(req.body);
     if (error) {
-      return sendError(res, 400, error.details[0].message, null);
+      return failureResponse(res, 400, error.details[0].message, null);
     }
     const { client_id, aadharOTP } = req.body;
 
@@ -681,23 +642,13 @@ const verifyAadharOTP = async (req, res) => {
         { $set: { isAadharVerified: true, aadharDetails: data } }
       );
       // Final response
-      res.status(200).send({
-        success: true,
-        message: "Aadhar verified successfully",
-        data,
-      });
+      return successResponse(res, 200, "Aadhar verified successfully", data);
     } else {
       // Final response
-      res.status(400).send({
-        success: false,
-        message: "Not verified",
-      });
+      return failureResponse(res, 400, "Not verified", null);
     }
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    failureResponse(res, 500, err.message, null);
   }
 };
 
