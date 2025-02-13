@@ -36,7 +36,10 @@ const validateVerifyMobileOTP = (data) => {
       .length(10)
       .pattern(/^[0-9]+$/)
       .required(),
-    otp: joi.string().length(parseInt(process.env.OTP_DIGITS_LENGTH)).required(),
+    otp: joi
+      .string()
+      .length(parseInt(process.env.OTP_DIGITS_LENGTH))
+      .required(),
   });
   return schema.validate(data);
 };
@@ -73,11 +76,22 @@ const validateAadharVerification = (data) => {
   return schema.validate(data);
 };
 
+const validateBankDetails = (data) => {
+  const schema = joi.object().keys({
+    IFSCCode: joi.string().required(),
+    accountNumber: joi.string().required(),
+    branch: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateUserRegistration,
   validateUserMobileLogin,
   validateVerifyMobileOTP,
   validateRolePage,
   validateUpdateInstructor,
-  validateProfileVisible,validateAadharVerification
+  validateProfileVisible,
+  validateAadharVerification,
+  validateBankDetails,
 };

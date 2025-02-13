@@ -338,11 +338,12 @@ const verifyMobileOTP = async (req, res) => {
 const myDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "_id name email mobileNumber role profilePic language dateOfBirth experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
+      "_id name email mobileNumber role profilePic language dateOfBirth experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRatin bankDetail"
     );
     if (!user) {
       return failureResponse(res, 401, "User is not present!");
     }
+    console.log(user._doc.bankDetail);
     // TransForm data
     const data = transformUserDetails(user._doc);
     // Send final success response
