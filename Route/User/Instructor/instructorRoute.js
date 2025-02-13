@@ -4,6 +4,7 @@ const router = express.Router();
 import profile from "./profile.js";
 import bankDetails from "./bankDetailsRoute.js";
 import certificate from "./certificateRoute.js";
+import education from "./educationRoute.js";
 
 // Middleware
 import { verifyUserJWT } from "../../../MiddleWare/verifyJWTToken.js";
@@ -11,5 +12,6 @@ import { verifyUserJWT } from "../../../MiddleWare/verifyJWTToken.js";
 router.use("/profile", verifyUserJWT, profile);
 router.use("/bankDetail", verifyUserJWT, bankDetails);
 router.use("/certificate", verifyUserJWT, certificate);
+router.use("/education", verifyUserJWT, education);
 
 export default router;

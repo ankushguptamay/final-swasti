@@ -20,6 +20,7 @@ const addBankDetails = async (req, res) => {
       IFSCCode,
       accountNumber,
       user: req.user._id,
+      isDelete: false,
     });
     if (isPresent)
       return failureResponse(res, 400, `This bank detail already exist!`);

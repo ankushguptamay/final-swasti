@@ -90,6 +90,15 @@ const validateCerificate = (data) => {
   return schema.validate(data);
 };
 
+const validateEducation = (data) => {
+  const schema = joi.object().keys({
+    courseName: joi.string().required(),
+    university_institute: joi.string().required(),
+    yearOfCompletion: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -100,4 +109,5 @@ export {
   validateAadharVerification,
   validateBankDetails,
   validateCerificate,
+  validateEducation,
 };
