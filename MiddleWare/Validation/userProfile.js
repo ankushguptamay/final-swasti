@@ -85,6 +85,11 @@ const validateBankDetails = (data) => {
   return schema.validate(data);
 };
 
+const validateCerificate = (data) => {
+  const schema = joi.object().keys({ name: joi.string().required() });
+  return schema.validate(data);
+};
+
 export {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -94,4 +99,5 @@ export {
   validateProfileVisible,
   validateAadharVerification,
   validateBankDetails,
+  validateCerificate,
 };

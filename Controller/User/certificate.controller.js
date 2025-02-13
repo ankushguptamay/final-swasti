@@ -1,108 +1,144 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import {
+  compressImageFile,
+  deleteSingleFile,
+} from "../../Helper/fileHelper.js";
+import fs from "fs";
 import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
-import {} from "../../MiddleWare/Validation/userProfile.js";
+import { validateCerificate } from "../../MiddleWare/Validation/userProfile.js";
+import { Certificate } from "../../Model/User/Profile/certificateModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
+import { uploadFileToBunny } from "../../Util/bunny.js";
+const bunnyFolderName = "inst-doc";
+const { SHOW_BUNNY_FILE_HOSTNAME } = process.env;
 
 // Main Controller
 const addCerificate = async (req, res) => {
   try {
+    // File should be exist
+    if (!req.file)
+      return failureResponse(
+        res,
+        400,
+        "Please..upload an image of certificate!",
+        null
+      );
     // Body Validation
-    const { error } = validateBankDetails(req.body);
+    const { error } = validateCerificate(req.body);
     if (error) {
+      deleteSingleFile(req.file.path);
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { IFSCCode, accountNumber, branch } = req.body;
-    // Find in RECORDS
-    const isPresent = await BankDetail.findOne({
-      IFSCCode,
-      accountNumber,
+    const { name } = req.body;
+    // Compress File
+    const buffer = fs.readFileSync(req.file.path);
+    const compressedImagePath = await compressImageFile(buffer, req.file);
+    // Upload file to bunny
+    const fileStream = fs.createReadStream(compressedImagePath.imagePath);
+    await uploadFileToBunny(
+      bunnyFolderName,
+      fileStream,
+      compressedImagePath.imageName
+    );
+    deleteSingleFile(compressedImagePath.imagePath);
+    const image = {
+      fileName: compressedImagePath.imageName,
+      url: `${SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`,
+    };
+    // Create this certificate
+    const certificate = await Certificate.create({
+      name,
+      image,
       user: req.user._id,
     });
-    if (isPresent)
-      return failureResponse(res, 400, `This bank detail already exist!`);
-    // Create this bank details
-    const details = await BankDetail.create({
-      IFSCCode,
-      accountNumber,
-      branch,
-      user: req.user._id,
-    });
-    // Update bankdetails array in user profile
-    const user = await User.findById(req.user._id).select("bankDetail");
-    user.bankDetail = [...user.bankDetail, details._id];
+    // Update certificate array in user profile
+    const user = await User.findById(req.user._id).select("certificate");
+    user.certificate = [...user.certificate, certificate._id];
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Bank details added successfully!`);
+    return successResponse(res, 201, `Certificate added successfully!`);
   } catch (err) {
+    deleteSingleFile(req.file.path);
     failureResponse(res, 500, err.message, null);
   }
 };
 
-const bankDetails = async (req, res) => {
+const certificates = async (req, res) => {
   try {
-    const details = await BankDetail.find({
+    const certificates = await Certificate.find({
       user: req.user._id,
       isDelete: false,
     })
-      .select("_id IFSCCode accountNumber branch")
+      .select("_id name image")
       .sort({
         createdAt: -1,
       });
+    // Transform
+    const transform = certificates.map(({ _id, name, image }) => {
+      return { _id, name, image: image ? image.url || null : null };
+    });
     // Send final success response
-    return successResponse(res, 201, `Bank details fetched successfully!`, {
-      details,
+    return successResponse(res, 201, `Certificates fetched successfully!`, {
+      certificates: transform,
     });
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
 };
 
-const bankDetailById = async (req, res) => {
+const certificateById = async (req, res) => {
   try {
-    const details = await BankDetail.findOne({
+    const certificate = await Certificate.findOne({
       _id: req.params.id,
       user: req.user._id,
       isDelete: false,
-    }).select("_id IFSCCode accountNumber branch");
+    }).select("_id name image");
+    // tranform
+    certificate._doc.image = certificate.image
+      ? certificate.image.url || null
+      : null;
     // Send final success response
-    return successResponse(res, 201, `Bank detail fetched successfully!`, {
-      details,
+    return successResponse(res, 201, `Certificate fetched successfully!`, {
+      certificate,
     });
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
 };
 
-const deleteBankDetails = async (req, res) => {
+const deleteCertificate = async (req, res) => {
   try {
-    const details = await BankDetail.findOne({
+    const certificates = await Certificate.findOne({
       _id: req.params.id,
       user: req.user._id,
       isDelete: false,
     });
-    if (!details)
-      return failureResponse(res, 400, `This bank detail does not exist!`);
+    if (!certificates)
+      return failureResponse(res, 400, `Certificate detail does not exist!`);
     // Update isDelete
-    details.isDelete = true;
-    details.deleted_at = new Date();
-    details.save();
+    certificates.isDelete = true;
+    certificates.deleted_at = new Date();
+    certificates.save();
     // Update bankdetails array in user profile
-    const user = await User.findById(req.user._id).select("bankDetail");
-    const bankDetail = [];
-    for (const bank of user._doc.bankDetail) {
-      if (bank.toString() !== details._doc._id.toString()) {
-        bankDetail.push(bank);
+    const user = await User.findById(req.user._id).select("certificate");
+    const certificate = [];
+    for (const cer of user._doc.certificate) {
+      if (cer.toString() !== certificates._doc._id.toString()) {
+        certificate.push(cer);
       }
     }
-    user.bankDetail = bankDetail;
+    user.certificate = certificate;
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Bank details deleted successfully!`);
+    return successResponse(res, 201, `Certificate deleted successfully!`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
 };
 
-export { addBankDetails, bankDetails, bankDetailById, deleteBankDetails };
+export { addCerificate, certificates, certificateById, deleteCertificate };
