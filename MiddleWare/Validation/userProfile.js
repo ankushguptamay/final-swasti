@@ -54,10 +54,11 @@ const validateRolePage = (data) => {
 const validateUpdateInstructor = (data) => {
   const schema = joi.object().keys({
     name: joi.string().min(3).max(30).required(),
-    bio: joi.string().min(20).max(1000).required(),
-    experience_year: joi.number().required(),
+    bio: joi.string().min(20).max(1000).optional(),
+    experience_year: joi.number().optional(),
     language: joi.array().min(1).optional(),
-    dateOfBirth: joi.string().min(20).max(1000).required(),
+    dateOfBirth: joi.string().min(20).max(1000).optional(),
+    gender: joi.string().valid("male", "female", "other").optional(),
   });
   return schema.validate(data);
 };

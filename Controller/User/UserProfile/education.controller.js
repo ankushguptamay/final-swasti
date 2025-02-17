@@ -1,10 +1,10 @@
 import {
   failureResponse,
   successResponse,
-} from "../../MiddleWare/responseMiddleware.js";
-import { validateEducation } from "../../MiddleWare/Validation/userProfile.js";
-import { Education } from "../../Model/User/Profile/educationModel.js";
-import { User } from "../../Model/User/Profile/userModel.js";
+} from "../../../MiddleWare/responseMiddleware.js";
+import { validateEducation } from "../../../MiddleWare/Validation/userProfile.js";
+import { Education } from "../../../Model/User/Profile/educationModel.js";
+import { User } from "../../../Model/User/Profile/userModel.js";
 
 // Main Controller
 const addEducation = async (req, res) => {

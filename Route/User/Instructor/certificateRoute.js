@@ -6,7 +6,7 @@ import {
   certificateById,
   certificates,
   deleteCertificate,
-} from "../../../Controller/User/certificate.controller.js";
+} from "../../../Controller/User/UserProfile/certificate.controller.js";
 
 // Middleware
 import { uploadImage } from "../../../MiddleWare/uploadFile.js";

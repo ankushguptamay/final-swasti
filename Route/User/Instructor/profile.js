@@ -11,7 +11,7 @@ import {
   isProfileVisible,
   getMyChakra,
   chakraDetails,
-} from "../../../Controller/User/user.controller.js";
+} from "../../../Controller/User/UserProfile/user.controller.js";
 
 // Middleware
 import { uploadImage } from "../../../MiddleWare/uploadFile.js";

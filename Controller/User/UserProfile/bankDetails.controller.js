@@ -1,10 +1,10 @@
 import {
   failureResponse,
   successResponse,
-} from "../../MiddleWare/responseMiddleware.js";
-import { validateBankDetails } from "../../MiddleWare/Validation/userProfile.js";
-import { BankDetail } from "../../Model/User/Profile/bankDetailsModel.js";
-import { User } from "../../Model/User/Profile/userModel.js";
+} from "../../../MiddleWare/responseMiddleware.js";
+import { validateBankDetails } from "../../../MiddleWare/Validation/userProfile.js";
+import { BankDetail } from "../../../Model/User/Profile/bankDetailsModel.js";
+import { User } from "../../../Model/User/Profile/userModel.js";
 
 // Main Controller
 const addBankDetails = async (req, res) => {

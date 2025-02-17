@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema(
@@ -12,6 +12,13 @@ const schema = new Schema(
     },
     language: [],
     dateOfBirth: { type: Date },
+    gender: {
+      type: String,
+      enum: {
+        values: ["male", "female", "other"],
+        message: "{VALUE} is not supported",
+      },
+    },
     experience_year: { type: Number },
     bio: { type: String },
     role: {
@@ -38,7 +45,6 @@ const schema = new Schema(
       aadharNumber: { type: String },
       name: { type: String },
       dateOfBirth: { type: String },
-      gender: { type: String },
       address: { type: String },
     },
     // Children Table

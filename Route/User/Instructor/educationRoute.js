@@ -7,7 +7,7 @@ import {
   educations,
   updateEducation,
   deleteEducation,
-} from "../../../Controller/User/education.controller.js";
+} from "../../../Controller/User/UserProfile/education.controller.js";
 
 router.post("/", addEducation);
 router.get("/", educations);

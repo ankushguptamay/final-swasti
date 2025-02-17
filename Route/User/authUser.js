@@ -8,7 +8,7 @@ import {
   refreshAccessToken,
   logout,
   rolePage,
-} from "../../Controller/User/user.controller.js";
+} from "../../Controller/User/UserProfile/user.controller.js";
 
 // Middle
 import { verifyUserJWT } from "../../MiddleWare/verifyJWTToken.js";

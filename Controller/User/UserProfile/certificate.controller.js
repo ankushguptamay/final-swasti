@@ -4,16 +4,16 @@ dotenv.config();
 import {
   compressImageFile,
   deleteSingleFile,
-} from "../../Helper/fileHelper.js";
+} from "../../../Helper/fileHelper.js";
 import fs from "fs";
 import {
   failureResponse,
   successResponse,
-} from "../../MiddleWare/responseMiddleware.js";
-import { validateCerificate } from "../../MiddleWare/Validation/userProfile.js";
-import { Certificate } from "../../Model/User/Profile/certificateModel.js";
-import { User } from "../../Model/User/Profile/userModel.js";
-import { uploadFileToBunny } from "../../Util/bunny.js";
+} from "../../../MiddleWare/responseMiddleware.js";
+import { validateCerificate } from "../../../MiddleWare/Validation/userProfile.js";
+import { Certificate } from "../../../Model/User/Profile/certificateModel.js";
+import { User } from "../../../Model/User/Profile/userModel.js";
+import { uploadFileToBunny } from "../../../Util/bunny.js";
 const bunnyFolderName = "inst-doc";
 const { SHOW_BUNNY_FILE_HOSTNAME } = process.env;
 

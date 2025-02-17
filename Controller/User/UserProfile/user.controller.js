@@ -2,20 +2,20 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
-import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
+import { capitalizeFirstLetter } from "../../../Helper/formatChange.js";
 import {
   compressImageFile,
   deleteSingleFile,
-} from "../../Helper/fileHelper.js";
-import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
+} from "../../../Helper/fileHelper.js";
+import { generateFixedLengthRandomNumber } from "../../../Helper/generateOTP.js";
 import {
   createUserAccessToken,
   createUserRefreshToken,
-} from "../../Helper/jwtToken.js";
+} from "../../../Helper/jwtToken.js";
 import {
   failureResponse,
   successResponse,
-} from "../../MiddleWare/responseMiddleware.js";
+} from "../../../MiddleWare/responseMiddleware.js";
 import {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -24,13 +24,13 @@ import {
   validateUpdateInstructor,
   validateProfileVisible,
   validateAadharVerification,
-} from "../../MiddleWare/Validation/userProfile.js";
-import { OTP } from "../../Model/User/otpModel.js";
-import { UserChakras } from "../../Model/User/Profile/chakrasModel.js";
-import { InstructorUpdateHistory } from "../../Model/User/Profile/instructorUpdateHistoryModel.js";
-import { User } from "../../Model/User/Profile/userModel.js";
-import { uploadFileToBunny } from "../../Util/bunny.js";
-import { sendOTPToNumber } from "../../Util/sendOTP.js";
+} from "../../../MiddleWare/Validation/userProfile.js";
+import { OTP } from "../../../Model/User/otpModel.js";
+import { UserChakras } from "../../../Model/User/Profile/chakrasModel.js";
+import { InstructorUpdateHistory } from "../../../Model/User/Profile/instructorUpdateHistoryModel.js";
+import { User } from "../../../Model/User/Profile/userModel.js";
+import { uploadFileToBunny } from "../../../Util/bunny.js";
+import { sendOTPToNumber } from "../../../Util/sendOTP.js";
 import axios from "axios";
 const {
   OTP_DIGITS_LENGTH,
@@ -83,6 +83,7 @@ function transformUserDetails(user) {
     email: user.email,
     mobileNumber: user.mobileNumber,
     role: user.role,
+    gender: user.gender || null,
     profilePic: user.profilePic ? user.profilePic.url || null : null,
     userCode: user.userCode,
   };
@@ -338,7 +339,7 @@ const verifyMobileOTP = async (req, res) => {
 const myDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "_id name email mobileNumber role profilePic language dateOfBirth experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRatin"
+      "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRatin"
     );
     if (!user) {
       return failureResponse(res, 401, "User is not present!");
@@ -401,7 +402,7 @@ const updateInstructor = async (req, res) => {
     if (!instructor) {
       return failureResponse(res, 400, "Instructor is not present!", null);
     }
-    const { bio, language, experience_year, dateOfBirth } = req.body;
+    const { bio, language, experience_year, dateOfBirth, gender } = req.body;
     const name = capitalizeFirstLetter(req.body.name);
     // Check Which data changed
     const changedData = {};
@@ -411,34 +412,51 @@ const updateInstructor = async (req, res) => {
       changedData.name = name;
       dataHistory.name = instructor.name;
     }
+    // Gender
+    if (!instructor.isAadharVerified) {
+      if (
+        instructor.gender &&
+        gender &&
+        gender.toLowerCase() !== instructor.gender.toLowerCase()
+      ) {
+        changedData.gender = gender.toLowerCase();
+        dataHistory.gender = instructor.gender;
+      }
+    }
     // Experience
-    if (parseInt(experience_year) !== parseInt(instructor.experience_year)) {
+    if (
+      experience_year &&
+      parseInt(experience_year) !== parseInt(instructor.experience_year)
+    ) {
       changedData.experience_year = experience_year;
       dataHistory.experience_year = instructor.experience_year;
     }
     // Bio
-    if (bio !== instructor.bio) {
+    if (bio && bio !== instructor.bio) {
       changedData.bio = bio;
       dataHistory.bio = instructor.bio;
     }
     // Date Of Birth
     if (!instructor.isAadharVerified) {
       if (
+        dateOfBirth &&
         new Date(dateOfBirth).getTime() !==
-        new Date(instructor.dateOfBirth || new Date()).getTime()
+          new Date(instructor.dateOfBirth || new Date()).getTime()
       ) {
         changedData.dateOfBirth = new Date(dateOfBirth);
         dataHistory.dateOfBirth = instructor.dateOfBirth;
       }
     }
     // Language
-    const isLanguageChanged = await compareArrays(
-      language,
-      instructor.language
-    );
-    if (!isLanguageChanged) {
-      changedData.language = language;
-      dataHistory.language = instructor.language;
+    if (language && language.length > 0) {
+      const isLanguageChanged = await compareArrays(
+        language,
+        instructor.language
+      );
+      if (!isLanguageChanged) {
+        changedData.language = language;
+        dataHistory.language = instructor.language;
+      }
     }
     // store current data in history
     await InstructorUpdateHistory.create({

@@ -6,7 +6,7 @@ import {
   bankDetailById,
   bankDetails,
   deleteBankDetails,
-} from "../../../Controller/User/bankDetails.controller.js";
+} from "../../../Controller/User/UserProfile/bankDetails.controller.js";
 
 router.post("/", addBankDetails);
 router.get("/", bankDetails);
