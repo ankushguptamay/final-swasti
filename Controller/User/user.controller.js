@@ -401,23 +401,37 @@ const updateInstructor = async (req, res) => {
     if (!instructor) {
       return failureResponse(res, 400, "Instructor is not present!", null);
     }
-    const { bio, language, experience_year } = req.body;
+    const { bio, language, experience_year, dateOfBirth } = req.body;
     const name = capitalizeFirstLetter(req.body.name);
     // Check Which data changed
     const changedData = {};
     const dataHistory = {};
+    // Name
     if (name !== instructor.name) {
       changedData.name = name;
       dataHistory.name = instructor.name;
     }
+    // Experience
     if (parseInt(experience_year) !== parseInt(instructor.experience_year)) {
       changedData.experience_year = experience_year;
       dataHistory.experience_year = instructor.experience_year;
     }
+    // Bio
     if (bio !== instructor.bio) {
       changedData.bio = bio;
       dataHistory.bio = instructor.bio;
     }
+    // Date Of Birth
+    if (!instructor.isAadharVerified) {
+      if (
+        new Date(dateOfBirth).getTime() !==
+        new Date(instructor.dateOfBirth || new Date()).getTime()
+      ) {
+        changedData.dateOfBirth = new Date(dateOfBirth);
+        dataHistory.dateOfBirth = instructor.dateOfBirth;
+      }
+    }
+    // Language
     const isLanguageChanged = await compareArrays(
       language,
       instructor.language
