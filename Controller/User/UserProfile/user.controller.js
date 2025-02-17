@@ -414,11 +414,7 @@ const updateInstructor = async (req, res) => {
     }
     // Gender
     if (!instructor.isAadharVerified) {
-      if (
-        instructor.gender &&
-        gender &&
-        gender.toLowerCase() !== instructor.gender.toLowerCase()
-      ) {
+      if (gender && gender !== instructor.gender) {
         changedData.gender = gender.toLowerCase();
         dataHistory.gender = instructor.gender;
       }

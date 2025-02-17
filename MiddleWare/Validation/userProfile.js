@@ -57,7 +57,7 @@ const validateUpdateInstructor = (data) => {
     bio: joi.string().min(20).max(1000).optional(),
     experience_year: joi.number().optional(),
     language: joi.array().min(1).optional(),
-    dateOfBirth: joi.string().min(20).max(1000).optional(),
+    dateOfBirth: joi.string().optional(),
     gender: joi.string().valid("male", "female", "other").optional(),
   });
   return schema.validate(data);

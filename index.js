@@ -9,6 +9,7 @@ import cors from "cors";
 // Routes
 import authUser from "./Route/User/authUser.js";
 import instructor from "./Route/User/Instructor/instructorRoute.js";
+import learner from "./Route/User/Learner/learnerRoute.js"
 
 const app = express();
 const server = createServer(app);
@@ -29,6 +30,8 @@ app.use(cors(corsOptions));
 app.use("/api/auth", authUser);
 // 1.Instructor
 app.use("/api/instructor", instructor);
+// 2.User
+app.use("/api/user", learner);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

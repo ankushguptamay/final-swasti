@@ -10,7 +10,7 @@ const schema = new Schema(
     replies: [
       {
         givenBy: { type: Types.ObjectId, ref: "User" },
-        message: { type: String, required: true },
+        reply: { type: String, required: true },
         givenAt: { type: Date, default: Date.now },
       },
     ],
