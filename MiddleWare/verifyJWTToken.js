@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { User } from "../Model/User/Profile/userModel.js";
 import { Admin } from "../Model/Admin/adminModel.js";
 import { failureResponse } from "./responseMiddleware.js";
-const { JWT_SECRET_KEY_USER, JWT_SECRET_KEY_Admin } = process.env;
+const { JWT_SECRET_KEY_USER, JWT_SECRET_KEY_ADMIN } = process.env;
 
 const verifyUserJWT = async (req, res, next) => {
   try {
@@ -39,7 +39,7 @@ const verifyAdminJWT = async (req, res, next) => {
 
     if (!token) return res.sendStatus(401);
 
-    const decode = jwt.verify(token, JWT_SECRET_KEY_Admin);
+    const decode = jwt.verify(token, JWT_SECRET_KEY_ADMIN);
 
     const admin = await Admin.findOne(
       { _id: decode._id },

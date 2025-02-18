@@ -7,6 +7,7 @@ const {
   JWT_SECRET_REFRESH_KEY_USER,
   JWT_ACCESS_VALIDITY,
   JWT_REFRESH_VALIDITY,
+  JWT_SECRET_KEY_ADMIN,
 } = process.env;
 
 const createUserAccessToken = (data) => {
@@ -23,4 +24,15 @@ const createUserRefreshToken = (data) => {
   return token;
 };
 
-export { createUserAccessToken, createUserRefreshToken };
+const createAdminAccessToken = (data) => {
+  const token = jwt.sign(data, JWT_SECRET_KEY_ADMIN, {
+    expiresIn: JWT_ACCESS_VALIDITY,
+  });
+  return token;
+};
+
+export {
+  createUserAccessToken,
+  createUserRefreshToken,
+  createAdminAccessToken,
+};

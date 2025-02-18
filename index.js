@@ -2,14 +2,15 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
-import {connectDB} from "./Util/mongoConnection.js"
+import { connectDB } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
 
 // Routes
+import admin from "./Route/Admin/authAdmin.js";
 import authUser from "./Route/User/authUser.js";
 import instructor from "./Route/User/Instructor/index.js";
-import learner from "./Route/User/Learner/index.js"
+import learner from "./Route/User/Learner/index.js";
 
 const app = express();
 const server = createServer(app);
@@ -33,6 +34,8 @@ app.use("/api/auth", authUser);
 app.use("/api/instructor", instructor);
 // 2.User
 app.use("/api/user", learner);
+// 3.User
+app.use("/api/admin", admin);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
