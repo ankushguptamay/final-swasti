@@ -94,9 +94,18 @@ const validateCerificate = (data) => {
 
 const validateEducation = (data) => {
   const schema = joi.object().keys({
-    courseName: joi.string().required(),
+    qualificationName: joi.string().required(),
     university_institute: joi.string().required(),
     yearOfCompletion: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
+const validateUpdateLearner = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().min(3).max(30).required(),
+    dateOfBirth: joi.string().optional(),
+    gender: joi.string().valid("male", "female", "other").optional(),
   });
   return schema.validate(data);
 };
@@ -112,4 +121,5 @@ export {
   validateBankDetails,
   validateCerificate,
   validateEducation,
+  validateUpdateLearner,
 };

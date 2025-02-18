@@ -24,12 +24,13 @@ import {
   validateUpdateInstructor,
   validateProfileVisible,
   validateAadharVerification,
+  validateUpdateLearner,
 } from "../../../MiddleWare/Validation/userProfile.js";
 import { OTP } from "../../../Model/User/otpModel.js";
 import { UserChakras } from "../../../Model/User/Profile/chakrasModel.js";
 import { InstructorUpdateHistory } from "../../../Model/User/Profile/instructorUpdateHistoryModel.js";
 import { User } from "../../../Model/User/Profile/userModel.js";
-import { uploadFileToBunny } from "../../../Util/bunny.js";
+import { deleteFileToBunny, uploadFileToBunny } from "../../../Util/bunny.js";
 import { sendOTPToNumber } from "../../../Util/sendOTP.js";
 import axios from "axios";
 const {
@@ -339,7 +340,7 @@ const verifyMobileOTP = async (req, res) => {
 const myDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRatin"
+      "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
     );
     if (!user) {
       return failureResponse(res, 401, "User is not present!");
@@ -376,12 +377,13 @@ const rolePage = async (req, res) => {
     const userCode = await generateUserCode(codePreFix);
     // Update user
     await User.findOneAndUpdate({ _id: req.user._id }, { role, userCode });
+    const accessToken = createUserAccessToken({ _id: req.user._id, role });
     // Final response
     return successResponse(
       res,
       201,
       `You are successfully register as ${message}!`,
-      { ...req.user._doc, role }
+      { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
@@ -402,7 +404,13 @@ const updateInstructor = async (req, res) => {
     if (!instructor) {
       return failureResponse(res, 400, "Instructor is not present!", null);
     }
-    const { bio, language, experience_year, dateOfBirth, gender } = req.body;
+    const {
+      bio,
+      language,
+      experience_year = 0,
+      dateOfBirth,
+      gender,
+    } = req.body;
     const name = capitalizeFirstLetter(req.body.name);
     // Check Which data changed
     const changedData = {};
@@ -420,10 +428,7 @@ const updateInstructor = async (req, res) => {
       }
     }
     // Experience
-    if (
-      experience_year &&
-      parseInt(experience_year) !== parseInt(instructor.experience_year)
-    ) {
+    if (parseInt(experience_year) !== parseInt(instructor.experience_year)) {
       changedData.experience_year = experience_year;
       dataHistory.experience_year = instructor.experience_year;
     }
@@ -493,11 +498,15 @@ const addUpdateProfilePic = async (req, res) => {
     let message = "Profile pic added successfully!";
     if (req.user?.profilePic?.fileName) {
       message = "Profile pic updated successfully!";
-      // Save updates if profile
-      await InstructorUpdateHistory.create({
-        profilePic: req.user.profilePic,
-        instructor: req.user._id,
-      });
+      if (req.user.role.toLowerCase() === "instructor") {
+        // Save updates if profile
+        await InstructorUpdateHistory.create({
+          profilePic: req.user.profilePic,
+          instructor: req.user._id,
+        });
+      } else {
+        deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
+      }
     }
     // Update
     await User.updateOne({ _id: req.user._id }, { profilePic });
@@ -511,11 +520,15 @@ const addUpdateProfilePic = async (req, res) => {
 const deleteProfilePic = async (req, res) => {
   try {
     if (req.user?.profilePic?.fileName) {
-      // Save updates if profile
-      await InstructorUpdateHistory.create({
-        profilePic: req.user.profilePic,
-        instructor: req.user._id,
-      });
+      if (req.user.role.toLowerCase() === "instructor") {
+        // Save updates if profile
+        await InstructorUpdateHistory.create({
+          profilePic: req.user.profilePic,
+          instructor: req.user._id,
+        });
+      } else {
+        deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
+      }
     }
     // Change
     await User.updateOne({ _id: req.user._id }, { profilePic: null });
@@ -773,6 +786,114 @@ const chakraDetails = async (req, res) => {
   }
 };
 
+const updateLearner = async (req, res) => {
+  try {
+    // Validate Body
+    const { error } = validateUpdateLearner(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { gender, dateOfBirth } = req.body;
+    const name = capitalizeFirstLetter(req.body.name);
+    // Check Which data changed
+    const changedData = {
+      name,
+      gender: gender ? gender.toLowerCase() : undefined,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+    };
+    // Update
+    await User.updateOne({ _id: req.user._id }, { $set: changedData });
+    // Send final success response
+    return successResponse(res, 201, `Profile updated successfully!`);
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+const searchInstructor = async (req, res) => {
+  try {
+    const {
+      search,
+      experienceLowerLimit,
+      experienceUpperLimit,
+      starRating,
+      role = "instructor",
+    } = req.query;
+
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+
+    //Search
+    let query = {
+      $and: [
+        { _id: { $nin: [req.user._id] } },
+        { role },
+        // { isProfileVisible: true },
+      ],
+    };
+    if (search) {
+      const startWith = new RegExp("^" + search.toLowerCase(), "i");
+      query.$and.push({ name: startWith });
+    }
+
+    // Filter
+    if ((experienceLowerLimit, experienceUpperLimit)) {
+      query.$and.push({
+        experience_year: {
+          $gte: parseInt(experienceLowerLimit),
+          $lte: parseInt(experienceUpperLimit),
+        },
+      });
+    }
+    // Average rating
+    if (starRating) {
+      query.$and.push({
+        averageRating: { $gte: parseInt(starRating) },
+      });
+    }
+    // Get required data
+    const [instructor, totalInstructor] = await Promise.all([
+      User.find(query)
+        .select(
+          "_id name role profilePic language dateOfBirth gender experience_year bio isProfileVisible averageRating"
+        )
+        .sort({ averageRating: -1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    // Transform Data
+    const transformData = instructor.map((user) => {
+      return {
+        _id: user._id,
+        name: user.name,
+        role: user.role,
+        gender: user.gender,
+        profilePic: user.profilePic ? user.profilePic.url || null : null,
+        bio: user.bio,
+        isProfileVisible: user.isProfileVisible,
+        language: user.language,
+        experience_year: user.experience_year,
+        averageRating: user.averageRating,
+      };
+    });
+    const totalPages = Math.ceil(totalInstructor / resultPerPage) || 0;
+    // Send final success response
+    return successResponse(res, 200, `Successfully!`, {
+      data: transformData,
+      totalPages: totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -789,4 +910,6 @@ export {
   verifyAadharOTP,
   getMyChakra,
   chakraDetails,
+  updateLearner,
+  searchInstructor,
 };

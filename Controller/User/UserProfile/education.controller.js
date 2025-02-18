@@ -14,10 +14,10 @@ const addEducation = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { courseName, university_institute, yearOfCompletion } = req.body;
+    const { qualificationName, university_institute, yearOfCompletion } = req.body;
     // Find in RECORDS
     const isPresent = await Education.findOne({
-      courseName,
+      qualificationName,
       university_institute,
       user: req.user._id,
       isDelete: false,
@@ -26,7 +26,7 @@ const addEducation = async (req, res) => {
       return failureResponse(res, 400, `This education already exist!`);
     // Create this education
     const education = await Education.create({
-      courseName,
+      qualificationName,
       university_institute,
       yearOfCompletion: new Date(yearOfCompletion),
       user: req.user._id,
@@ -48,7 +48,7 @@ const educations = async (req, res) => {
       user: req.user._id,
       isDelete: false,
     })
-      .select("_id courseName university_institute yearOfCompletion")
+      .select("_id qualificationName university_institute yearOfCompletion")
       .sort({
         createdAt: -1,
       });
@@ -67,7 +67,7 @@ const educationById = async (req, res) => {
       _id: req.params.id,
       user: req.user._id,
       isDelete: false,
-    }).select("_id courseName university_institute yearOfCompletion");
+    }).select("_id qualificationName university_institute yearOfCompletion");
     // Send final success response
     return successResponse(res, 200, `Education fetched successfully!`, {
       education,
@@ -84,7 +84,7 @@ const updateEducation = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { courseName, university_institute, yearOfCompletion } = req.body;
+    const { qualificationName, university_institute, yearOfCompletion } = req.body;
     // Find in RECORDS
     const isPresent = await Education.findOne({
       _id: req.params.id,
@@ -95,7 +95,7 @@ const updateEducation = async (req, res) => {
       return failureResponse(res, 400, `This education does not exist!`);
     // Find in RECORDS
     const isNewPresent = await Education.findOne({
-      courseName,
+      qualificationName,
       university_institute,
       user: req.user._id,
       isDelete: false,
@@ -108,7 +108,7 @@ const updateEducation = async (req, res) => {
     isPresent.save();
     // Create new education
     const education = await Education.create({
-      courseName,
+      qualificationName,
       university_institute,
       yearOfCompletion: new Date(yearOfCompletion),
       createdAt: isPresent.createdAt,

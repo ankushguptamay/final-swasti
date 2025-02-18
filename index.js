@@ -8,14 +8,15 @@ import cors from "cors";
 
 // Routes
 import authUser from "./Route/User/authUser.js";
-import instructor from "./Route/User/Instructor/instructorRoute.js";
-import learner from "./Route/User/Learner/learnerRoute.js"
+import instructor from "./Route/User/Instructor/index.js";
+import learner from "./Route/User/Learner/index.js"
 
 const app = express();
 const server = createServer(app);
 
+// Connect to database
 connectDB(process.env.MONGO_URI);
-
+// Cors options
 const corsOptions = {
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],

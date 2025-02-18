@@ -62,13 +62,22 @@ function tranformReview(data) {
 }
 
 // Main Controller
-const giveOrUpdateInstructorReviews = async (req, res) => {
+const giveOrUpdateReviews = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateInstructorReview(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { rating, message, instructor } = req.body;
+    const { rating, message = null, instructor } = req.body;
     const learner = req.user._id;
+    // Match id
+    if (learner.toString() == instructor.toString()) {
+      return failureResponse(
+        res,
+        400,
+        "You can not give review to your self!",
+        null
+      );
+    }
     // Check Is user take any service from instructor or not
 
     // Check is any review present
@@ -79,7 +88,7 @@ const giveOrUpdateInstructorReviews = async (req, res) => {
     });
     // Update or create new one
     if (review) {
-      if (message) review.message = message;
+      review.message = message;
       review.rating = parseInt(rating);
       await review.save();
     } else {
@@ -100,7 +109,7 @@ const giveOrUpdateInstructorReviews = async (req, res) => {
   }
 };
 
-const deleteInstructorReviewByUser = async (req, res) => {
+const deleteReviewByUser = async (req, res) => {
   try {
     const learner = req.user._id;
     const review = await InstructorReview.findOne({
@@ -127,12 +136,12 @@ const deleteInstructorReviewByUser = async (req, res) => {
   }
 };
 
-const getInstructorReviews = async (req, res) => {
+const getReviews = async (req, res) => {
   try {
     let instructorId = req.query.id;
     if (req.user.role.toLowerCase() !== "instructor") {
       if (!instructorId) {
-        failureResponse(res, 400, "Please select a instructor!", null);
+        return failureResponse(res, 400, "Please select a instructor!", null);
       }
     } else {
       instructorId = req.user._id;
@@ -145,7 +154,12 @@ const getInstructorReviews = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
     // Find Average rating and no of reviews
     const instructor = await InstructorReview.aggregate([
-      { $match: { isDelete: false, instructor: instructorId } },
+      {
+        $match: {
+          isDelete: false,
+          instructor: new mongoose.Types.ObjectId(instructorId),
+        },
+      },
       {
         $group: {
           _id: "$instructor", // Group by instructor ID
@@ -155,6 +169,7 @@ const getInstructorReviews = async (req, res) => {
       },
       { $project: { _id: 1, averageRating: 1, totalReviews: 1 } },
     ]);
+    console.log(instructor);
     // Get data
     const query = { $and: [{ isDelete: false }, { instructor: instructorId }] };
     const [reviews, totalReview] = await Promise.all([
@@ -172,7 +187,7 @@ const getInstructorReviews = async (req, res) => {
     return successResponse(res, 200, "Fetched!", {
       totalPages: Math.ceil(totalReview / resultPerPage) || 0,
       currentPage: page,
-      ...instructor[0],
+      instructor: instructor[0],
       reviews: transformData,
     });
   } catch (err) {
@@ -180,7 +195,7 @@ const getInstructorReviews = async (req, res) => {
   }
 };
 
-const giveReactionOnInstructorReview = async (req, res) => {
+const giveUnGiveReactionOnReview = async (req, res) => {
   try {
     const reviewId = req.params.id;
     const id = req.user._id;
@@ -199,35 +214,19 @@ const giveReactionOnInstructorReview = async (req, res) => {
     ) {
       // Check Is user take any service from instructor or not
     }
-    review.reactions = [...new Set(review.reactions.push(id))];
-    await review.save();
-    // Send final success response
-    return successResponse(res, 200, "Reaction gave!");
-  } catch (err) {
-    failureResponse(res, 500, err.message, null);
-  }
-};
+    let message = "Reaction gave!";
+    let reactions = review.reactions.map((rea) => rea.toString());
+    if (reactions.includes(id.toString())) {
+      message = "Reaction taken back!";
+      reactions = reactions.filter((e) => e !== id.toString());
+    } else {
+      reactions.push(id.toString());
+    }
+    review.reactions = reactions;
 
-const unGiveReactionOnInstructorReview = async (req, res) => {
-  try {
-    const reviewId = req.params.id;
-    const id = req.user._id;
-    // Find Review
-    const review = await InstructorReview.findOne({
-      _id: reviewId,
-      isDelete: false,
-    });
-    if (!review) {
-      failureResponse(res, 400, "This review is not present", null);
-    }
-    const newArr = [];
-    for (const reaction of review.reactions) {
-      if (reaction.toString() != id.toString()) newArr.push(reaction);
-    }
-    review.reactions = newArr;
     await review.save();
     // Send final success response
-    return successResponse(res, 200, "Reaction taked back!");
+    return successResponse(res, 200, message);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -313,12 +312,62 @@ const deleteMyReply = async (req, res) => {
   }
 };
 
+const getReviewDetails = async (req, res) => {
+  try {
+    const reviewId = req.params.id;
+    // Find Review
+    const review = await InstructorReview.findOne({
+      _id: reviewId,
+      isDelete: false,
+    })
+      .select("_id rating message replies instructor reactions")
+      .populate("learner", "_id name profilePic");
+    if (!review) {
+      failureResponse(res, 400, "This review is not present!", null);
+    }
+    // Find Average rating and no of reviews
+    const instructor = await InstructorReview.aggregate([
+      {
+        $match: {
+          isDelete: false,
+          instructor: new mongoose.Types.ObjectId(review.instructor),
+        },
+      },
+      {
+        $group: {
+          _id: "$instructor", // Group by instructor ID
+          averageRating: { $avg: "$rating" }, // Calculate the average rating
+          totalReviews: { $sum: 1 }, // Optional: Count total reviews
+        },
+      },
+      { $project: { _id: 1, averageRating: 1, totalReviews: 1 } },
+    ]);
+    const transformData = {
+      instructor: instructor[0],
+      review: {
+        ...review._doc,
+        learner: {
+          ...review.learner._doc,
+          profilePic: review.learner.profilePic
+            ? review.learner.profilePic.url || null
+            : null,
+        },
+        reactions: review.reactions.length,
+      },
+    };
+    // Send final success response
+    return successResponse(res, 200, "Fetched successfully!", transformData);
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
-  giveOrUpdateInstructorReviews,
-  deleteInstructorReviewByUser,
-  getInstructorReviews,
-  giveReactionOnInstructorReview,
-  unGiveReactionOnInstructorReview,
+  giveOrUpdateReviews,
+  deleteReviewByUser,
+  getReviews,
+  giveUnGiveReactionOnReview,
   replyOnMyReviews,
   deleteMyReply,
+  getReviewDetails,
 };

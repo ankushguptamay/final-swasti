@@ -3,7 +3,7 @@ const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema(
   {
-    courseName: { type: String },
+    qualificationName: { type: String },
     university_institute: { type: String },
     yearOfCompletion: { type: Date },
     user: { type: Types.ObjectId, ref: "User", required: true },
