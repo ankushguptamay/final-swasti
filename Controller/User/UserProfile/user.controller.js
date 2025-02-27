@@ -594,7 +594,7 @@ const refreshAccessToken = async (req, res) => {
     // Generate access token
     const token = createUserAccessToken({ _id: user._id });
     // Final response
-    return successResponse(res, 200, message, {
+    return successResponse(res, 200, "Successfully", {
       accessToken: token,
       refreshToken,
     });

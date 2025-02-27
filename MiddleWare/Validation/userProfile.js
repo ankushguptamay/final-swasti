@@ -82,6 +82,7 @@ const validateBankDetails = (data) => {
   const schema = joi.object().keys({
     IFSCCode: joi.string().required(),
     accountNumber: joi.string().required(),
+    bankName: joi.string().required(),
     branch: joi.string().required(),
   });
   return schema.validate(data);

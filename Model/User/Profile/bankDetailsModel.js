@@ -4,6 +4,7 @@ const { Schema, model, models, Types } = mongoose;
 const schema = new Schema(
   {
     accountNumber: { type: Number },
+    bankName: { type: String },
     branch: { type: String },
     IFSCCode: { type: String },
     user: { type: Types.ObjectId, ref: "User", required: true },

@@ -14,11 +14,12 @@ const addBankDetails = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { IFSCCode, accountNumber, branch } = req.body;
+    const { IFSCCode, accountNumber, bankName, branch } = req.body;
     // Find in RECORDS
     const isPresent = await BankDetail.findOne({
       IFSCCode,
       accountNumber,
+      bankName,
       user: req.user._id,
       isDelete: false,
     });
@@ -28,6 +29,7 @@ const addBankDetails = async (req, res) => {
     const details = await BankDetail.create({
       IFSCCode,
       accountNumber,
+      bankName,
       branch,
       user: req.user._id,
     });
@@ -48,7 +50,7 @@ const bankDetails = async (req, res) => {
       user: req.user._id,
       isDelete: false,
     })
-      .select("_id IFSCCode accountNumber branch")
+      .select("_id IFSCCode accountNumber branch bankName")
       .sort({
         createdAt: -1,
       });
@@ -67,7 +69,7 @@ const bankDetailById = async (req, res) => {
       _id: req.params.id,
       user: req.user._id,
       isDelete: false,
-    }).select("_id IFSCCode accountNumber branch");
+    }).select("_id IFSCCode accountNumber bankName branch");
     // Send final success response
     return successResponse(res, 201, `Bank detail fetched successfully!`, {
       details,

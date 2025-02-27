@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema({
@@ -7,4 +7,4 @@ const schema = new Schema({
   receiverId: { type: Types.ObjectId, ref: "User", required: true },
 });
 
-export const OTP = models.OTP || model("otp", schema);
+export const OTP = models.OTP || model("OTP", schema);
