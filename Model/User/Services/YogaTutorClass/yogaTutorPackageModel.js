@@ -3,6 +3,14 @@ const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema(
   {
+    packageType: {
+      type: String,
+      enum: {
+        values: ["individual", "group"],
+        message: "{VALUE} is not supported",
+      },
+      required: true,
+    },
     packageName: { type: String, required: true },
     group_price: { type: Number, default: null }, // price for all given days combined per person
     individual_price: { type: Number, default: null }, // price for all given days combined per person

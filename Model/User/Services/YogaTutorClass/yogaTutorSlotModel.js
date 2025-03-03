@@ -19,7 +19,7 @@ const schema = new Schema(
       },
       required: true,
     },
-    startDate: { type: Date }, // when class type
+    startDate: { type: Date }, // In individual classType start date and end date learner will decide, and in group start date will be decided by instructor. And also in group class type when if package is perDay then only start time is required
     endDate: { type: Date },
     time: { type: String }, // 24 hours formate
     timeDurationInMin: { type: Number, required: true },
@@ -28,11 +28,12 @@ const schema = new Schema(
     password: { type: Number, required: true },
     isBooked: { type: Boolean, default: false },
     // Associations
+    specialization: [{ type: Types.ObjectId, ref: "Specialization" }],
     transaction: [
       {
         type: Types.ObjectId,
         ref: "UserTransaction",
-        required: null,
+        required: false,
       },
     ],
     yogaTutorPackage: {
@@ -40,7 +41,12 @@ const schema = new Schema(
       ref: "YogaTutorPackage",
       required: true,
     },
-    learner: [{ type: Types.ObjectId, ref: "User", default: null }],
+    yogaTutorClass: {
+      type: Types.ObjectId,
+      ref: "YogaTutorClass",
+      required: true,
+    },
+    learner: [{ type: Types.ObjectId, ref: "User" }],
     instructor: { type: Types.ObjectId, ref: "User", required: true },
     // Soft delete
     isDelete: { type: Boolean, default: false },
@@ -51,32 +57,3 @@ const schema = new Schema(
 
 export const YogaTutorSlot =
   models.YogaTutorSlot || model("YogaTutorSlot", schema);
-
-const hii = {
-  modeOfClass: "online", // Page 1
-  classType: "individual", // Page 2
-  packageId: "dfbufis", // page 3, In customisePackage and packageId only one is required. If both are present then packageId should be prioritize and cuntomisePackage assumed to be null. If classType is individual then individual_price field is required, if in selected package individual_price is not presnet then one additional field will open to same page to enter individual_price. when instructor will add this field then all existing field in the package will be unchangable
-  customisePackage: {
-    numberOfDays: 1,
-    packageName: "ohhhho ek din me zero figure.",
-    individual_price: 600,
-  }, // Page 4
-  times: [
-    {
-      time: "11:00",
-      timeDurationInMin: 60,
-    },
-    {
-      time: "12:00",
-      timeDurationInMin: 60,
-    },
-    {
-      time: "16:00",
-      timeDurationInMin: 30,
-    },
-    {
-      time: "16:30",
-      timeDurationInMin: 30,
-    },
-  ], // Page 5
-};

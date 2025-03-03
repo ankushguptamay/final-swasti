@@ -5,6 +5,8 @@ import profile from "./profile.js";
 import bankDetails from "./bankDetailsRoute.js";
 import certificate from "./certificateRoute.js";
 import education from "./educationRoute.js";
+import yTClass from "./yogaTutorClassRoute.js";
+import master from "./masterDetailsRoute.js";
 
 // Middleware
 import { verifyUserJWT } from "../../../MiddleWare/verifyJWTToken.js";
@@ -25,5 +27,7 @@ router.use("/profile", profile);
 router.use("/bankDetail", bankDetails);
 router.use("/certificate", certificate);
 router.use("/education", education);
+router.use("/y-t-class", yTClass);
+router.use("/mas", master);
 
 export default router;

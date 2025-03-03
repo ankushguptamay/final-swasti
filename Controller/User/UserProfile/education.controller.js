@@ -94,14 +94,14 @@ const updateEducation = async (req, res) => {
     if (!isPresent)
       return failureResponse(res, 400, `This education does not exist!`);
     // Find in RECORDS
-    const isNewPresent = await Education.findOne({
-      qualificationName,
-      university_institute,
-      user: req.user._id,
-      isDelete: false,
-    });
-    if (isNewPresent)
-      return failureResponse(res, 400, `This education already exist!`);
+    // const isNewPresent = await Education.findOne({
+    //   qualificationName,
+    //   university_institute,
+    //   user: req.user._id,
+    //   isDelete: false,
+    // });
+    // if (isNewPresent)
+    //   return failureResponse(res, 400, `This education already exist!`);
     // Delete this education
     isPresent.isDelete = true;
     isPresent.deleted_at = new Date();
@@ -129,7 +129,7 @@ const updateEducation = async (req, res) => {
     user.education = newEducationArray;
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Education added successfully!`);
+    return successResponse(res, 201, `Education updated successfully!`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
