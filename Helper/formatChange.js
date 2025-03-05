@@ -1,4 +1,4 @@
-export const capitalizeFirstLetter = (str) => {
+const capitalizeFirstLetter = (str) => {
   const words = str.replace(/\s+/g, " ").trim().split(" ");
   return words
     .map((word) => {
@@ -6,3 +6,17 @@ export const capitalizeFirstLetter = (str) => {
     })
     .join(" ");
 };
+
+function getOldValues(existing, newValue) {
+  const oldValues = {};
+
+  Object.keys(newValue).forEach((field) => {
+    if (existing[field] !== newValue[field]) {
+      oldValues[field] = existing[field]; // Store only the old value
+    }
+  });
+
+  return oldValues;
+}
+
+export { capitalizeFirstLetter, getOldValues };

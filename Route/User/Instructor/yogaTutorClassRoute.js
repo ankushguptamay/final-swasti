@@ -9,8 +9,9 @@ import {
   deleteYTPackage,
 } from "../../../Controller/User/Service/YogaTutorClass/yTPackage.controller.js";
 import {
-  addNewAppointmentTimes,
-  appointmentTimesForInstructor,
+  addNewClassTimes,
+  classTimesForInstructor,
+  updateYTClassTimes,
 } from "../../../Controller/User/Service/YogaTutorClass/yogaTutor.controller.js";
 
 // Package
@@ -21,7 +22,8 @@ router.get("/package/:id", yTPackageDetails);
 router.delete("/package/:id", deleteYTPackage);
 
 // Add class
-router.post("/", addNewAppointmentTimes);
-router.get("/", appointmentTimesForInstructor);
+router.post("/", addNewClassTimes);
+router.get("/", classTimesForInstructor);
+router.put("/:id", updateYTClassTimes);
 
 export default router;

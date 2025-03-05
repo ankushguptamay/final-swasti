@@ -13,7 +13,7 @@ const times = joi.object({
     .required(),
 });
 
-const validateAppointmentTimes = (data) => {
+const validateYTClassTimes = (data) => {
   const schema = joi.object().keys({
     modeOfClass: joi
       .string()
@@ -36,4 +36,26 @@ const validateYTPackage = (data) => {
   return schema.validate(data);
 };
 
-export { validateAppointmentTimes, validateYTPackage };
+const validateUpdateYTClassTimes = (data) => {
+  const schema = joi.object().keys({
+    yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
+    description: joi.string().optional(),
+    packageId: joi.string().required(),
+    className: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
+const validateApprovalClassTimes = (data) => {
+  const schema = joi.object().keys({
+    approvalByAdmin: joi.string().valid("accepted", "rejected").required(),
+  });
+  return schema.validate(data);
+};
+
+export {
+  validateYTClassTimes,
+  validateYTPackage,
+  validateUpdateYTClassTimes,
+  validateApprovalClassTimes,
+};

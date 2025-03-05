@@ -27,7 +27,14 @@ const schema = new Schema(
     timeDurationInMin: { type: Number, required: true },
     description: { type: String },
     // Approval
-    isApprovedByAdmin: { type: Boolean, default: false },
+    approvalByAdmin: {
+      type: String,
+      enum: {
+        values: ["pending", "accepted", "rejected"],
+        message: "{VALUE} is not supported",
+      },
+      default: "pending",
+    },
     anyApprovalRequest: { type: Boolean, default: true },
     // Associations
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],

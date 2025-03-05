@@ -1,24 +1,13 @@
+import { getOldValues } from "../../../../Helper/formatChange.js";
 import {
   failureResponse,
   successResponse,
 } from "../../../../MiddleWare/responseMiddleware.js";
 import { validateYTPackage } from "../../../../MiddleWare/Validation/slots.js";
-import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorModel.js";
+import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
 import { YogaTutorPackage } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorPackageModel.js";
 import { YogaTutorPackageHistory } from "../../../../Model/User/Services/YogaTutorClass/yTPackageHistoryModel.js";
 
-// Helper
-function getOldValues(obj1, obj2) {
-  const oldValues = {};
-
-  Object.keys(obj2).forEach((field) => {
-    if (obj1[field] !== obj2[field]) {
-      oldValues[field] = obj1[field]; // Store only the old value
-    }
-  });
-
-  return oldValues;
-}
 // Main Controller
 const addYTPackage = async (req, res) => {
   try {

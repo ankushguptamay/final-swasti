@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { User } from "../Model/User/Profile/userModel.js";
+
 const connectDB = (uri) => {
   mongoose
     .connect(uri, { dbName: process.env.DB_NAME })
