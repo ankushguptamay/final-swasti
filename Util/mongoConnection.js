@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
+import { User } from "../Model/User/Profile/userModel.js";
 const connectDB = (uri) => {
   mongoose
     .connect(uri, { dbName: process.env.DB_NAME })
@@ -20,8 +21,8 @@ const connectDB = (uri) => {
 // async function updateExistingUsers() {
 //   try {
 //     const result = await User.updateMany(
-//       { isAadharVerified: { $exists: false } },
-//       { $set: { isAadharVerified: false } }
+//       { _id: { $exists: true } },
+//       { $set: { userTimeZone: "Asia/Kolkata" } }
 //     );
 //     console.log(`${result.modifiedCount} documents updated.`);
 //   } catch (error) {

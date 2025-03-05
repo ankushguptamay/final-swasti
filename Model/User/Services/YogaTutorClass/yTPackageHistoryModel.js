@@ -16,5 +16,9 @@ const schema = new Schema(
   { timestamps: true }
 );
 
+schema.pre("find", function () {
+  this.where({ isDelete: false });
+});
+
 export const YogaTutorPackageHistory =
   models.YogaTutorPackageHistory || model("YogaTutorPackageHistory", schema);

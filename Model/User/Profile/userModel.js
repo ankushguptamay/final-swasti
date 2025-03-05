@@ -47,6 +47,7 @@ const schema = new Schema(
       dateOfBirth: { type: String },
       address: { type: String },
     },
+    userTimeZone: { type: String, default: "Asia/Kolkata" },
     // Children Table
     bankDetail: [{ type: Types.ObjectId, ref: "BankDetail" }],
     education: [{ type: Types.ObjectId, ref: "Education" }],

@@ -19,7 +19,7 @@ const verifyUserJWT = async (req, res, next) => {
 
     const user = await User.findOne(
       { _id: decode._id },
-      "_id name email mobileNumber role isProfileVisible profilePic refreshToken"
+      "_id name email mobileNumber role isProfileVisible profilePic refreshToken userTimeZone"
     );
     if (!user || !user._doc.refreshToken) {
       return failureResponse(res, 401, "Unauthorized!", null);
