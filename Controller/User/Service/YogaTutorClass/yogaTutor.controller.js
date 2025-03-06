@@ -67,6 +67,7 @@ const addNewClassTimes = async (req, res) => {
       // Find all ongoing times
       const existingOnGoingTimes = await YogaTutorClass.find({
         instructor: req.user._id,
+        isDelete: false,
         $or: [
           { unPublishDate: { $exists: false } },
           { unPublishDate: { $gte: new Date(times[i].publishedDate) } },
@@ -242,6 +243,10 @@ const updateYTClassTimes = async (req, res) => {
         ...forHistory,
         approvalByAdmin,
         yogaTutorClass: _id,
+      });
+    } else if (classes._doc.approvalByAdmin === "rejected") {
+      await classes.updateOne({
+        $set: { ...req.body, approvalByAdmin: "pending" },
       });
     } else {
       await classes.updateOne({ $set: { ...req.body } });

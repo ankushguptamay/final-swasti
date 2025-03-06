@@ -236,7 +236,6 @@ const loginByMobile = async (req, res) => {
       otp: otp,
       receiverId: isUser._id,
     });
-    console.log(otp);
     // Send final success response
     return successResponse(
       res,
