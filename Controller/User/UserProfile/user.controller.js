@@ -707,7 +707,10 @@ const verifyAadharOTP = async (req, res) => {
         { $set: { isAadharVerified: true, aadharDetails: data, gender } }
       );
       // Final response
-      return successResponse(res, 200, "Aadhar verified successfully", data);
+      return successResponse(res, 200, "Aadhar verified successfully", {
+        ...data,
+        aadharNumber: aadhar.data.data.aadhaar_number,
+      });
     } else {
       // Final response
       return failureResponse(res, 400, "Not verified", null);
