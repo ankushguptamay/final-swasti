@@ -678,21 +678,24 @@ const verifyAadharOTP = async (req, res) => {
       refid,
     };
     const aadhar = await axios.post(url, JSON.stringify(data), { headers });
-    const address = Object.entries(aadhar.data.data.address)
-      .reverse()
-      .filter(([key, value]) => value) // Keep only entries with non-empty values
-      .map(([key, value]) => value)
-      .join(", ");
     let gender = undefined;
     if (aadhar.data.status) {
+      const address = Object.entries(aadhar.data.data.address)
+        .reverse()
+        .filter(([key, value]) => value) // Keep only entries with non-empty values
+        .map(([key, value]) => value)
+        .join(", ");
       gender =
         aadhar.data.data.gender.toLowerCase() === "m"
           ? "male"
           : aadhar.data.data.gender.toLowerCase() === "f"
           ? "female"
           : "other";
+      const aadharDetails = await User.findById(req.user._id).select(
+        "aadharDetails"
+      );
       const data = {
-        aadharNumber: aadhar.data.data.aadhaar_number,
+        aadharNumber: aadharDetails._doc.aadharDetails.aadharNumber,
         name: aadhar.data.data.full_name,
         gender,
         dateOfBirth: aadhar.data.data.dob,
