@@ -38,7 +38,7 @@ app.use("/api/user", learner);
 app.use("/api/admin", admin);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Welcome to Swasti!");
 });
 
 const PORT = process.env.PORT || 5000;
