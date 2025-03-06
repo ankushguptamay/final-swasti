@@ -683,18 +683,25 @@ const verifyAadharOTP = async (req, res) => {
       .filter(([key, value]) => value) // Keep only entries with non-empty values
       .map(([key, value]) => value)
       .join(", ");
+    let gender = undefined;
     if (aadhar.data.status) {
+      gender =
+        aadhar.data.data.gender.toLowerCase() === "m"
+          ? "male"
+          : aadhar.data.data.gender.toLowerCase() === "f"
+          ? "female"
+          : "other";
       const data = {
         aadharNumber: aadhar.data.data.aadhaar_number,
-        full_name: aadhar.data.data.full_name,
-        gender: aadhar.data.data.gender,
-        dob: aadhar.data.data.dob,
+        name: aadhar.data.data.full_name,
+        gender,
+        dateOfBirth: aadhar.data.data.dob,
         address,
       };
       // Store in database
       await User.updateOne(
         { _id: req.user._id },
-        { $set: { isAadharVerified: true, aadharDetails: data } }
+        { $set: { isAadharVerified: true, aadharDetails: data, gender } }
       );
       // Final response
       return successResponse(res, 200, "Aadhar verified successfully", data);
