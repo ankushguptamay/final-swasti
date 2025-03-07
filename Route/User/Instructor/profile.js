@@ -11,6 +11,7 @@ import {
   isProfileVisible,
   getMyChakra,
   chakraDetails,
+  myWallet,
 } from "../../../Controller/User/UserProfile/user.controller.js";
 import {
   getReviews,
@@ -43,5 +44,8 @@ router.get("/review/:id", getReviewDetails);
 router.post("/reaction/:id", giveUnGiveReactionOnReview);
 router.post("/reply", replyOnMyReviews);
 router.delete("/reply", deleteMyReply);
+
+// Wallet/Transcation
+router.get("/wallet", myWallet);
 
 export default router;

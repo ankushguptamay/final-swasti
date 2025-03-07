@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { User } from "../Model/User/Profile/userModel.js";
+import { Wallet } from "../Model/User/Profile/walletModel.js";
 
 const connectDB = (uri) => {
   mongoose
@@ -19,18 +20,24 @@ const connectDB = (uri) => {
 // await mongoose.connection.db.dropDatabase();
 // console.log("Database dropped");
 
-// async function updateExistingUsers() {
-//   try {
-//     const result = await User.updateMany(
-//       { _id: { $exists: true } },
-//       { $set: { userTimeZone: "Asia/Kolkata" } }
-//     );
-//     console.log(`${result.modifiedCount} documents updated.`);
-//   } catch (error) {
-//     console.error("Error updating documents:", error);
-//   }
-// }
+async function createWallet() {
+  try {
+    const result = await User.find();
+    let num = 0;
+    for (let i = 0; i < result.length; i++) {
+      await Wallet.findOneAndUpdate(
+        { userId: result[i]._id },
+        { updatedAt: new Date() },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      num = i;
+    }
+    console.log(`${num} done.`);
+  } catch (error) {
+    console.error("Error updating documents:", error);
+  }
+}
 
-// updateExistingUsers();
+createWallet();
 
 export { connectDB };

@@ -98,13 +98,13 @@ const addNewClassTimes = async (req, res) => {
         overlappingTimes.push(newTime);
       }
     }
-    let message = "All time slot created with zero overlapping.";
+    let message = "All time slots have been created without overlaps.";
     if (overlappingTimes.length >= 1) {
       message = `${
         times.length - overlappingTimes.length
-      } time slot created and ${
+      } time slots were added, and ${
         overlappingTimes.length
-      } overlapping slots removed.`;
+      } overlapping slots were removed.`;
     }
     // Send final success response
     return successResponse(res, 201, message);

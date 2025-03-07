@@ -14,7 +14,8 @@ const addEducation = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { qualificationName, university_institute, yearOfCompletion } = req.body;
+    const { qualificationName, university_institute, yearOfCompletion } =
+      req.body;
     // Find in RECORDS
     const isPresent = await Education.findOne({
       qualificationName,
@@ -36,7 +37,11 @@ const addEducation = async (req, res) => {
     user.education = [...user.education, education._id];
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Education added successfully!`);
+    return successResponse(
+      res,
+      201,
+      `Education details have been added successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -84,7 +89,8 @@ const updateEducation = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { qualificationName, university_institute, yearOfCompletion } = req.body;
+    const { qualificationName, university_institute, yearOfCompletion } =
+      req.body;
     // Find in RECORDS
     const isPresent = await Education.findOne({
       _id: req.params.id,
@@ -129,7 +135,11 @@ const updateEducation = async (req, res) => {
     user.education = newEducationArray;
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Education updated successfully!`);
+    return successResponse(
+      res,
+      201,
+      `Education details have been updated successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -159,7 +169,11 @@ const deleteEducation = async (req, res) => {
     user.education = education;
     await user.save();
     // Send final success response
-    return successResponse(res, 200, `Education deleted successfully!`);
+    return successResponse(
+      res,
+      200,
+      `Education details have been deleted successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }

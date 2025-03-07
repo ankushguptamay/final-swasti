@@ -38,7 +38,11 @@ const addBankDetails = async (req, res) => {
     user.bankDetail = [...user.bankDetail, details._id];
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Bank details added successfully!`);
+    return successResponse(
+      res,
+      201,
+      `Bank details have been added successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -103,7 +107,11 @@ const deleteBankDetails = async (req, res) => {
     user.bankDetail = bankDetail;
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Bank details deleted successfully!`);
+    return successResponse(
+      res,
+      201,
+      `Bank details have been deleted successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }

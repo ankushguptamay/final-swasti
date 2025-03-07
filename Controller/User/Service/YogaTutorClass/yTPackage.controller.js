@@ -43,7 +43,7 @@ const addYTPackage = async (req, res) => {
       parentPackage: packages._id,
     });
     // Send final success response
-    return successResponse(res, 201, `Package added successfully!`);
+    return successResponse(res, 201, `Package added successfully.`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -130,7 +130,7 @@ const updateYTPackage = async (req, res) => {
       parentPackage: packages._id,
     });
     // Send final success response
-    return successResponse(res, 200, `Package details fetched successfully!`, {
+    return successResponse(res, 201, `Package details updated successfully.`, {
       packages,
     });
   } catch (err) {
@@ -169,7 +169,7 @@ const deleteYTPackage = async (req, res) => {
     packages.deleted_at = new Date();
     await packages.save();
     // Send final success response
-    return successResponse(res, 200, `Package deleted successfully!`);
+    return successResponse(res, 200, `Package deleted successfully.`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }

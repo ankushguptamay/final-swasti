@@ -20,8 +20,7 @@ const schema = new Schema(
       required: true,
     },
     startDate: { type: Date }, // In individual classType start date and end date learner will decide, and in group start date will be decided by instructor. And also in group class type when if package is perDay then only start time is required
-    endDate: { type: Date },
-    time: { type: String }, // 24 hours formate
+    endDate: { type: Date }, // Full date time
     timeDurationInMin: { type: Number, required: true },
     yogaFor: [], // Child, Adults, Male, Female
     bookedSeat: { type: Number, default: 0 },

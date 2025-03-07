@@ -61,7 +61,7 @@ const addCerificate = async (req, res) => {
     user.certificate = [...user.certificate, certificate._id];
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Certificate added successfully!`);
+    return successResponse(res, 201, `Certificate added successfully.`);
   } catch (err) {
     deleteSingleFile(req.file.path);
     failureResponse(res, 500, err.message, null);
@@ -135,7 +135,7 @@ const deleteCertificate = async (req, res) => {
     user.certificate = certificate;
     await user.save();
     // Send final success response
-    return successResponse(res, 201, `Certificate deleted successfully!`);
+    return successResponse(res, 201, `Certificate deleted successfully.`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }

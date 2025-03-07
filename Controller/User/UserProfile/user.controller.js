@@ -46,6 +46,7 @@ const {
 } = process.env;
 import fs from "fs";
 import jwt from "jsonwebtoken";
+import { Wallet } from "../../../Model/User/Profile/walletModel.js";
 const bunnyFolderName = "inst-doc";
 
 // Helper
@@ -178,6 +179,8 @@ const register = async (req, res) => {
       otp: otp,
       receiverId: user._id,
     });
+    // Create Wallet
+    await Wallet.create({ userId: user._id });
     // Send final success response
     return successResponse(
       res,
@@ -384,7 +387,7 @@ const rolePage = async (req, res) => {
     return successResponse(
       res,
       201,
-      `You are successfully register as ${message}!`,
+      `You have been successfully registered as ${message}.`,
       { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
@@ -469,7 +472,11 @@ const updateInstructor = async (req, res) => {
     // Update
     await instructor.updateOne(changedData);
     // Send final success response
-    return successResponse(res, 201, `Profile updated successfully!`);
+    return successResponse(
+      res,
+      201,
+      `Your profile has been updated successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -909,6 +916,20 @@ const searchInstructor = async (req, res) => {
   }
 };
 
+const myWallet = async (req, res) => {
+  try {
+    const wallet = await Wallet.findOne({
+      userId: req.user._id,
+    }).select("-createdAt -updatedAt");
+    // Final Response
+    return successResponse(res, 200, "Fetched successfully!", {
+      wallet,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -927,4 +948,5 @@ export {
   chakraDetails,
   updateLearner,
   searchInstructor,
+  myWallet,
 };
