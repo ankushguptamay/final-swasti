@@ -367,15 +367,12 @@ const rolePage = async (req, res) => {
       return failureResponse(res, 400, error.details[0].message, null);
     }
     let { role } = req.body;
-    let message;
     if (!req.user.role) {
-      // Define code prefix and message
+      // Define code prefix
       let codePreFix;
       if (role.toLowerCase() === "instructor") {
-        message = "instructor";
         codePreFix = "SWI";
       } else if (role.toLowerCase() === "learner") {
-        message = "user";
         codePreFix = "SWL";
       } else {
         return failureResponse(res, 403, "This role is not supported!");
@@ -386,14 +383,13 @@ const rolePage = async (req, res) => {
       await User.findOneAndUpdate({ _id: req.user._id }, { role, userCode });
     } else {
       role = req.user.role;
-      message = req.user.role;
     }
     const accessToken = createUserAccessToken({ _id: req.user._id, role });
     // Final response
     return successResponse(
       res,
       201,
-      `You have been successfully registered as ${message}.`,
+      `You have been successfully registered as ${role}.`,
       { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
