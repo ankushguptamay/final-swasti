@@ -366,22 +366,28 @@ const rolePage = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { role } = req.body;
-    // Define code prefix and message
-    let codePreFix, message;
-    if (role.toLowerCase() === "instructor") {
-      message = "instructor";
-      codePreFix = "SWI";
-    } else if (role.toLowerCase() === "learner") {
-      message = "user";
-      codePreFix = "SWL";
+    let { role } = req.body;
+    let message;
+    if (!req.user.role) {
+      // Define code prefix and message
+      let codePreFix;
+      if (role.toLowerCase() === "instructor") {
+        message = "instructor";
+        codePreFix = "SWI";
+      } else if (role.toLowerCase() === "learner") {
+        message = "user";
+        codePreFix = "SWL";
+      } else {
+        return failureResponse(res, 403, "This role is not supported!");
+      }
+      // generate User code
+      const userCode = await generateUserCode(codePreFix);
+      // Update user
+      await User.findOneAndUpdate({ _id: req.user._id }, { role, userCode });
     } else {
-      return failureResponse(res, 403, "This role is not supported!");
+      role = req.user.role;
+      message = req.user.role;
     }
-    // generate User code
-    const userCode = await generateUserCode(codePreFix);
-    // Update user
-    await User.findOneAndUpdate({ _id: req.user._id }, { role, userCode });
     const accessToken = createUserAccessToken({ _id: req.user._id, role });
     // Final response
     return successResponse(
