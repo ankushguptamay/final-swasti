@@ -18,6 +18,7 @@ const schema = new Schema(
     isProfileVisible: { type: Boolean },
     isEmailVerified: { type: Boolean },
     isMobileNumberVerified: { type: Boolean },
+    specialization: [{ type: Types.ObjectId, ref: "Specialization" }],
     instructor: { type: Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }

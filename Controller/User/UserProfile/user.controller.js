@@ -91,6 +91,9 @@ function transformUserDetails(user) {
   };
   if (user.role.toLowerCase() === "instructor") {
     data.language = user.language || [];
+    data.specialization = user.specialization
+      ? user.specialization.map(({ specialization }) => specialization)
+      : [];
     data.dateOfBirth = user.dateOfBirth || null;
     data.experience_year = user.experience_year || null;
     data.bio = user.bio || null;
@@ -344,9 +347,11 @@ const verifyMobileOTP = async (req, res) => {
 
 const myDetails = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select(
-      "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
-    );
+    const user = await User.findById(req.user._id)
+      .select(
+        "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
+      )
+      .populate("specialization", "specialization");
     if (!user) {
       return failureResponse(res, 401, "User is not present!");
     }
@@ -413,10 +418,11 @@ const updateInstructor = async (req, res) => {
     }
     const {
       bio,
-      language,
+      language = [],
       experience_year = 0,
       dateOfBirth,
       gender,
+      specialization = [],
     } = req.body;
     const name = capitalizeFirstLetter(req.body.name);
     // Check Which data changed
@@ -456,7 +462,7 @@ const updateInstructor = async (req, res) => {
       }
     }
     // Language
-    if (language && language.length > 0) {
+    if (language.length > 0) {
       const isLanguageChanged = await compareArrays(
         language,
         instructor.language
@@ -466,6 +472,18 @@ const updateInstructor = async (req, res) => {
         dataHistory.language = instructor.language;
       }
     }
+    // Specialization
+    if (specialization.length > 0) {
+      const isSpecializationChanged = await compareArrays(
+        specialization.map((spe) => spe.toString()),
+        instructor.specialization.map((spe) => spe.toString())
+      );
+      if (!isSpecializationChanged) {
+        changedData.specialization = specialization;
+        dataHistory.specialization = instructor.specialization;
+      }
+    }
+
     // store current data in history
     await InstructorUpdateHistory.create({
       ...dataHistory,
@@ -887,6 +905,7 @@ const searchInstructor = async (req, res) => {
         .sort({ averageRating: -1 })
         .skip(skip)
         .limit(resultPerPage)
+        .populate("specialization", "specialization")
         .lean(),
       User.countDocuments(query),
     ]);
@@ -902,6 +921,10 @@ const searchInstructor = async (req, res) => {
         bio: user.bio,
         isProfileVisible: user.isProfileVisible,
         language: user.language,
+        specialization:
+          user.specialization.length > 0
+            ? user.specialization.map(({ specialization }) => specialization)
+            : [],
         experience_year: user.experience_year,
         averageRating: user.averageRating,
       };

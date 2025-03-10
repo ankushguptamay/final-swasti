@@ -56,6 +56,7 @@ const validateUpdateInstructor = (data) => {
     name: joi.string().min(3).max(30).required(),
     bio: joi.string().min(20).max(1000).optional(),
     experience_year: joi.number().optional(),
+    specialization: joi.array().min(1).optional(),
     language: joi.array().min(1).optional(),
     dateOfBirth: joi.string().optional(),
     gender: joi.string().valid("male", "female", "other").optional(),
