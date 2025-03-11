@@ -38,6 +38,8 @@ const schema = new Schema(
     anyApprovalRequest: { type: Boolean, default: true },
     // Associations
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
+    yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
+    yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
     userTimeZone: { type: String }, // Note 1.
     yogaTutorPackage: {
       type: Types.ObjectId,

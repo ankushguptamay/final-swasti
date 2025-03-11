@@ -19,15 +19,21 @@ const schema = new Schema(
       },
       required: true,
     },
-    startDate: { type: Date }, // In individual classType start date and end date learner will decide, and in group start date will be decided by instructor. And also in group class type when if package is perDay then only start time is required
+    startDate: { type: Date },
     endDate: { type: Date }, // Full date time
     timeDurationInMin: { type: Number, required: true },
-    yogaFor: [], // Child, Adults, Male, Female
+    yogaCategory: [], // Child, Adults, Male, Female
     bookedSeat: { type: Number, default: 0 },
+    learnerMessage: { type: String, required: true },
+    // For Booking Purpose
     password: { type: Number, required: true },
     isBooked: { type: Boolean, default: false },
+    // Time Zone
+    learnerTimeZone: { type: String },
+    instructorTimeZone: { type: String },
     // Associations
-    specialization: [{ type: Types.ObjectId, ref: "Specialization" }],
+    yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
+    yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
     transaction: [
       {
         type: Types.ObjectId,
@@ -45,7 +51,7 @@ const schema = new Schema(
       ref: "YogaTutorClass",
       required: true,
     },
-    learner: [{ type: Types.ObjectId, ref: "User" }],
+    learner: [{ type: Types.ObjectId, ref: "User" }], // Note.1.
     instructor: { type: Types.ObjectId, ref: "User", required: true },
     // Soft delete
     isDelete: { type: Boolean, default: false },
@@ -54,5 +60,8 @@ const schema = new Schema(
   { timestamps: true }
 );
 
-export const YogaTutorSlot =
-  models.YogaTutorSlot || model("YogaTutorSlot", schema);
+export const YTClassSlot =
+  models.YTClassSlot || model("YTClassSlot", schema);
+
+// Note.1.
+// If class is for individual and only one learner, And If group more then one can be possible

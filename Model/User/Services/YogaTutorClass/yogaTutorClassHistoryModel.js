@@ -4,7 +4,7 @@ const { Schema, model, models, Types } = mongoose;
 // In this when user is tring to change className or description then it will go through admin approval
 const schema = new Schema(
   {
-    className: { type: String, required: true },
+    className: { type: String },
     description: { type: String },
     // Approval
     approvalByAdmin: {  type: String,

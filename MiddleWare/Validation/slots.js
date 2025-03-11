@@ -2,6 +2,8 @@ import joi from "joi";
 
 const times = joi.object({
   yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
+  yTRule: joi.array().min(1).items(joi.string().required()).optional(),
+  yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
   description: joi.string().optional(),
   time: joi.string().length(5).required(),
   timeDurationInMin: joi.number().required(),
@@ -37,12 +39,24 @@ const validateYTPackage = (data) => {
 };
 
 const validateUpdateYTClassTimes = (data) => {
-  const schema = joi.object().keys({
-    yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
-    description: joi.string().optional(),
-    packageId: joi.string().required(),
-    className: joi.string().required(),
-  });
+  const schema = joi
+    .object()
+    .keys({
+      yTRule: joi.array().min(1).items(joi.string().required()).optional(),
+      yTRequirement: joi
+        .array()
+        .min(1)
+        .items(joi.string().required())
+        .optional(),
+      yogaCategory: joi
+        .array()
+        .min(1)
+        .items(joi.string().required())
+        .required(),
+      description: joi.string().optional(),
+      packageId: joi.string().required(),
+      className: joi.string().required(),
+    });
   return schema.validate(data);
 };
 

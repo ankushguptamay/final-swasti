@@ -2,7 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
-import { capitalizeFirstLetter } from "../../../Helper/formatChange.js";
+import {
+  capitalizeFirstLetter,
+  compareArrays,
+} from "../../../Helper/formatChange.js";
 import {
   compressImageFile,
   deleteSingleFile,
@@ -59,12 +62,6 @@ const chakraName = [
   "Third Eye",
   "Crown",
 ];
-
-async function compareArrays(a, b) {
-  return (
-    a.length === b.length && a.every((element, index) => element === b[index])
-  );
-}
 
 function getRandomIntInclusive(max, exclude) {
   let num = getRandomInt(max);
@@ -474,9 +471,11 @@ const updateInstructor = async (req, res) => {
     }
     // Specialization
     if (specialization.length > 0) {
+      const existing = instructor.specialization.map((spe) => spe.toString());
+      const specialization = specialization.map((spe) => spe.toString());
       const isSpecializationChanged = await compareArrays(
-        specialization.map((spe) => spe.toString()),
-        instructor.specialization.map((spe) => spe.toString())
+        specialization.sort(),
+        existing.sort()
       );
       if (!isSpecializationChanged) {
         changedData.specialization = specialization;

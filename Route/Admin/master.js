@@ -15,6 +15,12 @@ import {
   updateYogaCategory,
   deleteYogaCategory,
 } from "../../Controller/Master/yogaCategory.controller.js";
+import {
+  addYTRequirement,deleteYTRequirement,updateYTRequirement,getYTRequirement
+} from "../../Controller/Master/yTRequirement.controller.js";
+import {
+  addYTRule,getYTRule,updateYTRule,deleteYTRule
+} from "../../Controller/Master/yTRules.controller.js";
 
 // specialization
 router.post("/specialization", addSpecialization);
@@ -29,5 +35,17 @@ router.get("/y-c", getYogaCategory);
 router.get("/y-c/:id", yogaCategoryDetails);
 router.put("/y-c/:id", updateYogaCategory);
 router.delete("/y-c/:id", deleteYogaCategory);
+
+// YTRules
+router.post("/yTRule", addYTRule);
+router.get("/yTRule", getYTRule);
+router.put("/yTRule/:id", updateYTRule);
+router.delete("/yTRule/:id", deleteYTRule);
+
+// YTRequirement
+router.post("/yTRequirement", addYTRequirement);
+router.get("/yTRequirement", getYTRequirement);
+router.put("/yTRequirement/:id", updateYTRequirement);
+router.delete("/yTRequirement/:id", deleteYTRequirement);
 
 export default router;

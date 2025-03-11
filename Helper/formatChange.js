@@ -19,4 +19,10 @@ function getOldValues(existing, newValue) {
   return oldValues;
 }
 
-export { capitalizeFirstLetter, getOldValues };
+async function compareArrays(a, b) {
+  return (
+    a.length === b.length && a.every((element, index) => element === b[index])
+  );
+}
+
+export { capitalizeFirstLetter, getOldValues, compareArrays };

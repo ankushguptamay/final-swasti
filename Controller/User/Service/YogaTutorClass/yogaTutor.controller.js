@@ -1,4 +1,7 @@
-import { getOldValues } from "../../../../Helper/formatChange.js";
+import {
+  compareArrays,
+  getOldValues,
+} from "../../../../Helper/formatChange.js";
 import {
   failureResponse,
   successResponse,
@@ -87,6 +90,8 @@ const addNewClassTimes = async (req, res) => {
           classType,
           time: times[i].time,
           yogaCategory: times[i].yogaCategory,
+          yTRequirement: times[i].yTRequirement,
+          yTRule: times[i].yTRule,
           className: times[i].className,
           description: times[i].description,
           timeDurationInMin: times[i].timeDurationInMin,
@@ -186,7 +191,14 @@ const updateYTClassTimes = async (req, res) => {
       return failureResponse(res, 400, error.details[0].message, null);
     }
     // Body
-    const { className, packageId, yogaCategory, description } = req.body;
+    const {
+      className,
+      packageId,
+      yogaCategory,
+      description,
+      yTRequirement,
+      yTRule,
+    } = req.body;
     const _id = req.params.id;
     // Find record
     const classes = await YogaTutorClass.findOne({
@@ -194,7 +206,7 @@ const updateYTClassTimes = async (req, res) => {
       instructor: req.user._id,
       isDelete: false,
     }).select(
-      "approvalByAdmin anyApprovalRequest className yogaCategory description yogaTutorPackage"
+      "approvalByAdmin anyApprovalRequest className yogaCategory description yogaTutorPackage yTRequirement yTRule"
     );
     if (!classes)
       return failureResponse(res, 400, "This class is not present!", null);
@@ -204,32 +216,55 @@ const updateYTClassTimes = async (req, res) => {
       const forDirectUpdate = {};
       let anyApprovalRequest = false,
         approvalByAdmin = "accepted";
+      // Class Name
       if (className !== classes._doc.className) {
         anyApprovalRequest = true;
         approvalByAdmin = "pending";
         forHistory.className = className;
       }
+      // Description
       if (description !== classes._doc.description) {
         anyApprovalRequest = true;
         approvalByAdmin = "pending";
         forHistory.description = description;
       }
+      // Yoga Tutor Package
       if (packageId.toString() != classes._doc.yogaTutorPackage.toString()) {
         forHistory.yogaTutorPackage = yogaTutorPackage;
         forDirectUpdate.yogaTutorPackage = yogaTutorPackage;
       }
+      //  Yoga Tutor
       if (yogaCategory && yogaCategory.length >= 1) {
         const existing = classes._doc.yogaCategory.map((eve) => eve.toString());
-        const isEqual =
-          yogaCategory.length === existing &&
-          yogaCategory
-            .sort()
-            .every((val, index) => val === existing.sort()[index]);
+        const isEqual = await compareArrays(
+          yogaCategory.sort(),
+          existing.sort()
+        );
         if (!isEqual) {
           forHistory.yogaCategory = yogaCategory;
           forDirectUpdate.yogaCategory = yogaCategory;
         }
       }
+      // Requirement
+      if (yTRequirement && yTRequirement.length >= 1) {
+        const existing = classes._doc.yTRequirement
+          ? classes._doc.yTRequirement.map((eve) => eve.toString())
+          : [];
+        const isEqual = await compareArrays(
+          yTRequirement.sort(),
+          existing.sort()
+        );
+        if (!isEqual) forDirectUpdate.yTRequirement = yTRequirement;
+      }
+      // Rule
+      if (yTRule && yTRule.length >= 1) {
+        const existing = classes._doc.yTRule
+          ? classes._doc.yTRule.map((eve) => eve.toString())
+          : [];
+        const isEqual = await compareArrays(yTRule.sort(), existing.sort());
+        if (!isEqual) forDirectUpdate.yTRule = yTRule;
+      }
+      // Update
       await classes.updateOne({
         $set: { ...forDirectUpdate, anyApprovalRequest },
       });
@@ -239,11 +274,13 @@ const updateYTClassTimes = async (req, res) => {
         { $set: { approvalByAdmin: "rejected" } }
       );
       // Create new history
-      await YTClassUpdateHistory.create({
-        ...forHistory,
-        approvalByAdmin,
-        yogaTutorClass: _id,
-      });
+      if (Object.entries(forHistory).length !== 0) {
+        await YTClassUpdateHistory.create({
+          ...forHistory,
+          approvalByAdmin,
+          yogaTutorClass: _id,
+        });
+      }
     } else if (classes._doc.approvalByAdmin === "rejected") {
       await classes.updateOne({
         $set: { ...req.body, approvalByAdmin: "pending" },
@@ -303,7 +340,7 @@ const classTimesForAdmin = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin userTimeZone createdAt anyApprovalRequest"
+          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin userTimeZone yTRequirement yTRule createdAt anyApprovalRequest"
         )
         .sort({ createdAt: 1 })
         .skip(skip)
@@ -447,6 +484,38 @@ const approvalClassTimesUpdate = async (req, res) => {
   }
 };
 
+const classTimesDetailsForInstructor = async (req, res) => {
+  try {
+    const query = {
+      _id: req.params.id,
+      instructor: req.user._id,
+      isDelete: false,
+    };
+    // Get required data
+    const classes = await YogaTutorClass.findOne(query)
+      .select(
+        "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin createdAt"
+      )
+      .populate(
+        "yogaTutorPackage",
+        "packageType packageName group_price individual_price numberOfDays"
+      )
+      .populate("yogaCategory", "yogaCategory description")
+      .populate("yTRule", "rule")
+      .populate("yTRequirement", "requirement");
+
+    if (!classes)
+      return failureResponse(res, 400, "This class is not present!", null);
+    // Send final success response
+    return successResponse(res, 200, "Successfully", {
+      ...classes._doc,
+      unPublishDate: classes._doc.unPublishDate || null,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   addNewClassTimes,
   classTimesForInstructor,
@@ -455,4 +524,5 @@ export {
   approvalClassTimes,
   approvalClassTimesUpdate,
   classTimesUpdationRequest,
+  classTimesDetailsForInstructor,
 };
