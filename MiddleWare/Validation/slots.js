@@ -9,6 +9,7 @@ const times = joi.object({
   timeDurationInMin: joi.number().required(),
   className: joi.string().required(),
   packageId: joi.string().required(),
+  classType: joi.string().valid("individual", "group").required(),
   publishedDate: joi
     .string()
     .pattern(/^\d{4}-\d{2}-\d{2}$/)
@@ -19,9 +20,8 @@ const validateYTClassTimes = (data) => {
   const schema = joi.object().keys({
     modeOfClass: joi
       .string()
-      .valid("online", "offline-learners-place", "offline-tutors-place")
+      .valid("online")
       .required(),
-    classType: joi.string().valid("individual", "group").required(),
     times: joi.array().items(times).min(1).required(),
   });
   return schema.validate(data);
@@ -39,24 +39,14 @@ const validateYTPackage = (data) => {
 };
 
 const validateUpdateYTClassTimes = (data) => {
-  const schema = joi
-    .object()
-    .keys({
-      yTRule: joi.array().min(1).items(joi.string().required()).optional(),
-      yTRequirement: joi
-        .array()
-        .min(1)
-        .items(joi.string().required())
-        .optional(),
-      yogaCategory: joi
-        .array()
-        .min(1)
-        .items(joi.string().required())
-        .required(),
-      description: joi.string().optional(),
-      packageId: joi.string().required(),
-      className: joi.string().required(),
-    });
+  const schema = joi.object().keys({
+    yTRule: joi.array().min(1).items(joi.string().required()).optional(),
+    yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
+    yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
+    description: joi.string().optional(),
+    packageId: joi.string().required(),
+    className: joi.string().required(),
+  });
   return schema.validate(data);
 };
 

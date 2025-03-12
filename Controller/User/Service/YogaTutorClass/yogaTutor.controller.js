@@ -63,7 +63,7 @@ const addNewClassTimes = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { modeOfClass, classType, times } = req.body;
+    const { modeOfClass, times } = req.body;
     // Over lap times array
     const overlappingTimes = [];
     for (let i = 0; i < times.length; i++) {
@@ -87,7 +87,7 @@ const addNewClassTimes = async (req, res) => {
         await YogaTutorClass.create({
           userTimeZone: req.user.userTimeZone,
           modeOfClass,
-          classType,
+          classType: times[i].classType,
           time: times[i].time,
           yogaCategory: times[i].yogaCategory,
           yTRequirement: times[i].yTRequirement,
@@ -103,7 +103,7 @@ const addNewClassTimes = async (req, res) => {
         overlappingTimes.push(newTime);
       }
     }
-    let message = "All time slots have been created without overlaps.";
+    let message = "Time slot has been created without overlaps.";
     if (overlappingTimes.length >= 1) {
       message = `${
         times.length - overlappingTimes.length
