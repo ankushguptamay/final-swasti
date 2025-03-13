@@ -10,7 +10,7 @@ const validateYTClassTimes = (data) => {
     time: joi.string().length(5).required(),
     timeDurationInMin: joi.number().required(),
     className: joi.string().required(),
-    packageId: joi.string().required(),
+    yogaTutorPackage: joi.string().required(),
     classType: joi.string().valid("individual", "group").required(),
     publishedDate: joi
       .string()
@@ -37,7 +37,7 @@ const validateUpdateYTClassTimes = (data) => {
     yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
     yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
     description: joi.string().optional(),
-    packageId: joi.string().required(),
+    yogaTutorPackage: joi.string().required(),
     className: joi.string().required(),
   });
   return schema.validate(data);

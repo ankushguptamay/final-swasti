@@ -199,7 +199,7 @@ const updateYTClassTimes = async (req, res) => {
     // Body
     const {
       className,
-      packageId,
+      yogaTutorPackage,
       yogaCategory,
       description,
       yTRequirement,
@@ -235,7 +235,9 @@ const updateYTClassTimes = async (req, res) => {
         forHistory.description = description;
       }
       // Yoga Tutor Package
-      if (packageId.toString() != classes._doc.yogaTutorPackage.toString()) {
+      if (
+        yogaTutorPackage.toString() != classes._doc.yogaTutorPackage.toString()
+      ) {
         forHistory.yogaTutorPackage = yogaTutorPackage;
         forDirectUpdate.yogaTutorPackage = yogaTutorPackage;
       }
@@ -422,7 +424,7 @@ const classTimesUpdationRequest = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YTClassUpdateHistory.find(query)
         .select(
-          "_id className description packageId yogaCategory approvalByAdmin createdAt"
+          "_id className description yogaTutorPackage yogaCategory approvalByAdmin createdAt"
         )
         .sort({ createdAt: 1 })
         .skip(skip)
