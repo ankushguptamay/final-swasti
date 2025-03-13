@@ -63,54 +63,60 @@ const addNewClassTimes = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { modeOfClass, times } = req.body;
-    // Over lap times array
-    const overlappingTimes = [];
-    for (let i = 0; i < times.length; i++) {
-      // Find all ongoing times
-      const existingOnGoingTimes = await YogaTutorClass.find({
-        instructor: req.user._id,
-        isDelete: false,
-        $or: [
-          { unPublishDate: { $exists: false } },
-          { unPublishDate: { $gte: new Date(times[i].publishedDate) } },
-        ],
-      }).select("time publishedDate unPublishDate timeDurationInMin");
-      const newTime = {
-        time: times[i].time,
-        timeDurationInMin: times[i].timeDurationInMin,
-        publishedDate: times[i].publishedDate,
-      };
-      // Is over lapping present
-      const checkOverLap = isTimeSlotOverlapping(existingOnGoingTimes, newTime);
-      if (!checkOverLap) {
-        await YogaTutorClass.create({
-          userTimeZone: req.user.userTimeZone,
-          modeOfClass,
-          classType: times[i].classType,
-          time: times[i].time,
-          yogaCategory: times[i].yogaCategory,
-          yTRequirement: times[i].yTRequirement,
-          yTRule: times[i].yTRule,
-          className: times[i].className,
-          description: times[i].description,
-          timeDurationInMin: times[i].timeDurationInMin,
-          publishedDate: times[i].publishedDate,
-          yogaTutorPackage: times[i].packageId,
-          instructor: req.user._id,
-        });
-      } else {
-        overlappingTimes.push(newTime);
-      }
-    }
-    let message = "Time slot has been created without overlaps.";
-    if (overlappingTimes.length >= 1) {
-      message = `${
-        times.length - overlappingTimes.length
-      } time slots were added, and ${
-        overlappingTimes.length
-      } overlapping slots were removed.`;
-    }
+    const {
+      modeOfClass,
+      classType,
+      time,
+      yogaCategory,
+      yTRequirement,
+      yTRule,
+      className,
+      description,
+      timeDurationInMin,
+      publishedDate,
+      yogaTutorPackage,
+    } = req.body;
+    // Is this course name presnet
+    const isClassName = await YogaTutorClass.findOne({
+      className,
+      instructor: req.user._id,
+      isDelete: false,
+    });
+    const classNameMessage = "This time slot class name already presnet!";
+    if (isClassName) return failureResponse(res, 400, classNameMessage);
+    // Find all ongoing times
+    const existingOnGoingTimes = await YogaTutorClass.find({
+      instructor: req.user._id,
+      isDelete: false,
+      $or: [
+        { unPublishDate: { $exists: false } },
+        { unPublishDate: { $gte: new Date(publishedDate) } },
+      ],
+    }).select("time publishedDate unPublishDate timeDurationInMin");
+    const newTime = { time, timeDurationInMin, publishedDate };
+    // Is over lapping present
+    const checkOverLap = isTimeSlotOverlapping(existingOnGoingTimes, newTime);
+    const overLapMessage =
+      "This time slot overlaps with an existing time slot. Please view existing time slots!";
+    if (checkOverLap) return failureResponse(res, 400, overLapMessage);
+    // Create Yoga class
+    await YogaTutorClass.create({
+      userTimeZone: req.user.userTimeZone,
+      modeOfClass,
+      classType,
+      time,
+      yogaCategory,
+      yTRequirement,
+      yTRule,
+      className,
+      description,
+      timeDurationInMin,
+      publishedDate,
+      yogaTutorPackage,
+      instructor: req.user._id,
+    });
+
+    const message = "Time slot has been created successfully.";
     // Send final success response
     return successResponse(res, 201, message);
   } catch (err) {
@@ -478,7 +484,11 @@ const approvalClassTimesUpdate = async (req, res) => {
     // Save
     await classes.updateOne({ $set: { approvalByAdmin } });
     // Send final success response
-    return successResponse(res, 201, `Request ${approvalByAdmin} successfully`);
+    return successResponse(
+      res,
+      201,
+      `Request ${approvalByAdmin} successfully.`
+    );
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }

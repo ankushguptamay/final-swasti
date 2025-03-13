@@ -1,28 +1,21 @@
 import joi from "joi";
 
-const times = joi.object({
-  yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
-  yTRule: joi.array().min(1).items(joi.string().required()).optional(),
-  yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
-  description: joi.string().optional(),
-  time: joi.string().length(5).required(),
-  timeDurationInMin: joi.number().required(),
-  className: joi.string().required(),
-  packageId: joi.string().required(),
-  classType: joi.string().valid("individual", "group").required(),
-  publishedDate: joi
-    .string()
-    .pattern(/^\d{4}-\d{2}-\d{2}$/)
-    .required(),
-});
-
 const validateYTClassTimes = (data) => {
   const schema = joi.object().keys({
-    modeOfClass: joi
+    modeOfClass: joi.string().valid("online").required(),
+    yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
+    yTRule: joi.array().min(1).items(joi.string().required()).optional(),
+    yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
+    description: joi.string().optional(),
+    time: joi.string().length(5).required(),
+    timeDurationInMin: joi.number().required(),
+    className: joi.string().required(),
+    packageId: joi.string().required(),
+    classType: joi.string().valid("individual", "group").required(),
+    publishedDate: joi
       .string()
-      .valid("online")
+      .pattern(/^\d{4}-\d{2}-\d{2}$/)
       .required(),
-    times: joi.array().items(times).min(1).required(),
   });
   return schema.validate(data);
 };
