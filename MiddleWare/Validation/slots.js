@@ -4,8 +4,8 @@ const validateYTClassTimes = (data) => {
   const schema = joi.object().keys({
     modeOfClass: joi.string().valid("online").required(),
     yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
-    yTRule: joi.array().min(1).items(joi.string().required()).optional(),
-    yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
+    yTRule: joi.array().optional(),
+    yTRequirement: joi.array().optional(),
     description: joi.string().optional(),
     time: joi.string().length(5).required(),
     timeDurationInMin: joi.number().required(),
@@ -33,8 +33,8 @@ const validateYTPackage = (data) => {
 
 const validateUpdateYTClassTimes = (data) => {
   const schema = joi.object().keys({
-    yTRule: joi.array().min(1).items(joi.string().required()).optional(),
-    yTRequirement: joi.array().min(1).items(joi.string().required()).optional(),
+    yTRule: joi.array().optional(),
+    yTRequirement: joi.array().optional(),
     yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
     description: joi.string().optional(),
     yogaTutorPackage: joi.string().required(),

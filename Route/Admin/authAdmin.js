@@ -4,6 +4,7 @@ const router = express.Router();
 import { getAdmin, register, login } from "../../Controller/Admin/authAdmin.js";
 import master from "./master.js";
 import instructor from "./instructor.js";
+import user from "./user.js";
 
 // Middleware
 import { verifyAdminJWT } from "../../MiddleWare/verifyJWTToken.js";
@@ -19,5 +20,6 @@ router.get("/", getAdmin);
 
 router.use("/mas", master);
 router.use("/ins", instructor);
+router.use("/user", user);
 
 export default router;

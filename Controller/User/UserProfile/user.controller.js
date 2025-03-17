@@ -160,7 +160,7 @@ const register = async (req, res) => {
     // User Time Zone
     const timezone = req.headers["time-zone"] || req.headers["x-timezone"];
     // Create in database
-    const chakraBreakNumber = getRandomInt(7) + 1;
+    const chakraBreakNumber = getRandomInt(7);
     const user = await User.create({
       userTimeZone: timezone,
       name,

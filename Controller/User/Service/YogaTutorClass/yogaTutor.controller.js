@@ -76,13 +76,13 @@ const addNewClassTimes = async (req, res) => {
       publishedDate,
       yogaTutorPackage,
     } = req.body;
-    // Is this course name presnet
+    // Is this course name present
     const isClassName = await YogaTutorClass.findOne({
       className,
       instructor: req.user._id,
       isDelete: false,
     });
-    const classNameMessage = "This time slot class name already presnet!";
+    const classNameMessage = "This time slot class name already present!";
     if (isClassName) return failureResponse(res, 400, classNameMessage);
     // Find all ongoing times
     const existingOnGoingTimes = await YogaTutorClass.find({
@@ -162,7 +162,7 @@ const classTimesForInstructor = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin createdAt"
+          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin userTimeZone createdAt"
         )
         .sort({ publishedDate: -1, unPublishDate: -1 })
         .skip(skip)
