@@ -8,6 +8,6 @@ import {
 
 // User
 router.get("/", searchUser);
-router.get("/refferalData", getUserReferral);
+router.get("/refferalData/:rfC", getUserReferral);
 
 export default router;
