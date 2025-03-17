@@ -1,7 +1,9 @@
+import mongoose from "mongoose";
 import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
+import { UserChakras } from "../../Model/User/Profile/chakrasModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
 
 const searchUser = async (req, res) => {
@@ -94,18 +96,58 @@ const searchUser = async (req, res) => {
 const getUserReferral = async (req, res) => {
   try {
     const referralCode = req.params.rfC;
-    const [allUser, verifiedUser] = await Promise.all([
-      User.countDocuments({ referralCode }),
-      User.countDocuments({
-        referralCode,
-        $or: [{ isEmailVerified: true }, { isMobileNumberVerified: true }],
-      }),
-    ]);
+    const user = await User.findOne({ userCode: referralCode });
+    if (!user)
+      return failureResponse(res, 400, "This user is not present!", null);
+    const [allUser, verifiedUser, chakras, totalUnredemedChakras] =
+      await Promise.all([
+        User.countDocuments({ referralCode }),
+        User.countDocuments({
+          referralCode,
+          $or: [{ isEmailVerified: true }, { isMobileNumberVerified: true }],
+        }),
+        UserChakras.aggregate([
+          {
+            $match: {
+              isRedeemed: false,
+              referrer: new mongoose.Types.ObjectId(user._doc._id),
+            },
+          },
+          {
+            $group: {
+              _id: "$chakraNumber",
+              chakraName: { $first: "$chakraName" },
+              totalChakras: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+          {
+            $project: {
+              chakraNumber: "$_id",
+              _id: 0,
+              chakraName: 1,
+              totalChakras: 1,
+            },
+          },
+        ]),
+        UserChakras.countDocuments({
+          isRedeemed: false,
+          referrer: user._doc._id,
+        }),
+      ]);
+    // Count completed set
+    const completedSet =
+      chakras.length === 7
+        ? Math.min(...chakras.map(({ totalChakras }) => totalChakras))
+        : 0;
     // Final Response
     return successResponse(res, 200, "Fetched successfully!", {
-      allUser,
+      allUserJoined: allUser,
       verifiedUser,
       unverifiedUser: parseInt(allUser) - parseInt(verifiedUser),
+      totalUnredemedChakras,
+      completedSet,
+      chakras,
     });
   } catch (err) {
     failureResponse(res, 500, err.message, null);
