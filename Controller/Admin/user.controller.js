@@ -1,3 +1,7 @@
+import {
+  failureResponse,
+  successResponse,
+} from "../../MiddleWare/responseMiddleware.js";
 import { User } from "../../Model/User/Profile/userModel.js";
 
 const searchUser = async (req, res) => {
@@ -17,13 +21,7 @@ const searchUser = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
 
     //Search
-    let query = {
-      $and: [
-        { _id: { $nin: [req.user._id] } },
-        { role },
-        // { isProfileVisible: true },
-      ],
-    };
+    let query = { $and: [{ role }] };
     if (search) {
       const startWith = new RegExp("^" + search.toLowerCase(), "i");
       query.$and.push({ name: startWith });
