@@ -15,9 +15,7 @@ const addYogaCategory = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const yogaCategory = capitalizeFirstLetter(
-      req.body.yogaCategory.replace(/\s+/g, " ").trim()
-    );
+    const yogaCategory = req.body.yogaCategory;
     await YogaCategory.findOneAndUpdate(
       { yogaCategory },
       { updatedAt: new Date(), description: req.body.description },
@@ -88,9 +86,7 @@ const updateYogaCategory = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const yogaCategory = capitalizeFirstLetter(
-      req.body.yogaCategory.replace(/\s+/g, " ").trim()
-    );
+    const yogaCategory = req.body.yogaCategory;
     const yogaCategories = await YogaCategory.findOne({
       _id: req.params.id,
     });
