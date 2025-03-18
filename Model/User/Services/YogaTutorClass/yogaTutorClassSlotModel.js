@@ -22,7 +22,7 @@ const schema = new Schema(
     startDate: { type: Date },
     endDate: { type: Date }, // Full date time
     timeDurationInMin: { type: Number, required: true },
-    yogaCategory: [], // Child, Adults, Male, Female
+    yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }], // Child, Adults, Male, Female
     bookedSeat: { type: Number, default: 0 },
     learnerMessage: { type: String, required: true },
     // For Booking Purpose
@@ -60,8 +60,7 @@ const schema = new Schema(
   { timestamps: true }
 );
 
-export const YTClassSlot =
-  models.YTClassSlot || model("YTClassSlot", schema);
+export const YTClassSlot = models.YTClassSlot || model("YTClassSlot", schema);
 
 // Note.1.
 // If class is for individual and only one learner, And If group more then one can be possible

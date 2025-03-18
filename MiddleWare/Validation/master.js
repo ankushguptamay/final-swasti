@@ -3,6 +3,7 @@ import joi from "joi";
 const validateSpecialization = (data) => {
   const schema = joi.object().keys({
     specialization: joi.string().required(),
+    description: joi.string().optional(),
   });
   return schema.validate(data);
 };

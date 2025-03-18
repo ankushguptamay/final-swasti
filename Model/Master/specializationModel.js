@@ -4,6 +4,7 @@ const { Schema, model, models, Types } = mongoose;
 const schema = new Schema(
   {
     specialization: { type: String },
+    description: { type: String },
   },
   { timestamps: true }
 );

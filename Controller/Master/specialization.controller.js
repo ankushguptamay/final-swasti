@@ -5,6 +5,7 @@ import {
 } from "../../MiddleWare/responseMiddleware.js";
 import { validateSpecialization } from "../../MiddleWare/Validation/master.js";
 import { Specialization } from "../../Model/Master/specializationModel.js";
+import { User } from "../../Model/User/Profile/userModel.js";
 
 const addSpecialization = async (req, res) => {
   try {
@@ -18,7 +19,7 @@ const addSpecialization = async (req, res) => {
     );
     await Specialization.findOneAndUpdate(
       { specialization },
-      { updatedAt: new Date() },
+      { updatedAt: new Date(), description: req.body.description },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     return successResponse(res, 201, `Added successfully!`);
@@ -64,7 +65,9 @@ const getSpecialization = async (req, res) => {
 
 const specializationDetails = async (req, res) => {
   try {
-    const specialization = await Specialization.findOne({ _id: req.params.id });
+    const specialization = await Specialization.findOne({
+      _id: req.params.id,
+    }).select("_id specialization description");
     if (!specialization) {
       return failureResponse(
         res,
@@ -86,6 +89,7 @@ const updateSpecialization = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
+    const { description = undefined } = req.body;
     const specialization = capitalizeFirstLetter(
       req.body.specialization.replace(/\s+/g, " ").trim()
     );
@@ -111,7 +115,7 @@ const updateSpecialization = async (req, res) => {
         );
       }
     }
-    await specializations.updateOne({ specialization });
+    await specializations.updateOne({ specialization, description });
     return successResponse(res, 201, `Updated successfully!`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
@@ -129,6 +133,11 @@ const deleteSpecialization = async (req, res) => {
         null
       );
     }
+    // Delete from all place
+    await User.updateMany(
+      { specialization: specialization._id },
+      { $pull: { specialization: specialization._id } }
+    );
     // delete
     await specialization.deleteOne();
     return successResponse(res, 200, `Deleted successfully!`);
