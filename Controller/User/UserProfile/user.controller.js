@@ -472,9 +472,9 @@ const updateInstructor = async (req, res) => {
     // Specialization
     if (specialization.length > 0) {
       const existing = instructor.specialization.map((spe) => spe.toString());
-      const specialization = specialization.map((spe) => spe.toString());
+      const newSpecialization = specialization.map((spe) => spe.toString());
       const isSpecializationChanged = await compareArrays(
-        specialization.sort(),
+        newSpecialization.sort(),
         existing.sort()
       );
       if (!isSpecializationChanged) {
