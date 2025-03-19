@@ -13,6 +13,7 @@ const validateUserRegistration = (data) => {
       .pattern(/^[0-9]+$/)
       .required(),
     referralCode: joi.string().optional(),
+    term_condition_accepted: joi.boolean().required(),
   });
   return schema.validate(data);
 };
@@ -25,6 +26,7 @@ const validateUserMobileLogin = (data) => {
       .pattern(/^[0-9]+$/)
       .required(),
     referralCode: joi.string().optional(),
+    term_condition_accepted: joi.boolean().required(),
   });
   return schema.validate(data);
 };

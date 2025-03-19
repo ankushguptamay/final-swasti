@@ -145,7 +145,15 @@ const register = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { email, mobileNumber, referralCode } = req.body;
+    const { email, mobileNumber, referralCode, term_condition_accepted } =
+      req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
     // Capital First Letter
     const name = capitalizeFirstLetter(req.body.name);
     // Is user already present
@@ -168,6 +176,7 @@ const register = async (req, res) => {
       mobileNumber,
       chakraBreakNumber,
       referralCode,
+      term_condition_accepted,
     });
     // Generate OTP for Email
     const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
@@ -202,7 +211,14 @@ const loginByMobile = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { mobileNumber, referralCode } = req.body;
+    const { mobileNumber, referralCode, term_condition_accepted } = req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
     // Find User in collection
     const data = { mobileNumber };
     if (referralCode) {

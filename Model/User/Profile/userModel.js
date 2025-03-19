@@ -48,6 +48,7 @@ const schema = new Schema(
       address: { type: String },
     },
     userTimeZone: { type: String, default: "Asia/Kolkata" },
+    term_condition_accepted: { type: Boolean, default: false },
     // Children Table
     bankDetail: [{ type: Types.ObjectId, ref: "BankDetail" }],
     education: [{ type: Types.ObjectId, ref: "Education" }],
