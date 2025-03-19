@@ -154,4 +154,80 @@ const getUserReferral = async (req, res) => {
   }
 };
 
-export { searchUser, getUserReferral };
+const usersReferral = async (req, res) => {
+  try {
+    const allUser = await UserChakras.aggregate([
+      {
+        $group: {
+          _id: "$referrer",
+          totalJoinedUser: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "referrerDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$referrerDetails",
+          preserveNullAndEmptyArrays: true, // This ensures referrerDetails is not null or return value in string
+        },
+      },
+      {
+        $project: {
+          referrer: {
+            _id: "$referrerDetails._id",
+            name: "$referrerDetails.name",
+            profilePic: "$referrerDetails.profilePic",
+          },
+          totalJoinedUser: 1,
+          _id: 0,
+        },
+      },
+    ]);
+    // Final Response
+    return successResponse(res, 200, "Fetched successfully!", {
+      allUser,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+const userCount = async (req, res) => {
+  try {
+    const utcDate = new Date();
+    utcDate.setMinutes(utcDate.getMinutes() + 330);
+    const today = new Date(
+      `${utcDate.toISOString().split("T")[0]}T18:29:59.000Z`
+    );
+    const [allUser, verifiedUser, tadayUser, tadayVerifiedUser] =
+      await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({
+          $or: [{ isEmailVerified: true }, { isMobileNumberVerified: true }],
+        }),
+        User.countDocuments({
+          createdAt: { $gte: today },
+        }),
+        User.countDocuments({
+          $or: [{ isEmailVerified: true }, { isMobileNumberVerified: true }],
+          createdAt: { $gte: today },
+        }),
+      ]);
+    // Final Response
+    return successResponse(res, 200, "Fetched successfully!", {
+      allUser,
+      verifiedUser,
+      tadayUser,
+      tadayVerifiedUser,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+export { searchUser, getUserReferral, usersReferral, userCount };
