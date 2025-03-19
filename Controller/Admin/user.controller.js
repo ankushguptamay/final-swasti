@@ -201,7 +201,7 @@ const usersReferral = async (req, res) => {
 const userCount = async (req, res) => {
   try {
     const utcDate = new Date();
-    utcDate.setMinutes(utcDate.getMinutes() + 330);
+    utcDate.setMinutes(utcDate.getMinutes() - 1110);
     const today = new Date(
       `${utcDate.toISOString().split("T")[0]}T18:29:59.000Z`
     );
