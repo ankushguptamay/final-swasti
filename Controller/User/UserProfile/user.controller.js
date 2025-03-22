@@ -85,13 +85,13 @@ function transformUserDetails(user) {
     gender: user.gender || null,
     profilePic: user.profilePic ? user.profilePic.url || null : null,
     userCode: user.userCode,
+    dateOfBirth: user.dateOfBirth || null,
   };
   if (user.role.toLowerCase() === "instructor") {
     data.language = user.language || [];
     data.specialization = user.specialization
       ? user.specialization.map(({ specialization }) => specialization)
       : [];
-    data.dateOfBirth = user.dateOfBirth || null;
     data.experience_year = user.experience_year || null;
     data.bio = user.bio || null;
     data.aadharDetails = user.aadharDetails || null;
