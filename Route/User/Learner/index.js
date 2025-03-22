@@ -14,7 +14,7 @@ router.use(verifyUserJWT);
 // Validate instructor role
 router.use((req, res, next) => {
   if (!req.user.role || req.user.role.toLowerCase() !== "learner") {
-    return failureResponse(res, 401, "Unauthorized!", null);
+    return failureResponse(res, 401, "Unauthorized", null);
   }
   next();
 });

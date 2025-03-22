@@ -205,7 +205,7 @@ const userCount = async (req, res) => {
     const today = new Date(
       `${utcDate.toISOString().split("T")[0]}T18:29:59.000Z`
     );
-    const [allUser, verifiedUser, tadayUser, tadayVerifiedUser] =
+    const [allUser, verifiedUser, todayUser, todayVerifiedUser] =
       await Promise.all([
         User.countDocuments(),
         User.countDocuments({
@@ -223,8 +223,8 @@ const userCount = async (req, res) => {
     return successResponse(res, 200, "Fetched successfully!", {
       allUser,
       verifiedUser,
-      tadayUser,
-      tadayVerifiedUser,
+      todayUser,
+      todayVerifiedUser,
     });
   } catch (err) {
     failureResponse(res, 500, err.message, null);

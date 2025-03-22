@@ -506,7 +506,7 @@ const classTimesDetailsForInstructor = async (req, res) => {
     // Get required data
     const classes = await YogaTutorClass.findOne(query)
       .select(
-        "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin createdAt"
+        "_id modeOfClass classType className publishedDate unPublishDate time description timeDurationInMin approvalByAdmin createdAt"
       )
       .populate(
         "yogaTutorPackage",

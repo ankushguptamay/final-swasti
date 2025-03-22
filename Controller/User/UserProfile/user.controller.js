@@ -228,7 +228,8 @@ const loginByMobile = async (req, res) => {
     if (!isUser) {
       return failureResponse(res, 401, "NOTPRESENT", data);
     }
-
+    isUser.term_condition_accepted = term_condition_accepted;
+    await isUser.save();
     // Testing
     if (
       mobileNumber === TEST_NUMBER_1 || // Ankush
@@ -632,8 +633,12 @@ const refreshAccessToken = async (req, res) => {
     );
     // Find valid user
     const user = await User.findById(decoded._id);
-    if (!user || user?.refreshToken !== refreshToken) {
-      return failureResponse(res, 403, "Unauthorized!", null);
+    if (
+      !user ||
+      user?.refreshToken !== refreshToken ||
+      !user.term_condition_accepted
+    ) {
+      return failureResponse(res, 403, "Unauthorized", null);
     }
     // Generate access token
     const token = createUserAccessToken({ _id: user._id });

@@ -26,7 +26,7 @@ const verifyUserJWT = async (req, res, next) => {
       !user._doc.refreshToken ||
       !user._doc.term_condition_accepted
     ) {
-      return failureResponse(res, 401, "Unauthorized!", null);
+      return failureResponse(res, 401, "Unauthorized", null);
     }
     req.user = user;
     return next();
@@ -50,7 +50,7 @@ const verifyAdminJWT = async (req, res, next) => {
       "_id name email mobileNumber"
     );
     if (!admin) {
-      return failureResponse(res, 401, "Unauthorized!", null);
+      return failureResponse(res, 401, "Unauthorized", null);
     }
     req.admin = decode;
     return next();
