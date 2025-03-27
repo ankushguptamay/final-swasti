@@ -1,6 +1,5 @@
 import express from "express";
 const router = express.Router();
-import { searchInstructor } from "../../../Controller/User/UserProfile/user.controller.js";
 import {
   giveOrUpdateReviews,
   deleteReviewByUser,
@@ -11,8 +10,6 @@ import {
   getReviewDetails,
 } from "../../../Controller/User/Review/instructorReview.js";
 
-// Instructor
-router.get("/", searchInstructor);
 // Instructor Review
 router.get("/review", getReviews);
 router.get("/review/:id", getReviewDetails);

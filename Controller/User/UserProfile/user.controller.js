@@ -50,6 +50,8 @@ const {
 import fs from "fs";
 import jwt from "jsonwebtoken";
 import { Wallet } from "../../../Model/User/Profile/walletModel.js";
+import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
+import { convertGivenTimeZoneToUTC } from "../../../Util/timeZone.js";
 const bunnyFolderName = "inst-doc";
 
 // Helper
@@ -135,6 +137,67 @@ async function generateUserCode(preFix) {
     userCode = `${startWith}${lastDigits++}`;
   }
   return userCode;
+}
+
+async function bindByPackageId(classes) {
+  const yTClassTime = classes.reduce((acc, item) => {
+    const {
+      _id,
+      modeOfClass,
+      classType,
+      className,
+      publishedDate,
+      unPublishDate,
+      time,
+      timeDurationInMin,
+      instructorTimeZone,
+      yogaTutorPackage,
+    } = item;
+    const {
+      _id: package_id,
+      packageType,
+      packageName,
+      group_price,
+      individual_price,
+      numberOfDays,
+    } = yogaTutorPackage;
+
+    // Find existing group
+    let group = acc.find((g) => g.package_id === package_id);
+
+    if (!group) {
+      // Create new group if not found
+      group = {
+        package_id,
+        packageType,
+        packageName,
+        group_price,
+        individual_price,
+        numberOfDays,
+        classTimes: [],
+      };
+      acc.push(group);
+    }
+    const classPublishTimeInUTC = convertGivenTimeZoneToUTC(
+      `${publishedDate}T${time}:00.000`,
+      instructorTimeZone
+    );
+    // Add class details
+    group.classTimes.push({
+      _id,
+      className,
+      modeOfClass,
+      classType,
+      publishedDate,
+      unPublishDate,
+      time,
+      timeDurationInMin,
+      classPublishTimeInUTC,
+    });
+
+    return acc;
+  }, []);
+  return yTClassTime;
 }
 
 // Main Controller
@@ -875,11 +938,13 @@ const updateLearner = async (req, res) => {
 const searchInstructor = async (req, res) => {
   try {
     const {
-      search,
-      experienceLowerLimit,
-      experienceUpperLimit,
-      starRating,
+      s, // search
+      eLL, // experienceLowerLimit
+      eUL, // experienceUpperLimit
+      sR = 0, // starRating
       role = "instructor",
+      spe,
+      gender,
     } = req.query;
 
     const resultPerPage = req.query.resultPerPage
@@ -888,44 +953,45 @@ const searchInstructor = async (req, res) => {
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const skip = (page - 1) * resultPerPage;
 
-    //Search
+    // Data query
     let query = {
       $and: [
-        { _id: { $nin: [req.user._id] } },
         { role },
-        // { isProfileVisible: true },
+        { $expr: { $gte: [{ $size: "$education" }, 1] } }, // Atleast one educaion should present
+        { "profilePic.url": { $exists: true, $ne: null, $ne: "" } }, // profile pic should be present
       ],
     };
-    if (search) {
-      const startWith = new RegExp("^" + search.toLowerCase(), "i");
-      query.$and.push({ name: startWith });
+    //Search
+    if (s) {
+      const containInString = new RegExp(s, "i");
+      query.$and.push({ name: containInString });
     }
 
     // Filter
-    if ((experienceLowerLimit, experienceUpperLimit)) {
+    if ((eLL, eUL)) {
       query.$and.push({
-        experience_year: {
-          $gte: parseInt(experienceLowerLimit),
-          $lte: parseInt(experienceUpperLimit),
-        },
+        experience_year: { $gte: parseInt(eLL), $lte: parseInt(eUL) },
       });
     }
+    // Specialization
+    if (Array.isArray(spe) && spe.length > 0) {
+      query.$and.push({ specialization: { $in: spe } });
+    }
     // Average rating
-    if (starRating) {
-      query.$and.push({
-        averageRating: { $gte: parseInt(starRating) },
-      });
+    if (sR) {
+      query.$and.push({ averageRating: { $gte: parseInt(sR) } });
+    }
+    // Gender
+    if (gender) {
+      query.$and.push({ gender });
     }
     // Get required data
     const [instructor, totalInstructor] = await Promise.all([
       User.find(query)
-        .select(
-          "_id name role profilePic language dateOfBirth gender experience_year bio isProfileVisible averageRating"
-        )
-        .sort({ averageRating: -1 })
+        .select("_id name profilePic bio averageRating")
+        .sort({ averageRating: -1, name: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .populate("specialization", "specialization")
         .lean(),
       User.countDocuments(query),
     ]);
@@ -935,17 +1001,8 @@ const searchInstructor = async (req, res) => {
       return {
         _id: user._id,
         name: user.name,
-        role: user.role,
-        gender: user.gender,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
         bio: user.bio,
-        isProfileVisible: user.isProfileVisible,
-        language: user.language,
-        specialization:
-          user.specialization.length > 0
-            ? user.specialization.map(({ specialization }) => specialization)
-            : [],
-        experience_year: user.experience_year,
         averageRating: user.averageRating,
       };
     });
@@ -975,6 +1032,95 @@ const myWallet = async (req, res) => {
   }
 };
 
+const instructorDetailsForLearner = async (req, res) => {
+  try {
+    const instructor = await User.find({
+      _id: req.params.id,
+      role,
+      $expr: { $gte: [{ $size: "$education" }, 1] },
+      "profilePic.url": { $exists: true, $ne: null, $ne: "" },
+    })
+      .select(
+        "_id name role profilePic language dateOfBirth gender experience_year bio isProfileVisible averageRating isAadharVerified"
+      )
+      .populate("specialization", "specialization")
+      .populate("certificate", "name")
+      .lean();
+
+    // Transform Data
+    const data = {
+      ...instructor,
+      profilePic: instructor.profilePic
+        ? instructor.profilePic.url || null
+        : null,
+      specialization:
+        instructor.specialization.length > 0
+          ? instructor.specialization.map(
+              ({ specialization }) => specialization
+            )
+          : [],
+      certificate:
+        instructor.certificate.length > 0
+          ? instructor.certificate.map(({ name }) => name)
+          : [],
+    };
+    if (!instructor)
+      return failureResponse(
+        res,
+        400,
+        "This instructor profile is not available!",
+        null
+      );
+    // Find other user
+    const specialization =
+      instructor.specialization.length > 0
+        ? instructor.specialization.map(({ specialization }) => specialization)
+        : [];
+    const similarQuery = {
+      $or: [
+        { specialization: { $in: specialization } },
+        { averageRating: { $gte: instructor.averageRating } },
+        { experience_year: { $gte: instructor.experience_year } },
+        { language: { $in: language } },
+      ],
+    };
+    const [similarProfile, yogaClasses] = await Promise.all([
+      User.find(similarQuery)
+        .select("_id name profilePic bio averageRating")
+        .sort({ averageRating: -1, name: 1 })
+        .limit(20)
+        .lean(),
+      YogaTutorClass.find({
+        $or: [
+          { unPublishDate: { $exists: false } },
+          {
+            unPublishDate: {
+              $gte: new Date(new Date().toISOString().split("T")[0]),
+            },
+          },
+        ],
+        instructor: req.params.id,
+        isDelete: false,
+        approvalByAdmin: "accepted",
+      })
+        .select(
+          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin instructorTimeZone"
+        )
+        .populate(
+          "yogaTutorPackage",
+          "packageType packageName group_price individual_price numberOfDays"
+        )
+        .lean(),
+    ]);
+    data.similarProfile = similarProfile;
+    data.yTClassTime = await bindByPackageId(yogaClasses);
+    // Send final success response
+    return successResponse(res, 200, `Successfully!`, { data });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -994,4 +1140,5 @@ export {
   updateLearner,
   searchInstructor,
   myWallet,
+  instructorDetailsForLearner,
 };

@@ -7,11 +7,14 @@ import {
   usersReferral,
   userCount,
 } from "../../Controller/Admin/user.controller.js";
+import { contactUs } from "../../Controller/Admin/contactUs.controller.js";
 
 // User
 router.get("/", searchUser);
 router.get("/count", userCount);
 router.get("/referral", usersReferral);
 router.get("/refferalDetails/:rfC", getUserReferral);
+
+router.get("/contactUs", contactUs);
 
 export default router;

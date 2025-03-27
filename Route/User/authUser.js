@@ -10,6 +10,8 @@ import {
   rolePage,
 } from "../../Controller/User/UserProfile/user.controller.js";
 
+import publicRoute from "./publicRoute.js";
+
 // Middle
 import { verifyUserJWT } from "../../MiddleWare/verifyJWTToken.js";
 
@@ -20,5 +22,8 @@ router.post("/refresh", refreshAccessToken);
 
 router.put("/logout", verifyUserJWT, logout);
 router.put("/rolePage", verifyUserJWT, rolePage);
+
+// PubLic Routes
+router.use("/pub", publicRoute);
 
 export default router;

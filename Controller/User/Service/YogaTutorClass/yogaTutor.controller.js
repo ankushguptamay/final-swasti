@@ -11,9 +11,11 @@ import {
   validateYTClassTimes,
   validateApprovalClassTimes,
 } from "../../../../MiddleWare/Validation/slots.js";
+import { User } from "../../../../Model/User/Profile/userModel.js";
 import { YTClassUpdateHistory } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassHistoryModel.js";
 import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import moment from "moment-timezone";
+import { YogaTutorPackage } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorPackageModel.js";
+import { convertGivenTimeZoneToUTC } from "../../../../Util/timeZone.js";
 
 // Helper
 function isTimeSlotOverlapping(existingRecords, newRecord) {
@@ -44,16 +46,62 @@ function getMinutes(time) {
   return hours * 60 + minutes;
 }
 
-// This Function convet UTC time in preticular time zone
-function convertUTCToGivenTimeZone(utcTime, timeZone) {
-  return moment.utc(utcTime).tz(timeZone).format("YYYY-MM-DD HH:mm:ss");
+async function filterQueryOfClassForUser(data) {
+  const {
+    mOC, // modeOfClass,
+    cT = "individual", // classType,
+    search,
+    date = new Date().toISOString().split("T")[0], // Default today
+    timing,
+    miP = 100, // minimumPrice,
+    maP = 100000, // maximumPrice,
+  } = data;
+  // Find Instructor Whose education, profilePic present
+  const instructorArray = await User.distinct("_id", {
+    role: "instructor",
+    $expr: { $gte: [{ $size: "$education" }, 1] },
+    "profilePic.url": { $exists: true, $ne: null, $ne: "" },
+  });
+  // Query
+  const query = {
+    instructor: { $in: instructorArray },
+    isDelete: false,
+    approvalByAdmin: "accepted",
+  };
+  // Search
+  if (search) {
+    const containInString = new RegExp(search, "i");
+    query.$or = [
+      { className: containInString },
+      { classType: containInString },
+      { modeOfClass: containInString },
+      { description: containInString },
+    ];
+  }
+  // Filter
+  if (mOC) query.modeOfClass = mOC;
+  if (date)
+    query.$or = [
+      { unPublishDate: { $exists: false } },
+      { unPublishDate: { $gte: new Date(date) } },
+    ];
+  if (timing) query.time = timing;
+  query.classType = cT;
+  const divide = "$yogaTutorPackage.numberOfDays";
+  let type = "$yogaTutorPackage.individual_price";
+  if (cT === "group") {
+    type = "$yogaTutorPackage.group_price";
+  }
+  const priceQuery = {
+    $expr: {
+      $and: [
+        { $gte: [{ $divide: [type, divide] }, miP] },
+        { $lte: [{ $divide: [type, divide] }, maP] },
+      ],
+    },
+  };
+  return { query, priceQuery };
 }
-
-function convertGivenTimeZoneToUTC(dateTime, timeZone) {
-  return moment.tz(dateTime, timeZone).utc().format("YYYY-MM-DD HH:mm:ss");
-}
-
-const allTimeZone = moment.tz.names();
 
 // Main Controller
 const addNewClassTimes = async (req, res) => {
@@ -101,7 +149,7 @@ const addNewClassTimes = async (req, res) => {
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
     // Create Yoga class
     await YogaTutorClass.create({
-      userTimeZone: req.user.userTimeZone,
+      instructorTimeZone: req.user.userTimeZone,
       modeOfClass,
       classType,
       time,
@@ -143,12 +191,12 @@ const classTimesForInstructor = async (req, res) => {
     // Search
     if (search) {
       const containInString = new RegExp(req.query.search, "i");
-      query.$or = {
-        className: containInString,
-        classType: containInString,
-        modeOfClass: containInString,
-        description: containInString,
-      };
+      query.$or = [
+        { className: containInString },
+        { classType: containInString },
+        { modeOfClass: containInString },
+        { description: containInString },
+      ];
     }
     // Filter
     if (modeOfClass) {
@@ -162,7 +210,7 @@ const classTimesForInstructor = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin userTimeZone createdAt"
+          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin instructorTimeZone createdAt"
         )
         .sort({ publishedDate: -1, unPublishDate: -1 })
         .skip(skip)
@@ -348,7 +396,7 @@ const classTimesForAdmin = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin userTimeZone yTRequirement yTRule createdAt anyApprovalRequest"
+          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin instructorTimeZone yTRequirement yTRule createdAt anyApprovalRequest"
         )
         .sort({ createdAt: 1 })
         .skip(skip)
@@ -431,7 +479,7 @@ const classTimesUpdationRequest = async (req, res) => {
         .limit(resultPerPage)
         .populate(
           "yogaTutorClass",
-          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin userTimeZone createdAt"
+          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin instructorTimeZone createdAt"
         )
         .lean(),
       YTClassUpdateHistory.countDocuments(query),
@@ -528,6 +576,94 @@ const classTimesDetailsForInstructor = async (req, res) => {
   }
 };
 
+const classTimesForUser = async (req, res) => {
+  try {
+    // Pagination
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+    // Filter query
+    const { query, priceQuery } = await filterQueryOfClassForUser(req.query);
+    // Get required data
+    const [classes, totalClasses] = await Promise.all([
+      YogaTutorClass.aggregate([
+        {
+          $lookup: {
+            from: "yogatutorpackages",
+            localField: "yogaTutorPackage",
+            foreignField: "_id",
+            as: "yogaTutorPackage",
+          },
+        },
+        { $unwind: "$yogaTutorPackage" }, // Flatten array
+        { $match: query },
+        { $match: priceQuery },
+        {
+          $project: {
+            _id: 1,
+            modeOfClass: 1,
+            classType: 1,
+            className: 1,
+            publishedDate: 1,
+            unPublishDate: 1,
+            time: 1,
+            timeDurationInMin: 1,
+            approvalByAdmin: 1,
+            instructorTimeZone: 1,
+            createdAt: 1,
+            "yogaTutorPackage.packageType": 1,
+            "yogaTutorPackage.packageName": 1,
+            "yogaTutorPackage.group_price": 1,
+            "yogaTutorPackage.individual_price": 1,
+            "yogaTutorPackage.numberOfDays": 1,
+          },
+        },
+        { $sort: { publishedDate: -1, unPublishDate: -1 } },
+        { $skip: skip },
+        { $limit: resultPerPage },
+      ]),
+      YogaTutorClass.aggregate([
+        {
+          $lookup: {
+            from: "yogatutorpackages",
+            localField: "yogaTutorPackage",
+            foreignField: "_id",
+            as: "yogaTutorPackage",
+          },
+        },
+        { $unwind: "$yogaTutorPackage" },
+        { $match: query },
+        { $match: priceQuery },
+        { $count: "total" }, // Correct count method
+      ]),
+    ]);
+    const totalPages = totalClasses[0]?.total
+      ? Math.ceil(totalClasses[0].total / resultPerPage)
+      : 0;
+    const transformData = classes.map((times) => {
+      const classPublishTimeInUTC = convertGivenTimeZoneToUTC(
+        `${times.publishedDate}T${times.time}:00.000`,
+        times.instructorTimeZone
+      );
+      return {
+        ...times,
+        unPublishDate: times.unPublishDate || null,
+        classPublishTimeInUTC,
+      };
+    });
+    // Send final success response
+    return successResponse(res, 200, "Successfully", {
+      data: transformData,
+      totalPages: totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   addNewClassTimes,
   classTimesForInstructor,
@@ -537,4 +673,5 @@ export {
   approvalClassTimesUpdate,
   classTimesUpdationRequest,
   classTimesDetailsForInstructor,
+  classTimesForUser,
 };

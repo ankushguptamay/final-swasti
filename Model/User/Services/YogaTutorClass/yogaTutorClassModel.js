@@ -40,7 +40,7 @@ const schema = new Schema(
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
     yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
     yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
-    userTimeZone: { type: String }, // Note 1.
+    instructorTimeZone: { type: String }, // Note 1.
     yogaTutorPackage: {
       type: Types.ObjectId,
       ref: "YogaTutorPackage",
