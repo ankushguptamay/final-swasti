@@ -35,6 +35,6 @@ async function updateTimeZoneField() {
   }
 }
 
-updateTimeZoneField();
+// updateTimeZoneField();
 
 export { connectDB };
