@@ -22,15 +22,15 @@ const schema = new Schema(
     startDate: { type: Date },
     endDate: { type: Date }, // Full date time
     timeDurationInMin: { type: Number, required: true },
-    yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }], // Child, Adults, Male, Female
+    yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
     bookedSeat: { type: Number, default: 0 },
     learnerMessage: { type: String, required: true },
     // For Booking Purpose
     password: { type: Number, required: true },
     isBooked: { type: Boolean, default: false },
     // Time Zone
-    learnerTimeZone: { type: String },
     instructorTimeZone: { type: String },
+    meetingLink: { type: String },
     // Associations
     yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
     yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],

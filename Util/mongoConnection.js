@@ -21,10 +21,13 @@ const connectDB = (uri) => {
 
 async function updateTimeZoneField() {
   try {
-    // Rename 'userTimeZone' to 'instructorTimeZone'
+    const updateed = await YogaTutorClass.updateMany(
+      {},
+      { $unset: { userTimeZone: 1 } }
+    );
     const result = await YogaTutorClass.updateMany(
-      { userTimeZone: { $exists: true } }, // Only update documents where userTimeZone exists
-      { $rename: { userTimeZone: "instructorTimeZone" } }
+      {},
+      { $set: { instructorTimeZone: "Asia/Kolkata" } }
     );
     console.log(`Updated ${result.modifiedCount} documents.`);
   } catch (error) {
@@ -32,6 +35,6 @@ async function updateTimeZoneField() {
   }
 }
 
-// updateTimeZoneField();
+updateTimeZoneField();
 
 export { connectDB };
