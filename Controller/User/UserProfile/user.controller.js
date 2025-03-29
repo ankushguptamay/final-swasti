@@ -1052,7 +1052,6 @@ const instructorDetailsForLearner = async (req, res) => {
         "This instructor profile is not available!",
         null
       );
-    console.log(instructor);
     // Transform Data
     const data = {
       ...instructor,
@@ -1076,6 +1075,8 @@ const instructorDetailsForLearner = async (req, res) => {
         ? instructor.specialization.map(({ _id }) => _id)
         : [];
     const similarQuery = {
+      $expr: { $gte: [{ $size: "$education" }, 1] },
+      "profilePic.url": { $exists: true, $ne: null, $ne: "" },
       $or: [
         { averageRating: { $gte: instructor.averageRating } },
         { experience_year: { $gte: instructor.experience_year } },
@@ -1085,7 +1086,6 @@ const instructorDetailsForLearner = async (req, res) => {
     if (specialization.length > 0) {
       similarQuery.$or.push({ specialization: { $in: specialization } });
     }
-    console.log(similarQuery);
     const [similarProfile, yogaClasses] = await Promise.all([
       User.find(similarQuery)
         .select("_id name profilePic bio averageRating")
@@ -1115,7 +1115,6 @@ const instructorDetailsForLearner = async (req, res) => {
         .lean(),
     ]);
     data.similarProfile = similarProfile;
-    console.log(yogaClasses)
     data.yTClassTime = await bindByPackageId(yogaClasses);
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { data });
