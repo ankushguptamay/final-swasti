@@ -1079,7 +1079,7 @@ const instructorDetailsForLearner = async (req, res) => {
       $or: [
         { averageRating: { $gte: instructor.averageRating } },
         { experience_year: { $gte: instructor.experience_year } },
-        { language: { $in: language } },
+        { language: { $in: instructor.language } },
       ],
     };
     if (specialization.length > 0) {
@@ -1115,6 +1115,7 @@ const instructorDetailsForLearner = async (req, res) => {
         .lean(),
     ]);
     data.similarProfile = similarProfile;
+    console.log(yogaClasses)
     data.yTClassTime = await bindByPackageId(yogaClasses);
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { data });
