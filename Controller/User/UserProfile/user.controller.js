@@ -1034,7 +1034,7 @@ const myWallet = async (req, res) => {
 
 const instructorDetailsForLearner = async (req, res) => {
   try {
-    const instructor = await User.find({
+    const instructor = await User.findOne({
       _id: req.params.id,
       $expr: { $gte: [{ $size: "$education" }, 1] },
       "profilePic.url": { $exists: true, $ne: null, $ne: "" },
