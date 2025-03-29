@@ -1045,24 +1045,6 @@ const instructorDetailsForLearner = async (req, res) => {
       .populate("specialization", "specialization")
       .populate("certificate", "name")
       .lean();
-
-    // Transform Data
-    const data = {
-      ...instructor,
-      profilePic: instructor.profilePic
-        ? instructor.profilePic.url || null
-        : null,
-      specialization:
-        instructor.specialization.length > 0
-          ? instructor.specialization.map(
-              ({ specialization }) => specialization
-            )
-          : [],
-      certificate:
-        instructor.certificate.length > 0
-          ? instructor.certificate.map(({ name }) => name)
-          : [],
-    };
     if (!instructor)
       return failureResponse(
         res,
@@ -1070,19 +1052,40 @@ const instructorDetailsForLearner = async (req, res) => {
         "This instructor profile is not available!",
         null
       );
+    console.log(instructor);
+    // Transform Data
+    const data = {
+      ...instructor,
+      profilePic: instructor.profilePic
+        ? instructor.profilePic.url || null
+        : null,
+      specialization:
+        instructor.specialization?.length > 0
+          ? instructor.specialization.map(
+              ({ specialization }) => specialization
+            )
+          : [],
+      certificate:
+        instructor.certificate?.length > 0
+          ? instructor.certificate.map(({ name }) => name)
+          : [],
+    };
     // Find other user
     const specialization =
-      instructor.specialization.length > 0
-        ? instructor.specialization.map(({ specialization }) => specialization)
+      instructor.specialization?.length > 0
+        ? instructor.specialization.map(({ _id }) => _id)
         : [];
     const similarQuery = {
       $or: [
-        { specialization: { $in: specialization } },
         { averageRating: { $gte: instructor.averageRating } },
         { experience_year: { $gte: instructor.experience_year } },
         { language: { $in: language } },
       ],
     };
+    if (specialization.length > 0) {
+      similarQuery.$or.push({ specialization: { $in: specialization } });
+    }
+    console.log(similarQuery);
     const [similarProfile, yogaClasses] = await Promise.all([
       User.find(similarQuery)
         .select("_id name profilePic bio averageRating")
