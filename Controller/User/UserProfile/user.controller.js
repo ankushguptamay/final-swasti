@@ -1075,6 +1075,7 @@ const instructorDetailsForLearner = async (req, res) => {
         ? instructor.specialization.map(({ _id }) => _id)
         : [];
     const similarQuery = {
+      _id: { $ne: req.params.id },
       $expr: { $gte: [{ $size: "$education" }, 1] },
       "profilePic.url": { $exists: true, $ne: null, $ne: "" },
       $or: [

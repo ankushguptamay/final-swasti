@@ -34,10 +34,10 @@ const schema = new Schema(
     // Associations
     yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
     yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
-    transaction: [
+    serviceOrder: [
       {
         type: Types.ObjectId,
-        ref: "UserTransaction",
+        ref: "ServiceOrder",
         required: false,
       },
     ],
