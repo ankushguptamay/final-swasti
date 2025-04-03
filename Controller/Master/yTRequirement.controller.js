@@ -5,7 +5,6 @@ import {
 import { validateYTRequirement } from "../../MiddleWare/Validation/master.js";
 import { YogaTutorRequirement } from "../../Model/Master/YogaTutorRequirementModel.js";
 import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { YTClassSlot } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassSlotModel.js";
 
 // Main Controller
 const addYTRequirement = async (req, res) => {
@@ -77,10 +76,6 @@ const deleteYTRequirement = async (req, res) => {
       );
     // Delete from all place
     await YogaTutorClass.updateMany(
-      { yTRequirement: requirements._id },
-      { $pull: { yTRequirement: requirements._id } }
-    );
-    await YTClassSlot.updateMany(
       { yTRequirement: requirements._id },
       { $pull: { yTRequirement: requirements._id } }
     );

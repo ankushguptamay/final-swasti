@@ -20,11 +20,21 @@ const schema = new Schema(
       },
       required: true,
     },
-    className: { type: String, required: true },
-    publishedDate: { type: Date }, // From when this yoga tutor class open for public YYYY-MM-DD
-    unPublishDate: { type: Date }, // Note 2.
+    packageType: {
+      type: String,
+      enum: {
+        values: ["weekly", "daily", "monthly"],
+        message: "{VALUE} is not supported",
+      },
+      default: "daily",
+    },
+    numberOfClass: { type: Number, default: 1 },
+    startDate: { type: Date },
+    endDate: { type: Date },
     time: { type: String }, // 24 hours formate
     timeDurationInMin: { type: Number, required: true },
+    datesOfClasses: [{ type: Date }],
+    price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
     // Approval
     approvalByAdmin: {
@@ -35,18 +45,19 @@ const schema = new Schema(
       },
       default: "pending",
     },
-    anyApprovalRequest: { type: Boolean, default: true },
+    numberOfSeats: { type: Number, default: 1 },
+    // For Booking Purpose
+    instructorTimeZone: { type: String }, // Note 1.
+    password: { type: Number, required: true },
+    isBooked: { type: Boolean, default: false },
+    meetingLink: { type: String },
+    totalBookedSeat: { type: Number, default: 0 },
     // Associations
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
     yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
     yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
-    instructorTimeZone: { type: String }, // Note 1.
-    yogaTutorPackage: {
-      type: Types.ObjectId,
-      ref: "YogaTutorPackage",
-      required: true,
-    },
     instructor: { type: Types.ObjectId, ref: "User", required: true },
+    serviceOrder: [{ type: Types.ObjectId, ref: "ServiceOrder" }],
     // Soft delete
     isDelete: { type: Boolean, default: false },
     deleted_at: { type: Date },
@@ -66,3 +77,21 @@ export const YogaTutorClass =
 // Note 2.
 // Instructor can stop taking new appointment on this slot form this date. default value is null.
 //  if this value is present then this slot is unpublished for general user
+
+// const data = {
+//   modeOfClass: "online",
+//   classType: "group",
+//   time: "16:00",
+//   timeDurationInMin: 30,
+//   startDate: "2025-04-04",
+//   packageType: "Weekly",
+//   numberOfClass: 4,
+//   description:"",
+//   price: 4000,
+//   datesOfClasses: ["2025-04-04", "2025-04-06", "2025-04-07", "2025-04-09"],
+//   endDate: "2025-04-09",
+//   numberOfSeats: 10,
+//   yogaCategory: [],
+//   yTRule: [],
+//   yTRequirement: [],
+// };

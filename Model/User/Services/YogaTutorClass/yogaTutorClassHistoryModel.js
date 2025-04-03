@@ -4,24 +4,14 @@ const { Schema, model, models, Types } = mongoose;
 // In this when user is tring to change className or description then it will go through admin approval
 const schema = new Schema(
   {
-    className: { type: String },
-    description: { type: String },
-    // Approval
-    approvalByAdmin: {  type: String,
-        enum: {
-          values: ["pending", "accepted", "rejected"],
-          message: "{VALUE} is not supported",
-        },
-        default: "pending", },
-    // Associations
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
-    yogaTutorPackage: {
+    yogaTutorClass: {
       type: Types.ObjectId,
-      ref: "YogaTutorPackage",
+      ref: "YogaTutorClass",
+      required: true,
     },
-    yogaTutorClass: [
-      { type: Types.ObjectId, ref: "YogaTutorClass", required: true },
-    ],
+    yTRule: [{ type: Types.ObjectId, ref: "YogaTutorRule" }],
+    yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
   },
   { timestamps: true }
 );

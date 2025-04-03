@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
-import { connectDB } from "./Util/mongoConnection.js";
+import { connectDB, dropCollection } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
 
@@ -15,8 +15,12 @@ import learner from "./Route/User/Learner/index.js";
 const app = express();
 const server = createServer(app);
 
-// Connect to database
-connectDB(process.env.MONGO_URI);
+(async () => {
+  // Connect to database
+  await connectDB(process.env.MONGO_URI);
+  // await dropCollection();
+})();
+
 // Cors options
 const corsOptions = {
   origin: "*",

@@ -311,6 +311,7 @@ const loginByMobile = async (req, res) => {
 
     // Generate OTP for Email
     const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
+    console.log(otp)
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
     //  Store OTP

@@ -1,7 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import {
   compareArrays,
   getOldValues,
 } from "../../../../Helper/formatChange.js";
+import { generateFixedLengthRandomNumber } from "../../../../Helper/generateOTP.js";
 import {
   failureResponse,
   successResponse,
@@ -14,36 +18,42 @@ import {
 import { User } from "../../../../Model/User/Profile/userModel.js";
 import { YTClassUpdateHistory } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassHistoryModel.js";
 import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { YogaTutorPackage } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorPackageModel.js";
 import { convertGivenTimeZoneToUTC } from "../../../../Util/timeZone.js";
 
 // Helper
-function isTimeSlotOverlapping(existingRecords, newRecord) {
-  return existingRecords.some((record) => {
-    // Convert dates to timestamps for proper comparison
-    const recordStartDate = new Date(record.publishedDate).getTime();
-    const recordEndDate = record.unPublishDate
-      ? new Date(record.unPublishDate).getTime()
-      : Infinity;
-    const newDate = new Date(newRecord.publishedDate).getTime();
-    // Check if the new record's date falls within the existing record's date range
-    if (recordStartDate <= newDate && newDate <= recordEndDate) {
-      // Convert time to minutes for easy comparison
-      const existingStart = getMinutes(record.time);
-      const existingEnd = existingStart + record.timeDurationInMin;
-      const newStart = getMinutes(newRecord.time);
-      const newEnd = newStart + newRecord.timeDurationInMin;
+async function isOverlapping(existingSlots, newOne) {
+  for (let slot of existingSlots) {
+    // Convert time strings to minutes since start of the day
+    const [slotHour, slotMinute] = slot.time.split(":").map(Number);
+    const slotStartMinutes = slotHour * 60 + slotMinute;
+    const slotEndMinutes = slotStartMinutes + slot.timeDurationInMin;
 
-      // Check if times overlap
-      return !(newEnd <= existingStart || newStart >= existingEnd);
+    const [newHour, newMinute] = newOne.time.split(":").map(Number);
+    const newStartMinutes = newHour * 60 + newMinute;
+    const newEndMinutes = newStartMinutes + newOne.timeDurationInMin;
+
+    // Convert date strings to Date objects & get timestamps
+    const slotDatesInMs = slot.datesOfClasses.map((date) =>
+      new Date(date).getTime()
+    );
+    const newDatesInMs = newOne.datesOfClasses.map((date) =>
+      new Date(date).getTime()
+    );
+
+    // Check if there is any overlapping date
+    const hasDateOverlap = slotDatesInMs.some((dateMs) =>
+      newDatesInMs.includes(dateMs)
+    );
+
+    // Check if time ranges overlap
+    const hasTimeOverlap =
+      newStartMinutes < slotEndMinutes && newEndMinutes > slotStartMinutes;
+
+    if (hasDateOverlap && hasTimeOverlap) {
+      return true; // Overlap detected
     }
-    return false;
-  });
-}
-
-function getMinutes(time) {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
+  }
+  return false; // No overlap
 }
 
 async function filterQueryOfClassForUser(data) {
@@ -111,56 +121,100 @@ const addNewClassTimes = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
+    // Validate again
+
     const {
       modeOfClass,
       classType,
       time,
+      description,
+      timeDurationInMin,
+      numberOfSeats,
+      numberOfClass,
+      packageType,
+      price,
+      datesOfClasses,
       yogaCategory,
       yTRequirement,
       yTRule,
-      className,
-      description,
-      timeDurationInMin,
-      publishedDate,
-      yogaTutorPackage,
     } = req.body;
-    // Is this course name present
-    const isClassName = await YogaTutorClass.findOne({
-      className,
-      instructor: req.user._id,
-      isDelete: false,
-    });
-    const classNameMessage = "This time slot class name already present!";
-    if (isClassName) return failureResponse(res, 400, classNameMessage);
+    // Price
+    if (Math.ceil(price / numberOfClass) < 500)
+      return failureResponse(
+        res,
+        400,
+        "Price for individual person per day should be greater then 500.",
+        null
+      );
+    if (numberOfClass !== datesOfClasses.length)
+      return failureResponse(res, 400, "Select all dates!", null);
+    // date
+    const today = new Date().toISOString().split("T")[0];
+    const hasPastDate = datesOfClasses.some(
+      (date) => new Date(date).getTime() < new Date(today).getTime()
+    );
+    if (hasPastDate)
+      return failureResponse(res, 400, "Some dates are in the past!", null);
+    if (
+      (packageType.toLowerCase() === "daily" && numberOfClass === 1) ||
+      (packageType.toLowerCase() === "weekly" &&
+        numberOfClass >= 2 &&
+        numberOfClass <= 7) ||
+      (packageType.toLowerCase() === "monthly" &&
+        numberOfClass >= 8 &&
+        numberOfClass <= 28)
+    ) {
+    } else {
+      return failureResponse(
+        res,
+        400,
+        "Package type and classes are not matching.",
+        null
+      );
+    }
+    const dateObjects = datesOfClasses.map((date) => new Date(date).getTime());
+    // Find the smallest (earliest) and greatest (latest) timestamp
+    const startDate = new Date(Math.min(...dateObjects));
+    const endDate = new Date(Math.max(...dateObjects));
+
     // Find all ongoing times
+    const defaultToday = new Date().toISOString().split("T")[0];
     const existingOnGoingTimes = await YogaTutorClass.find({
       instructor: req.user._id,
       isDelete: false,
-      $or: [
-        { unPublishDate: { $exists: false } },
-        { unPublishDate: { $gte: new Date(publishedDate) } },
-      ],
-    }).select("time publishedDate unPublishDate timeDurationInMin");
-    const newTime = { time, timeDurationInMin, publishedDate };
+      endDate: { $gte: new Date(defaultToday) },
+    })
+      .select("time startDate endDate timeDurationInMin datesOfClasses")
+      .lean();
+    const newTime = { time, timeDurationInMin, datesOfClasses };
     // Is over lapping present
-    const checkOverLap = isTimeSlotOverlapping(existingOnGoingTimes, newTime);
+    const checkOverLap = await isOverlapping(existingOnGoingTimes, newTime);
     const overLapMessage =
       "This time slot overlaps with an existing time slot. Please view existing time slots!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
+    // Password
+    const password = generateFixedLengthRandomNumber(
+      process.env.OTP_DIGITS_LENGTH
+    );
     // Create Yoga class
     await YogaTutorClass.create({
       instructorTimeZone: req.user.userTimeZone,
       modeOfClass,
       classType,
+      password,
       time,
-      yogaCategory,
-      yTRequirement,
-      yTRule,
-      className,
+      yogaCategory: yogaCategory?.length > 0 ? yogaCategory : [],
+      yTRequirement: yTRequirement?.length > 0 ? yTRequirement : [],
+      yTRule: yTRule?.length > 0 ? yTRule : [],
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      datesOfClasses: datesOfClasses.map((date) => new Date(date)),
+      numberOfSeats,
+      numberOfClass,
+      packageType,
+      price,
       description,
       timeDurationInMin,
-      publishedDate,
-      yogaTutorPackage,
       instructor: req.user._id,
     });
 
@@ -192,7 +246,6 @@ const classTimesForInstructor = async (req, res) => {
     if (search) {
       const containInString = new RegExp(req.query.search, "i");
       query.$or = [
-        { className: containInString },
         { classType: containInString },
         { modeOfClass: containInString },
         { description: containInString },
@@ -210,25 +263,18 @@ const classTimesForInstructor = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin approvalByAdmin instructorTimeZone createdAt"
+          "_id modeOfClass classType startDate endDate price time timeDurationInMin approvalByAdmin instructorTimeZone createdAt"
         )
-        .sort({ publishedDate: -1, unPublishDate: -1 })
+        .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
         .limit(resultPerPage)
-        .populate(
-          "yogaTutorPackage",
-          "packageType packageName group_price individual_price numberOfDays"
-        )
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);
     const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
-    const transformData = classes.map((times) => {
-      return { ...times, unPublishDate: times.unPublishDate || null };
-    });
     // Send final success response
     return successResponse(res, 200, "Successfully", {
-      data: transformData,
+      data: classes,
       totalPages: totalPages,
       currentPage: page,
     });
@@ -357,8 +403,7 @@ const classTimesForAdmin = async (req, res) => {
       modeOfClass,
       classType,
       search,
-      approvalByAdmin = "pending",
-      anyApprovalRequest,
+      approvalByAdmin = "pending"
     } = req.query;
     // Pagination
     const resultPerPage = req.query.resultPerPage
@@ -372,7 +417,6 @@ const classTimesForAdmin = async (req, res) => {
     if (search) {
       const containInString = new RegExp(req.query.search, "i");
       query.$or = {
-        className: containInString,
         classType: containInString,
         modeOfClass: containInString,
         description: containInString,
@@ -386,22 +430,15 @@ const classTimesForAdmin = async (req, res) => {
       query.classType = classType;
     }
     query.approvalByAdmin = approvalByAdmin;
-    if (
-      anyApprovalRequest &&
-      (anyApprovalRequest === "true" || anyApprovalRequest === "false")
-    ) {
-      query.anyApprovalRequest = JSON.parse(anyApprovalRequest);
-    }
     // Get required data
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin instructorTimeZone yTRequirement yTRule createdAt anyApprovalRequest"
+          "_id modeOfClass classType startDate time timeDurationInMin description approvalByAdmin instructorTimeZone yTRequirement yTRule createdAt"
         )
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .populate("yogaTutorPackage", "group_price individual_price")
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);

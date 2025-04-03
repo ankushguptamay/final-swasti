@@ -5,7 +5,6 @@ import {
 import { validateYTRule } from "../../MiddleWare/Validation/master.js";
 import { YogaTutorRule } from "../../Model/Master/yogaTutorRulesModel.js";
 import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { YTClassSlot } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassSlotModel.js";
 
 // Main Controller
 const addYTRule = async (req, res) => {
@@ -75,10 +74,6 @@ const deleteYTRule = async (req, res) => {
       );
     // Delete from all place
     await YogaTutorClass.updateMany(
-      { yTRule: rules._id },
-      { $pull: { yTRule: rules._id } }
-    );
-    await YTClassSlot.updateMany(
       { yTRule: rules._id },
       { $pull: { yTRule: rules._id } }
     );

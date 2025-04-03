@@ -9,10 +9,26 @@ const validateYTClassTimes = (data) => {
     description: joi.string().optional(),
     time: joi.string().length(5).required(),
     timeDurationInMin: joi.number().required(),
-    className: joi.string().required(),
-    yogaTutorPackage: joi.string().required(),
+    packageType: joi.string().valid("weekly", "daily", "monthly").required(),
     classType: joi.string().valid("individual", "group").required(),
-    publishedDate: joi
+    numberOfSeats: joi.number().required(),
+    numberOfClass: joi.number().required(),
+    price: joi.number().required(),
+    datesOfClasses: joi
+      .array()
+      .min(1)
+      .items(
+        joi
+          .string()
+          .pattern(/^\d{4}-\d{2}-\d{2}$/)
+          .required()
+      )
+      .required(),
+    startDate: joi
+      .string()
+      .pattern(/^\d{4}-\d{2}-\d{2}$/)
+      .required(),
+    endDate: joi
       .string()
       .pattern(/^\d{4}-\d{2}-\d{2}$/)
       .required(),

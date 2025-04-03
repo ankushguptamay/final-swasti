@@ -6,7 +6,6 @@ import {
 import { validateYogaCategory } from "../../MiddleWare/Validation/master.js";
 import { YogaCategory } from "../../Model/Master/yogaCategoryModel.js";
 import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { YTClassSlot } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassSlotModel.js";
 
 const addYogaCategory = async (req, res) => {
   try {
@@ -132,10 +131,6 @@ const deleteYogaCategory = async (req, res) => {
     }
     // Delete from all place
     await YogaTutorClass.updateMany(
-      { yogaCategory: yogaCategory._id },
-      { $pull: { yogaCategory: yogaCategory._id } }
-    );
-    await YTClassSlot.updateMany(
       { yogaCategory: yogaCategory._id },
       { $pull: { yogaCategory: yogaCategory._id } }
     );
