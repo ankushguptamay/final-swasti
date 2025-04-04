@@ -20,9 +20,6 @@ const connectDB = async (uri) => {
 
 async function dropCollection() {
   try {
-    const db = mongoose.connection.db;
-    const collections = await db.listCollections().toArray();
-    console.log(collections);
     await mongoose.connection.db.dropCollection("ytclassslots");
     console.log("Collection YTClassSlot deleted successfully.");
     await mongoose.connection.db.dropCollection("yogatutorclasses");

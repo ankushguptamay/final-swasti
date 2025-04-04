@@ -181,8 +181,16 @@ const addNewClassTimes = async (req, res) => {
       .select("time startDate endDate timeDurationInMin datesOfClasses")
       .lean();
     const newTime = { time, timeDurationInMin, datesOfClasses };
+    // trans form Change
+    const existingTimes = existingOnGoingTimes.map((times) => {
+      return {
+        time: times.time,
+        timeDurationInMin: times.timeDurationInMin,
+        datesOfClasses: times.datesOfClasses.map((dates) => dates.date),
+      };
+    });
     // Is over lapping present
-    const checkOverLap = await isOverlapping(existingOnGoingTimes, newTime);
+    const checkOverLap = await isOverlapping(existingTimes, newTime);
     const overLapMessage =
       "This time slot overlaps with an existing time slot. Please view existing time slots!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
@@ -190,6 +198,9 @@ const addNewClassTimes = async (req, res) => {
     const password = generateFixedLengthRandomNumber(
       process.env.OTP_DIGITS_LENGTH
     );
+    const dateObject = datesOfClasses.map((dates) => {
+      return { date: new Date(dates), meetingLink: null };
+    });
     // Create Yoga class
     await YogaTutorClass.create({
       instructorTimeZone: req.user.userTimeZone,
@@ -202,7 +213,7 @@ const addNewClassTimes = async (req, res) => {
       yTRule: yTRule?.length > 0 ? yTRule : [],
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      datesOfClasses: datesOfClasses.map((date) => new Date(date)),
+      datesOfClasses: dateObject,
       numberOfSeats,
       numberOfClass,
       packageType,
@@ -541,30 +552,37 @@ const classTimesForUser = async (req, res) => {
     const totalPages = totalClasses[0]?.total
       ? Math.ceil(totalClasses[0].total / resultPerPage)
       : 0;
-    const transformData = classes.map((times) => {
-      const classStartTimeInUTC = convertGivenTimeZoneToUTC(
-        `${times.startDate}T${times.time}:00.000`,
-        times.instructorTimeZone
-      );
-      const datesOfClasses = [];
-      for (let i = 0; i < datesOfClasses.length; i++) {
-        const classDatesTimeInUTC = convertGivenTimeZoneToUTC(
-          `${datesOfClasses[i]}T${times.time}:00.000`,
+    const transformData = await Promise.all(
+      classes.map(async (times) => {
+        const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
+          `${times.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
           times.instructorTimeZone
         );
-        const day = getDatesDay(classDatesTimeInUTC);
-        datesOfClasses.push({
-          date: datesOfClasses[i],
-          classDatesTimeInUTC,
-          day,
-        });
-      }
-      return {
-        ...times,
-        classStartTimeInUTC,
-        datesOfClasses,
-      };
-    });
+        const datesOfClasses = [];
+        for (let i = 0; i < times.datesOfClasses.length; i++) {
+          const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+            `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
+              times.time
+            }:00.000`,
+            times.instructorTimeZone
+          );
+          const day = await getDatesDay(
+            classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+          );
+          datesOfClasses.push({
+            date: times.datesOfClasses[i].date,
+            classDatesTimeInUTC,
+            day,
+            meetingLink: times.datesOfClasses[i].meetingLink,
+          });
+        }
+        return {
+          ...times,
+          classStartTimeInUTC,
+          datesOfClasses,
+        };
+      })
+    );
     // Send final success response
     return successResponse(res, 200, "Successfully", {
       data: transformData,

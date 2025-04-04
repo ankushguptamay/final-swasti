@@ -9,7 +9,7 @@ async function convertGivenTimeZoneToUTC(dateTime, timeZone) {
 }
 
 async function getDatesDay(dateInUTC) {
-  const date = new Date(dateString);
+  const date = new Date(dateInUTC);
   // Get day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
   const dayIndex = date.getUTCDay();
   const days = [

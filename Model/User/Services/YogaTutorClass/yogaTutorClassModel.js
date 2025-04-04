@@ -33,7 +33,9 @@ const schema = new Schema(
     endDate: { type: Date },
     time: { type: String }, // 24 hours formate
     timeDurationInMin: { type: Number, required: true },
-    datesOfClasses: [{ type: Date }],
+    datesOfClasses: [
+      { date: { type: Date }, meetingLink: { type: String, default: null } },
+    ],
     price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
     // Approval
@@ -50,7 +52,6 @@ const schema = new Schema(
     instructorTimeZone: { type: String }, // Note 1.
     password: { type: Number, required: true },
     isBooked: { type: Boolean, default: false },
-    meetingLink: { type: String },
     totalBookedSeat: { type: Number, default: 0 },
     // Associations
     yogaCategory: [{ type: Types.ObjectId, ref: "YogaCategory" }],
