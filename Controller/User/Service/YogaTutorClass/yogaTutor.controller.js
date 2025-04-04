@@ -18,7 +18,10 @@ import {
 import { User } from "../../../../Model/User/Profile/userModel.js";
 import { YTClassUpdateHistory } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassHistoryModel.js";
 import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { convertGivenTimeZoneToUTC } from "../../../../Util/timeZone.js";
+import {
+  convertGivenTimeZoneToUTC,
+  getDatesDay,
+} from "../../../../Util/timeZone.js";
 
 // Helper
 async function isOverlapping(existingSlots, newOne) {
@@ -63,7 +66,8 @@ async function filterQueryOfClassForUser(data) {
     search,
     date = new Date().toISOString().split("T")[0], // Default today
     timing,
-    miP = 100, // minimumPrice,
+    pt, // packageType
+    miP = 500, // minimumPrice,
     maP = 100000, // maximumPrice,
   } = data;
   // Find Instructor Whose education, profilePic present
@@ -82,7 +86,7 @@ async function filterQueryOfClassForUser(data) {
   if (search) {
     const containInString = new RegExp(search, "i");
     query.$or = [
-      { className: containInString },
+      { packageType: containInString },
       { classType: containInString },
       { modeOfClass: containInString },
       { description: containInString },
@@ -90,27 +94,17 @@ async function filterQueryOfClassForUser(data) {
   }
   // Filter
   if (mOC) query.modeOfClass = mOC;
-  if (date)
-    query.$or = [
-      { unPublishDate: { $exists: false } },
-      { unPublishDate: { $gte: new Date(date) } },
-    ];
+  if (date) query.startDate = { $gte: new Date(date) };
   if (timing) query.time = timing;
   query.classType = cT;
-  const divide = "$yogaTutorPackage.numberOfDays";
-  let type = "$yogaTutorPackage.individual_price";
-  if (cT === "group") {
-    type = "$yogaTutorPackage.group_price";
-  }
-  const priceQuery = {
-    $expr: {
-      $and: [
-        { $gte: [{ $divide: [type, divide] }, miP] },
-        { $lte: [{ $divide: [type, divide] }, maP] },
-      ],
-    },
+  // Price
+  query.$expr = {
+    $and: [
+      { $gte: [{ $divide: ["$price", "$numberOfClass"] }, miP] },
+      { $lte: [{ $divide: ["$price", "$numberOfClass"] }, maP] },
+    ],
   };
-  return { query, priceQuery };
+  return query;
 }
 
 // Main Controller
@@ -292,12 +286,10 @@ const updateYTClassTimes = async (req, res) => {
     }
     // Body
     const {
-      className,
-      yogaTutorPackage,
-      yogaCategory,
-      description,
-      yTRequirement,
-      yTRule,
+      price,
+      yogaCategory = [],
+      yTRequirement = [],
+      yTRule = [],
     } = req.body;
     const _id = req.params.id;
     // Find record
@@ -305,91 +297,100 @@ const updateYTClassTimes = async (req, res) => {
       _id,
       instructor: req.user._id,
       isDelete: false,
-    }).select(
-      "approvalByAdmin anyApprovalRequest className yogaCategory description yogaTutorPackage yTRequirement yTRule"
-    );
+    }).select("price yogaCategory yTRequirement yTRule numberOfClass isBooked");
     if (!classes)
       return failureResponse(res, 400, "This class is not present!", null);
-    // Get Changed field
-    if (classes._doc.approvalByAdmin === "accepted") {
-      const forHistory = {};
-      const forDirectUpdate = {};
-      let anyApprovalRequest = false,
-        approvalByAdmin = "accepted";
-      // Class Name
-      if (className !== classes._doc.className) {
-        anyApprovalRequest = true;
-        approvalByAdmin = "pending";
-        forHistory.className = className;
-      }
-      // Description
-      if (description !== classes._doc.description) {
-        anyApprovalRequest = true;
-        approvalByAdmin = "pending";
-        forHistory.description = description;
-      }
-      // Yoga Tutor Package
-      if (
-        yogaTutorPackage.toString() != classes._doc.yogaTutorPackage.toString()
-      ) {
-        forHistory.yogaTutorPackage = yogaTutorPackage;
-        forDirectUpdate.yogaTutorPackage = yogaTutorPackage;
-      }
-      //  Yoga Tutor
-      if (yogaCategory && yogaCategory.length >= 1) {
-        const existing = classes._doc.yogaCategory.map((eve) => eve.toString());
-        const isEqual = await compareArrays(
-          yogaCategory.sort(),
-          existing.sort()
-        );
-        if (!isEqual) {
-          forHistory.yogaCategory = yogaCategory;
-          forDirectUpdate.yogaCategory = yogaCategory;
-        }
-      }
-      // Requirement
-      if (yTRequirement && yTRequirement.length >= 1) {
-        const existing = classes._doc.yTRequirement
-          ? classes._doc.yTRequirement.map((eve) => eve.toString())
-          : [];
-        const isEqual = await compareArrays(
-          yTRequirement.sort(),
-          existing.sort()
-        );
-        if (!isEqual) forDirectUpdate.yTRequirement = yTRequirement;
-      }
-      // Rule
-      if (yTRule && yTRule.length >= 1) {
-        const existing = classes._doc.yTRule
-          ? classes._doc.yTRule.map((eve) => eve.toString())
-          : [];
-        const isEqual = await compareArrays(yTRule.sort(), existing.sort());
-        if (!isEqual) forDirectUpdate.yTRule = yTRule;
-      }
-      // Update
-      await classes.updateOne({
-        $set: { ...forDirectUpdate, anyApprovalRequest },
-      });
-      // Update any if pending
-      await YTClassUpdateHistory.updateMany(
-        { yogaTutorClass: _id, approvalByAdmin: "Pending" },
-        { $set: { approvalByAdmin: "rejected" } }
+    // Only Non booked class can update
+    if (classes.isBooked)
+      return failureResponse(
+        res,
+        400,
+        "A booked yoga class can not be update.",
+        null
       );
+    // Price
+    if (Math.ceil(price / classes.numberOfClass) < 500)
+      return failureResponse(
+        res,
+        400,
+        "Price for individual person per day should be greater then 500.",
+        null
+      );
+    // Get Changed field
+    const changedField = {};
+    //  Yoga Tutor category
+    if (yogaCategory.length >= 1) {
+      const existing = classes._doc.yogaCategory.map((eve) => eve.toString());
+      const isEqual = await compareArrays(yogaCategory.sort(), existing.sort());
+      if (!isEqual) {
+        changedField.yogaCategory = yogaCategory;
+      }
+    }
+    // Requirement
+    if (yTRequirement.length >= 1) {
+      const existing = classes._doc.yTRequirement
+        ? classes._doc.yTRequirement.map((eve) => eve.toString())
+        : [];
+      const isEqual = await compareArrays(
+        yTRequirement.sort(),
+        existing.sort()
+      );
+      if (!isEqual) changedField.yTRequirement = yTRequirement;
+    }
+    // Rule
+    if (yTRule.length >= 1) {
+      const existing = classes._doc.yTRule
+        ? classes._doc.yTRule.map((eve) => eve.toString())
+        : [];
+      const isEqual = await compareArrays(yTRule.sort(), existing.sort());
+      if (!isEqual) forDirectUpdate.yTRule = yTRule;
+    }
+    // update record accordingly
+    if (classes._doc.approvalByAdmin === "accepted") {
+      // Update Class
+      await classes.updateOne({ $set: { ...changedField } });
       // Create new history
-      if (Object.entries(forHistory).length !== 0) {
+      if (Object.entries(changedField).length !== 0) {
         await YTClassUpdateHistory.create({
-          ...forHistory,
-          approvalByAdmin,
+          ...changedField,
           yogaTutorClass: _id,
         });
       }
-    } else if (classes._doc.approvalByAdmin === "rejected") {
-      await classes.updateOne({
-        $set: { ...req.body, approvalByAdmin: "pending" },
-      });
     } else {
-      await classes.updateOne({ $set: { ...req.body } });
+      await classes.updateOne({
+        $set: { ...changedField, approvalByAdmin: "pending" },
+      });
     }
+    // Send final success response
+    return successResponse(res, 201, "Updated Successfully!");
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+const deleteYTClassTimes = async (req, res) => {
+  try {
+    const _id = req.params.id;
+    // Find record
+    const classes = await YogaTutorClass.findOne({
+      _id,
+      instructor: req.user._id,
+      isDelete: false,
+    }).select("isBooked");
+    if (!classes)
+      return failureResponse(res, 400, "This class is not present!", null);
+    // Only Non booked class can delete
+    if (classes.isBooked)
+      return failureResponse(
+        res,
+        400,
+        "A booked yoga class can not be delete.",
+        null
+      );
+    // Update Class to soft delete
+    await classes.updateOne({
+      $set: { isDelete: true, deleted_at: new Date() },
+    });
     // Send final success response
     return successResponse(res, 201, "Updated Successfully!");
   } catch (err) {
@@ -403,7 +404,7 @@ const classTimesForAdmin = async (req, res) => {
       modeOfClass,
       classType,
       search,
-      approvalByAdmin = "pending"
+      approvalByAdmin = "pending",
     } = req.query;
     // Pagination
     const resultPerPage = req.query.resultPerPage
@@ -434,7 +435,7 @@ const classTimesForAdmin = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType startDate time timeDurationInMin description approvalByAdmin instructorTimeZone yTRequirement yTRule createdAt"
+          "_id modeOfClass classType startDate endDate time price timeDurationInMin description approvalByAdmin createdAt"
         )
         .sort({ createdAt: 1 })
         .skip(skip)
@@ -467,115 +468,23 @@ const approvalClassTimes = async (req, res) => {
     const classes = await YogaTutorClass.findOne({
       _id,
       isDelete: false,
-    }).select(
-      "approvalByAdmin className yogaCategory description yogaTutorPackage"
-    );
+    }).select("approvalByAdmin yogaCategory yTRequirement yTRule price");
     if (!classes)
       return failureResponse(res, 400, "This class is not present!", null);
     // Save History
     if (approvalByAdmin === "accepted") {
       await YTClassUpdateHistory.create({
-        approvalByAdmin,
-        className: classes.className,
         yogaCategory: classes.yogaCategory,
-        description: classes.description,
-        yogaTutorPackage: classes.yogaTutorPackage,
+        price: classes.price,
+        yTRequirement: classes.yTRequirement,
+        yTRule: classes.yTRule,
         yogaTutorClass: _id,
       });
     }
     // Save
-    await classes.updateOne({
-      $set: { approvalByAdmin, anyApprovalRequest: false },
-    });
-    // Send final success response
-    return successResponse(res, 201, `Class ${approvalByAdmin} successfully`);
-  } catch (err) {
-    failureResponse(res, 500, err.message, null);
-  }
-};
-
-const classTimesUpdationRequest = async (req, res) => {
-  try {
-    // Pagination
-    const resultPerPage = req.query.resultPerPage
-      ? parseInt(req.query.resultPerPage)
-      : 20;
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const skip = (page - 1) * resultPerPage;
-    // Query
-    const query = { approvalByAdmin: "pending" };
-
-    // Get required data
-    const [classes, totalClasses] = await Promise.all([
-      YTClassUpdateHistory.find(query)
-        .select(
-          "_id className description yogaTutorPackage yogaCategory approvalByAdmin createdAt"
-        )
-        .sort({ createdAt: 1 })
-        .skip(skip)
-        .limit(resultPerPage)
-        .populate(
-          "yogaTutorClass",
-          "_id modeOfClass classType className publishedDate time timeDurationInMin description approvalByAdmin instructorTimeZone createdAt"
-        )
-        .lean(),
-      YTClassUpdateHistory.countDocuments(query),
-    ]);
-    const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
-    // Send final success response
-    return successResponse(res, 200, "Successfully", {
-      data: classes,
-      totalPages: totalPages,
-      currentPage: page,
-    });
-  } catch (err) {
-    failureResponse(res, 500, err.message, null);
-  }
-};
-
-const approvalClassTimesUpdate = async (req, res) => {
-  try {
-    // Body Validation
-    const { error } = validateApprovalClassTimes(req.body);
-    if (error) {
-      return failureResponse(res, 400, error.details[0].message, null);
-    }
-    const approvalByAdmin = req.body.approvalByAdmin;
-    const _id = req.params.id;
-    // Find record
-    const classes = await YTClassUpdateHistory.findOne({ _id }).select(
-      "approvalByAdmin className description yogaTutorClass"
-    );
-    if (!classes)
-      return failureResponse(
-        res,
-        400,
-        "This class updation request is not present!",
-        null
-      );
-    const data = { anyApprovalRequest: false };
-    // Save History
-    if (approvalByAdmin === "accepted") {
-      if (classes._doc.className) {
-        data.className = classes._doc.className;
-      }
-      if (classes._doc.description) {
-        data.description = classes._doc.description;
-      }
-    }
-    // Update
-    await YogaTutorClass.updateOne(
-      { _id: classes._doc.yogaTutorClass },
-      { $set: { data } }
-    );
-    // Save
     await classes.updateOne({ $set: { approvalByAdmin } });
     // Send final success response
-    return successResponse(
-      res,
-      201,
-      `Request ${approvalByAdmin} successfully.`
-    );
+    return successResponse(res, 201, `Class ${approvalByAdmin} successfully`);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -591,23 +500,17 @@ const classTimesDetailsForInstructor = async (req, res) => {
     // Get required data
     const classes = await YogaTutorClass.findOne(query)
       .select(
-        "_id modeOfClass classType className publishedDate unPublishDate time description timeDurationInMin approvalByAdmin createdAt"
-      )
-      .populate(
-        "yogaTutorPackage",
-        "packageType packageName group_price individual_price numberOfDays"
+        "_id modeOfClass classType startDate endDate time description price timeDurationInMin numberOfSeats numberOfClass packageType datesOfClasses approvalByAdmin createdAt"
       )
       .populate("yogaCategory", "yogaCategory description")
       .populate("yTRule", "rule")
-      .populate("yTRequirement", "requirement");
+      .populate("yTRequirement", "requirement")
+      .lean();
 
     if (!classes)
       return failureResponse(res, 400, "This class is not present!", null);
     // Send final success response
-    return successResponse(res, 200, "Successfully", {
-      ...classes._doc,
-      unPublishDate: classes._doc.unPublishDate || null,
-    });
+    return successResponse(res, 200, "Successfully", classes);
   } catch (err) {
     failureResponse(res, 500, err.message, null);
   }
@@ -622,72 +525,44 @@ const classTimesForUser = async (req, res) => {
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const skip = (page - 1) * resultPerPage;
     // Filter query
-    const { query, priceQuery } = await filterQueryOfClassForUser(req.query);
+    const query = await filterQueryOfClassForUser(req.query);
     // Get required data
     const [classes, totalClasses] = await Promise.all([
-      YogaTutorClass.aggregate([
-        {
-          $lookup: {
-            from: "yogatutorpackages",
-            localField: "yogaTutorPackage",
-            foreignField: "_id",
-            as: "yogaTutorPackage",
-          },
-        },
-        { $unwind: "$yogaTutorPackage" }, // Flatten array
-        { $match: query },
-        { $match: priceQuery },
-        {
-          $project: {
-            _id: 1,
-            modeOfClass: 1,
-            classType: 1,
-            className: 1,
-            publishedDate: 1,
-            unPublishDate: 1,
-            time: 1,
-            timeDurationInMin: 1,
-            approvalByAdmin: 1,
-            instructorTimeZone: 1,
-            createdAt: 1,
-            "yogaTutorPackage.packageType": 1,
-            "yogaTutorPackage.packageName": 1,
-            "yogaTutorPackage.group_price": 1,
-            "yogaTutorPackage.individual_price": 1,
-            "yogaTutorPackage.numberOfDays": 1,
-          },
-        },
-        { $sort: { publishedDate: -1, unPublishDate: -1 } },
-        { $skip: skip },
-        { $limit: resultPerPage },
-      ]),
-      YogaTutorClass.aggregate([
-        {
-          $lookup: {
-            from: "yogatutorpackages",
-            localField: "yogaTutorPackage",
-            foreignField: "_id",
-            as: "yogaTutorPackage",
-          },
-        },
-        { $unwind: "$yogaTutorPackage" },
-        { $match: query },
-        { $match: priceQuery },
-        { $count: "total" }, // Correct count method
-      ]),
+      YogaTutorClass.find(query)
+        .select(
+          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin datesOfClasses instructorTimeZone createdAt"
+        )
+        .sort({ startDate: -1, endDate: -1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .lean(),
+      YogaTutorClass.countDocuments(query),
     ]);
     const totalPages = totalClasses[0]?.total
       ? Math.ceil(totalClasses[0].total / resultPerPage)
       : 0;
     const transformData = classes.map((times) => {
-      const classPublishTimeInUTC = convertGivenTimeZoneToUTC(
-        `${times.publishedDate}T${times.time}:00.000`,
+      const classStartTimeInUTC = convertGivenTimeZoneToUTC(
+        `${times.startDate}T${times.time}:00.000`,
         times.instructorTimeZone
       );
+      const datesOfClasses = [];
+      for (let i = 0; i < datesOfClasses.length; i++) {
+        const classDatesTimeInUTC = convertGivenTimeZoneToUTC(
+          `${datesOfClasses[i]}T${times.time}:00.000`,
+          times.instructorTimeZone
+        );
+        const day = getDatesDay(classDatesTimeInUTC);
+        datesOfClasses.push({
+          date: datesOfClasses[i],
+          classDatesTimeInUTC,
+          day,
+        });
+      }
       return {
         ...times,
-        unPublishDate: times.unPublishDate || null,
-        classPublishTimeInUTC,
+        classStartTimeInUTC,
+        datesOfClasses,
       };
     });
     // Send final success response
@@ -707,8 +582,7 @@ export {
   updateYTClassTimes,
   classTimesForAdmin,
   approvalClassTimes,
-  approvalClassTimesUpdate,
-  classTimesUpdationRequest,
   classTimesDetailsForInstructor,
   classTimesForUser,
+  deleteYTClassTimes,
 };

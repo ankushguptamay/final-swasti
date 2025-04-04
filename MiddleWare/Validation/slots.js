@@ -52,9 +52,7 @@ const validateUpdateYTClassTimes = (data) => {
     yTRule: joi.array().optional(),
     yTRequirement: joi.array().optional(),
     yogaCategory: joi.array().min(1).items(joi.string().required()).required(),
-    description: joi.string().optional(),
-    yogaTutorPackage: joi.string().required(),
-    className: joi.string().required(),
+    price: joi.number().required(),
   });
   return schema.validate(data);
 };

@@ -139,62 +139,16 @@ async function generateUserCode(preFix) {
   return userCode;
 }
 
-async function bindByPackageId(classes) {
-  const yTClassTime = classes.reduce((acc, item) => {
-    const {
-      _id,
-      modeOfClass,
-      classType,
-      className,
-      publishedDate,
-      unPublishDate,
-      time,
-      timeDurationInMin,
-      instructorTimeZone,
-      yogaTutorPackage,
-    } = item;
-    const {
-      _id: package_id,
-      packageType,
-      packageName,
-      group_price,
-      individual_price,
-      numberOfDays,
-    } = yogaTutorPackage;
-
-    // Find existing group
-    let group = acc.find((g) => g.package_id === package_id);
-
+async function bindByPackageType(data) {
+  const yTClassTime = data.reduce((acc, { packageType, ...rest }) => {
+    let group = acc.find(
+      (g) => g.packageType.toLowerCase() === packageType.toLowerCase()
+    );
     if (!group) {
-      // Create new group if not found
-      group = {
-        package_id,
-        packageType,
-        packageName,
-        group_price,
-        individual_price,
-        numberOfDays,
-        classTimes: [],
-      };
+      group = { packageType: packageType, yogaClasses: [] };
       acc.push(group);
     }
-    const classPublishTimeInUTC = convertGivenTimeZoneToUTC(
-      `${publishedDate}T${time}:00.000`,
-      instructorTimeZone
-    );
-    // Add class details
-    group.classTimes.push({
-      _id,
-      className,
-      modeOfClass,
-      classType,
-      publishedDate,
-      unPublishDate,
-      time,
-      timeDurationInMin,
-      classPublishTimeInUTC,
-    });
-
+    group.yogaClasses.push(rest);
     return acc;
   }, []);
   return yTClassTime;
@@ -311,7 +265,7 @@ const loginByMobile = async (req, res) => {
 
     // Generate OTP for Email
     const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    console.log(otp)
+    // console.log(otp);
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
     //  Store OTP
@@ -1095,29 +1049,20 @@ const instructorDetailsForLearner = async (req, res) => {
         .limit(20)
         .lean(),
       YogaTutorClass.find({
-        $or: [
-          { unPublishDate: { $exists: false } },
-          {
-            unPublishDate: {
-              $gte: new Date(new Date().toISOString().split("T")[0]),
-            },
-          },
-        ],
+        startDate: {
+          $gte: new Date(new Date().toISOString().split("T")[0]),
+        },
         instructor: req.params.id,
         isDelete: false,
         approvalByAdmin: "accepted",
       })
         .select(
-          "_id modeOfClass classType className publishedDate unPublishDate time timeDurationInMin instructorTimeZone"
-        )
-        .populate(
-          "yogaTutorPackage",
-          "packageType packageName group_price individual_price numberOfDays"
+          "_id modeOfClass classType startDate endDate packageType numberOfClass time price timeDurationInMin instructorTimeZone"
         )
         .lean(),
     ]);
     data.similarProfile = similarProfile;
-    data.yTClassTime = await bindByPackageId(yogaClasses);
+    data.yTClassTime = await bindByPackageType(yogaClasses);
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { data });
   } catch (err) {
