@@ -550,6 +550,7 @@ const classTimesForUser = async (req, res) => {
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
         .limit(resultPerPage)
+        .populate("instructor", "name profilePic")
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);
@@ -584,6 +585,11 @@ const classTimesForUser = async (req, res) => {
           ...times,
           classStartTimeInUTC,
           datesOfClasses,
+          instructor: {
+            _id: times.instructor._id,
+            name: times.instructor.name,
+            profilePic: times.instructor.profilePic.url,
+          },
         };
       })
     );
