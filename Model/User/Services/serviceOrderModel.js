@@ -18,7 +18,7 @@ const schema = new Schema(
       enum: ["pending", "completed", "cancelled", "refunded", "failed"],
       default: "pending",
     },
-    reference: { type: String, unique: true }, // Unique transaction ID
+    receipt: { type: String, unique: true }, // Unique transaction ID
   },
   { timestamps: true }
 );

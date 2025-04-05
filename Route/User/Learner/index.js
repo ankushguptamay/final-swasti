@@ -3,6 +3,7 @@ const router = express.Router();
 
 import profile from "./profile.js";
 import instructor from "./instructor.js";
+import service from "./services.js";
 
 // Middleware
 import { verifyUserJWT } from "../../../MiddleWare/verifyJWTToken.js";
@@ -21,5 +22,6 @@ router.use((req, res, next) => {
 
 router.use("/profile", profile);
 router.use("/inst", instructor);
+router.use("/service", service);
 
 export default router;

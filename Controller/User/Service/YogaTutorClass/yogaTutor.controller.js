@@ -319,16 +319,21 @@ const updateYTClassTimes = async (req, res) => {
         "A booked yoga class can not be update.",
         null
       );
-    // Price
-    if (Math.ceil(price / classes.numberOfClass) < 500)
-      return failureResponse(
-        res,
-        400,
-        "Price for individual person per day should be greater then 500.",
-        null
-      );
     // Get Changed field
     const changedField = {};
+    // Price
+    if (price !== classes._doc.price) {
+      if (Math.ceil(price / classes.numberOfClass) < 500) {
+        return failureResponse(
+          res,
+          400,
+          "Price for individual person per day should be greater then 500.",
+          null
+        );
+      } else {
+        changedField.price = price;
+      }
+    }
     //  Yoga Tutor category
     if (yogaCategory.length >= 1) {
       const existing = classes._doc.yogaCategory.map((eve) => eve.toString());
