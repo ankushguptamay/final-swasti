@@ -335,32 +335,31 @@ const updateYTClassTimes = async (req, res) => {
       }
     }
     //  Yoga Tutor category
-    if (yogaCategory.length >= 1) {
-      const existing = classes._doc.yogaCategory.map((eve) => eve.toString());
-      const isEqual = await compareArrays(yogaCategory.sort(), existing.sort());
-      if (!isEqual) {
-        changedField.yogaCategory = yogaCategory;
-      }
+    const existingCategory = classes._doc.yogaCategory.map((eve) =>
+      eve.toString()
+    );
+    const isEqualCategory = await compareArrays(
+      yogaCategory.sort(),
+      existingCategory.sort()
+    );
+    if (!isEqualCategory) {
+      changedField.yogaCategory = yogaCategory;
     }
     // Requirement
-    if (yTRequirement.length >= 1) {
-      const existing = classes._doc.yTRequirement
-        ? classes._doc.yTRequirement.map((eve) => eve.toString())
-        : [];
-      const isEqual = await compareArrays(
-        yTRequirement.sort(),
-        existing.sort()
-      );
-      if (!isEqual) changedField.yTRequirement = yTRequirement;
-    }
+    const existingRequirement = classes._doc.yTRequirement
+      ? classes._doc.yTRequirement.map((eve) => eve.toString())
+      : [];
+    const isEqualRequirement = await compareArrays(
+      yTRequirement.sort(),
+      existingRequirement.sort()
+    );
+    if (!isEqualRequirement) changedField.yTRequirement = yTRequirement;
     // Rule
-    if (yTRule.length >= 1) {
-      const existing = classes._doc.yTRule
-        ? classes._doc.yTRule.map((eve) => eve.toString())
-        : [];
-      const isEqual = await compareArrays(yTRule.sort(), existing.sort());
-      if (!isEqual) forDirectUpdate.yTRule = yTRule;
-    }
+    const existingRule = classes._doc.yTRule
+      ? classes._doc.yTRule.map((eve) => eve.toString())
+      : [];
+    const isEqualRule = await compareArrays(yTRule.sort(), existingRule.sort());
+    if (!isEqualRule) changedField.yTRule = yTRule;
     // update record accordingly
     if (classes._doc.approvalByAdmin === "accepted") {
       // Update Class
