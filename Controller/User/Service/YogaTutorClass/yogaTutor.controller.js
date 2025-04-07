@@ -551,6 +551,7 @@ const classTimesForUser = async (req, res) => {
         .skip(skip)
         .limit(resultPerPage)
         .populate("instructor", "name profilePic")
+        .populate("yogaCategory", "-_id yogaCategory description")
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);

@@ -1098,6 +1098,7 @@ const instructorDetailsForLearner = async (req, res) => {
         .select(
           "_id modeOfClass classType startDate endDate packageType numberOfClass time price datesOfClasses timeDurationInMin instructorTimeZone"
         )
+        .populate("yogaCategory", "-_id yogaCategory description")
         .lean(),
     ]);
     data.similarProfile = similarProfile;
