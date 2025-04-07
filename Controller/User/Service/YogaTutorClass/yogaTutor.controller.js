@@ -62,7 +62,7 @@ async function isOverlapping(existingSlots, newOne) {
 async function filterQueryOfClassForUser(data) {
   const {
     mOC, // modeOfClass,
-    cT = "individual", // classType,
+    cT, // classType,
     search,
     date = new Date().toISOString().split("T")[0], // Default today
     timing,
@@ -96,7 +96,7 @@ async function filterQueryOfClassForUser(data) {
   if (mOC) query.modeOfClass = mOC;
   if (date) query.startDate = { $gte: new Date(date) };
   if (timing) query.time = timing;
-  query.classType = cT;
+  if (cT) query.classType = cT;
   // Price
   query.$expr = {
     $and: [

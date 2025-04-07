@@ -7,8 +7,8 @@ const schema = new Schema(
     serviceOrder: { type: Types.ObjectId, ref: "ServiceOrder" },
     user: { type: Types.ObjectId, ref: "User", required: true },
     // Amount
-    amountRecieved: { type: Number },
-    amountWithdrawed: { type: Number },
+    amount: { type: Number },
+    amountWithdrawed: { type: Number, default: 0 },
     withDrawDone: { type: Boolean, default: false },
     // Payment
     razorpayOrderId: { type: String },

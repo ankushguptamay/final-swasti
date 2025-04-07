@@ -14,6 +14,9 @@ import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yoga
 const { SERVICE_OFFER, RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
 import Razorpay from "razorpay";
 import { purchaseServiceValidation } from "../../../MiddleWare/Validation/slots.js";
+import crypto from "crypto";
+import { Wallet } from "../../../Model/User/Profile/walletModel.js";
+import { UserTransaction } from "../../../Model/User/Profile/transactionModel.js";
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -146,125 +149,84 @@ const createPayment = async (req, res) => {
   }
 };
 
-// const verifyPaymentForRegisterUser = async (req, res) => {
-//   try {
-//     const orderId = req.body.razorpay_order_id;
-//     const paymentId = req.body.razorpay_payment_id;
-//     const razorpay_signature = req.body.razorpay_signature;
-//     // Creating hmac object
-//     let hmac = crypto.createHmac("sha256", RAZORPAY_SECRET_ID);
-//     // Passing the data to be hashed
-//     hmac.update(orderId + "|" + paymentId);
-//     // Creating the hmac in the required format
-//     const generated_signature = hmac.digest("hex");
+const verifyPayment = async (req, res) => {
+  try {
+    const orderId = req.body.razorpay_order_id;
+    const paymentId = req.body.razorpay_payment_id;
+    const razorpay_signature = req.body.razorpay_signature;
+    // Creating hmac object
+    let hmac = crypto.createHmac("sha256", RAZORPAY_SECRET_ID);
+    // Passing the data to be hashed
+    hmac.update(orderId + "|" + paymentId);
+    // Creating the hmac in the required format
+    const generated_signature = hmac.digest("hex");
 
-//     if (razorpay_signature === generated_signature) {
-//       const purchase = await User_Course.findOne({
-//         where: {
-//           razorpayOrderId: orderId,
-//           verify: false,
-//           status: "created",
-//         },
-//       });
-//       if (!purchase) {
-//         return res.status(200).json({
-//           success: true,
-//           message: "Payment has been verified! Second Time!",
-//         });
-//       }
-//       // Get Course
-//       const course = await Course.findOne({
-//         where: {
-//           id: purchase.courseId,
-//         },
-//       });
-//       // Get Marketing Ratio, if course does not have any ratio id then we get a "GENERAL"(ratioName) ratio
-//       let ratio;
-//       if (course.ratioId) {
-//         ratio = await AffiliateMarketingRatio.findOne({
-//           where: {
-//             id: course.ratioId,
-//           },
-//         });
-//       } else {
-//         ratio = await AffiliateMarketingRatio.findOne({
-//           where: {
-//             ratioName: "GENERAL",
-//           },
-//         });
-//       }
-//       // find Referal Wallet
-//       let referalWallet;
-//       if (purchase.referalId) {
-//         const referalUserWallet = await UserWallet.findOne({
-//           where: {
-//             userId: purchase.referalId,
-//           },
-//         });
-//         const referalAdminWallet = await AdminWallet.findOne({
-//           where: {
-//             adminId: purchase.referalId,
-//           },
-//         });
-//         if (referalUserWallet) {
-//           referalWallet = referalUserWallet;
-//         } else {
-//           referalWallet = referalAdminWallet;
-//         }
-//       }
-//       // Get Course Owner wallet
-//       const courseOwnerWallet = await AdminWallet.findOne({
-//         where: {
-//           adminId: course.adminId,
-//         },
-//       });
-//       // Transfer money to Course Owenr Wallet
-//       const adminWalletAmount =
-//         parseFloat(courseOwnerWallet.amount) +
-//         (parseFloat(purchase.amount) * parseFloat(ratio.adminRatio)) / 100;
-//       await courseOwnerWallet.update({
-//         amount: Math.round(adminWalletAmount * 100) / 100,
-//       });
-//       // Transfer money to Referal Wallet, if referal is not present then tranfer it to course admin wallet
-//       if (referalWallet) {
-//         const referalAmount =
-//           parseFloat(referalWallet.amount) +
-//           (parseFloat(purchase.amount) * parseFloat(ratio.referalRatio)) / 100;
-//         await referalWallet.update({
-//           amount: Math.round(referalAmount * 100) / 100,
-//         });
-//       } else {
-//         const referalAmount =
-//           parseFloat(courseOwnerWallet.amount) +
-//           (parseFloat(purchase.amount) * parseFloat(ratio.referalRatio)) / 100;
-//         // (Math.round(referalAmount * 100) / 100).toFixed(2)
-//         await courseOwnerWallet.update({
-//           amount: Math.round(referalAmount * 100) / 100,
-//         });
-//       }
-//       // Update Purchase
-//       await purchase.update({
-//         ...purchase,
-//         status: "paid",
-//         razorpayPaymentId: paymentId,
-//         verify: true,
-//       });
-//       res.status(200).json({
-//         success: true,
-//         message: "Payment has been verified",
-//       });
-//     } else {
-//       res.status(400).json({
-//         success: false,
-//         message: "Payment verification failed",
-//       });
-//     }
-//   } catch (err) {
-//     res.status(500).send({
-//       success: false,
-//       err: err.message,
-//     });
-//   }
-// };
+    if (razorpay_signature === generated_signature) {
+      const purchase = await ServiceOrder.findOne({
+        razorpayOrderId: orderId,
+      });
+      if (!purchase) {
+        return failureResponse(res, 400, "Order does not exist!");
+      }
+      if (!purchase.verify && purchase.status === "pending") {
+        // Get Service
+        let instructor = "";
+        let amount = 0;
+        if (purchase.service === "yogatutorclass") {
+          const yogaTutor = await YogaTutorClass.findOne({
+            _id: purchase.serviceId,
+            isDelete: false,
+            approvalByAdmin: "accepted",
+          });
+          if (!yogaTutor) {
+            return failureResponse(res);
+          } else {
+            const totalBookedSeat =
+              parseInt(yogaTutor.totalBookedSeat) +
+              parseInt(purchase.numberOfBooking);
+            const serviceOrder = [...yogaTutor.serviceOrder, purchase._id];
+            await yogaTutor.updateOne({
+              $set: { totalBookedSeat, isBooked: true, serviceOrder },
+            });
+            instructor = yogaTutor.instructor;
+            amount = amount + purchase.amount - (purchase.amount * 12) / 100;
+          }
+        } else {
+          return failureResponse(res);
+        }
+        // Update wallet amount
+        const wallet = await Wallet.findOneAndUpdate(
+          { userId: instructor, status: "active" },
+          { $inc: { balance: amount } }
+        );
+        // Transaction in Wallet
+        const transaction = await UserTransaction.create({
+          wallet: wallet._id,
+          serviceOrder: purchase._id,
+          user: wallet.userId,
+          amount,
+          paymentType: "credit",
+          reason: "servicebooked",
+          status: "completed",
+        });
+        // Updatae wallet
+        const transactions = [...wallet.transactions, transaction._id];
+        await wallet.updateOne({ $set: { transactions } });
+        // Update Purchase
+        await purchase.update({
+          ...purchase,
+          status: "completed",
+          razorpayPaymentId: paymentId,
+          verify: true,
+        });
+      }
+      return successResponse(res, 201, "Payment has been verified");
+    } else {
+      return failureResponse(res, 400, "Payment verification failed");
+    }
+  } catch (err) {
+    return failureResponse(res, 500, err.message);
+  }
+};
 
-export { createPayment };
+export { createPayment, verifyPayment };

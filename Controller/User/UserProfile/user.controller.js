@@ -148,7 +148,11 @@ async function bindByPackageType(data) {
       group = { packageType: packageType, yogaClasses: [] };
       acc.push(group);
     }
-    group.yogaClasses.push(rest);
+    const classStartTimeInUTC = convertGivenTimeZoneToUTC(
+      `${rest.startDate.toISOString().split("T")[0]}T${rest.time}:00.000`,
+      rest.instructorTimeZone
+    );
+    group.yogaClasses.push({ ...rest, classStartTimeInUTC });
     return acc;
   }, []);
   return yTClassTime;
@@ -1070,6 +1074,80 @@ const instructorDetailsForLearner = async (req, res) => {
   }
 };
 
+const register_login_learner = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateUserRegistration(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { email, mobileNumber, referralCode, term_condition_accepted } =
+      req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
+    // Is user already present
+    const user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
+    if (user) {
+      if (user.role === "instructor")
+        return failureResponse(
+          res,
+          400,
+          "You are already register as instructor.",
+          null
+        );
+    } else {
+      // Capital First Letter
+      const name = capitalizeFirstLetter(req.body.name);
+      // User Time Zone
+      const timezone = req.headers["time-zone"] || req.headers["x-timezone"];
+      // Create in database
+      const chakraBreakNumber = getRandomInt(7);
+      // generate User code
+      const userCode = await generateUserCode("SWL");
+      // Store data
+      user = await User.create({
+        userTimeZone: timezone,
+        name,
+        email,
+        mobileNumber,
+        chakraBreakNumber,
+        referralCode,
+        userCode,
+        role: "learner",
+        term_condition_accepted,
+      });
+      // Create Wallet
+      await Wallet.create({ userId: user._id });
+    }
+    // Generate OTP for Email
+    const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
+    // Sending OTP to mobile number
+    await sendOTPToNumber(mobileNumber, otp);
+    // Store OTP
+    await OTP.create({
+      validTill: new Date().getTime() + parseInt(OTP_VALIDITY_IN_MILLISECONDS),
+      otp: otp,
+      receiverId: user._id,
+    });
+    // Send final success response
+    return successResponse(
+      res,
+      201,
+      `OTP send successfully! Valid for ${
+        OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
+      } minutes!`,
+      { mobileNumber }
+    );
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -1090,4 +1168,5 @@ export {
   searchInstructor,
   myWallet,
   instructorDetailsForLearner,
+  register_login_learner,
 };

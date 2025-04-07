@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   logout,
   rolePage,
+  register_login_learner,
 } from "../../Controller/User/UserProfile/user.controller.js";
 
 import publicRoute from "./publicRoute.js";
@@ -19,6 +20,8 @@ router.post("/register", register);
 router.post("/loginByMobile", loginByMobile);
 router.post("/verifyMobileOTP", verifyMobileOTP);
 router.post("/refresh", refreshAccessToken);
+
+router.post("/register_login_learner", register_login_learner);
 
 router.put("/logout", verifyUserJWT, logout);
 router.put("/rolePage", verifyUserJWT, rolePage);

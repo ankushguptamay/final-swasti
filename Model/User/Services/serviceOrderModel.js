@@ -18,6 +18,7 @@ const schema = new Schema(
       enum: ["pending", "completed", "cancelled", "refunded", "failed"],
       default: "pending",
     },
+    verify: { type: Boolean, default: false },
     receipt: { type: String, unique: true }, // Unique transaction ID
   },
   { timestamps: true }
