@@ -51,7 +51,10 @@ import fs from "fs";
 import jwt from "jsonwebtoken";
 import { Wallet } from "../../../Model/User/Profile/walletModel.js";
 import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { convertGivenTimeZoneToUTC } from "../../../Util/timeZone.js";
+import {
+  convertGivenTimeZoneToUTC,
+  getDatesDay,
+} from "../../../Util/timeZone.js";
 const bunnyFolderName = "inst-doc";
 
 // Helper
@@ -140,24 +143,56 @@ async function generateUserCode(preFix) {
 }
 
 async function bindByPackageType(data) {
-  const yTClassTime = data.reduce((acc, { packageType, ...rest }) => {
-    let group = acc.find(
+  const grouped = [];
+
+  for (const { packageType, ...rest } of data) {
+    // Find or create group
+    let group = grouped.find(
       (g) => g.packageType.toLowerCase() === packageType.toLowerCase()
     );
+
     if (!group) {
-      group = { packageType: packageType, yogaClasses: [] };
-      acc.push(group);
+      group = { packageType, yogaClasses: [] };
+      grouped.push(group);
     }
-    const classStartTimeInUTC = convertGivenTimeZoneToUTC(
+
+    // Convert class start time to UTC
+    const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
       `${rest.startDate.toISOString().split("T")[0]}T${rest.time}:00.000`,
       rest.instructorTimeZone
     );
-    group.yogaClasses.push({ ...rest, classStartTimeInUTC });
-    return acc;
-  }, []);
-  return yTClassTime;
-}
 
+    // Convert each class date
+    const datesOfClasses = await Promise.all(
+      rest.datesOfClasses.map(async ({ date, meetingLink }) => {
+        const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+          `${date.toISOString().split("T")[0]}T${rest.time}:00.000`,
+          rest.instructorTimeZone
+        );
+
+        const day = await getDatesDay(
+          classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+        );
+
+        return {
+          date,
+          classDatesTimeInUTC,
+          day,
+          meetingLink,
+        };
+      })
+    );
+
+    // Add processed class to group
+    group.yogaClasses.push({
+      ...rest,
+      classStartTimeInUTC,
+      datesOfClasses,
+    });
+  }
+
+  return grouped;
+}
 // Main Controller
 const register = async (req, res) => {
   try {
@@ -1061,7 +1096,7 @@ const instructorDetailsForLearner = async (req, res) => {
         approvalByAdmin: "accepted",
       })
         .select(
-          "_id modeOfClass classType startDate endDate packageType numberOfClass time price timeDurationInMin instructorTimeZone"
+          "_id modeOfClass classType startDate endDate packageType numberOfClass time price datesOfClasses timeDurationInMin instructorTimeZone"
         )
         .lean(),
     ]);
