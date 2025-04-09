@@ -133,7 +133,10 @@ const addNewClassTimes = async (req, res) => {
       yTRule,
     } = req.body;
     // Price
-    if (Math.ceil(price / numberOfClass) < 500)
+    if (
+      Math.ceil(price / numberOfClass) <
+      parseInt(process.env.PER_CLASS_PRICE_LIMIT)
+    )
       return failureResponse(
         res,
         400,
@@ -143,12 +146,22 @@ const addNewClassTimes = async (req, res) => {
     if (numberOfClass !== datesOfClasses.length)
       return failureResponse(res, 400, "Select all dates!", null);
     // date
-    const today = new Date().toISOString().split("T")[0];
-    const hasPastDate = datesOfClasses.some(
-      (date) => new Date(date).getTime() < new Date(today).getTime()
-    );
-    if (hasPastDate)
-      return failureResponse(res, 400, "Some dates are in the past!", null);
+    for (let i = 0; i < datesOfClasses.length; i++) {
+      const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+        `${datesOfClasses[i]}T${time}:00.000`,
+        req.user.instructorTimeZone
+      );
+      const hasPastDate =
+        new Date(`${classDatesTimeInUTC.replace(" ", "T")} +.000Z`).getTime() >=
+        new Date().getTime() + 24 * 60 * 60 * 1000;
+      if (!hasPastDate)
+        return failureResponse(
+          res,
+          400,
+          "All date should be 24 hours in future.",
+          null
+        );
+    }
     if (
       (packageType.toLowerCase() === "daily" && numberOfClass === 1) ||
       (packageType.toLowerCase() === "weekly" &&
@@ -545,7 +558,7 @@ const classTimesForUser = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin datesOfClasses instructorTimeZone createdAt"
+          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin datesOfClasses instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
         )
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
