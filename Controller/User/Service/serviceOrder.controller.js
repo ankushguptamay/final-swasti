@@ -214,11 +214,12 @@ const verifyPayment = async (req, res) => {
         const transactions = [...wallet.transactions, transaction._id];
         await wallet.updateOne({ $set: { transactions } });
         // Update Purchase
-        await purchase.update({
-          ...purchase,
-          status: "completed",
-          razorpayPaymentId: paymentId,
-          verify: true,
+        await purchase.updateOne({
+          $set: {
+            status: "completed",
+            razorpayPaymentId: paymentId,
+            verify: true,
+          },
         });
       }
       return successResponse(res, 201, "Payment has been verified");
