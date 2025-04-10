@@ -45,7 +45,7 @@ const createPayment = async (req, res) => {
         );
       // Validate time
       const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-        `${ytc.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
+        `${ytc.startDate.toISOString().split("T")[0]}T${ytc.time}:00.000`,
         ytc.instructorTimeZone
       );
       const dateObject = new Date(

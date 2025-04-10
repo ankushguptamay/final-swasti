@@ -1096,7 +1096,7 @@ const instructorDetailsForLearner = async (req, res) => {
         approvalByAdmin: "accepted",
       })
         .select(
-          "_id modeOfClass classType startDate endDate packageType numberOfClass time price datesOfClasses timeDurationInMin instructorTimeZone"
+          "_id modeOfClass classType startDate endDate packageType numberOfClass time price datesOfClasses timeDurationInMin totalBookedSeat numberOfSeats isBooked instructorTimeZone"
         )
         .populate("yogaCategory", "-_id yogaCategory description")
         .lean(),
