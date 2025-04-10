@@ -149,10 +149,10 @@ const addNewClassTimes = async (req, res) => {
     for (let i = 0; i < datesOfClasses.length; i++) {
       const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
         `${datesOfClasses[i]}T${time}:00.000`,
-        req.user.instructorTimeZone
+        req.user.userTimeZone
       );
       const hasPastDate =
-        new Date(`${classDatesTimeInUTC.replace(" ", "T")} +.000Z`).getTime() >=
+        new Date(`${classDatesTimeInUTC.replace(" ", "T")}.000Z`).getTime() >=
         new Date().getTime() + 24 * 60 * 60 * 1000;
       if (!hasPastDate)
         return failureResponse(
