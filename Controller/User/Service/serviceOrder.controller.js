@@ -116,7 +116,7 @@ const createPayment = async (req, res) => {
     const receipt = await generateReceiptNumber("ytc");
     // initiate payment
     razorpayInstance.orders.create(
-      { amount, currency, receipt },
+      { amount: amount * 100, currency, receipt },
       (err, order) => {
         if (!err) {
           ServiceOrder.create({
