@@ -27,7 +27,8 @@ const createPayment = async (req, res) => {
     // Validate body
     const { error } = purchaseServiceValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { service, serviceId, amount, currency, numberOfPeople } = req.body;
+    const { service, serviceId, currency, numberOfPeople } = req.body;
+    const amount = req.body.amount / 100;
     // Check Availablity
     let instructor;
     if (service.toLowerCase() === "yogatutorclass") {
