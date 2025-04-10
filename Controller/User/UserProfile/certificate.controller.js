@@ -124,7 +124,7 @@ const deleteCertificate = async (req, res) => {
     certificates.isDelete = true;
     certificates.deleted_at = new Date();
     certificates.save();
-    // Update bankdetails array in user profile
+    // Update certificate array in user profile
     const user = await User.findById(req.user._id).select("certificate");
     const certificate = [];
     for (const cer of user._doc.certificate) {
