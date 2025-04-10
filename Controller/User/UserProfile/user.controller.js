@@ -304,7 +304,6 @@ const loginByMobile = async (req, res) => {
 
     // Generate OTP for Email
     const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    console.log(otp)
     // console.log(otp);
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
@@ -1128,7 +1127,7 @@ const register_login_learner = async (req, res) => {
         null
       );
     // Is user already present
-    const user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
+    let user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
     if (user) {
       if (user.role === "instructor")
         return failureResponse(
