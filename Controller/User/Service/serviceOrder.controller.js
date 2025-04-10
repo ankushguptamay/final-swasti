@@ -152,8 +152,8 @@ const createPayment = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const orderId = req.body.razorpay_order_id;
-    const paymentId = req.body.razorpay_payment_id;
+    const orderId = req.body.orderId;
+    const paymentId = req.body.paymentId;
     const razorpay_signature = req.body.razorpay_signature;
     // Creating hmac object
     let hmac = crypto.createHmac("sha256", RAZORPAY_SECRET_ID);
