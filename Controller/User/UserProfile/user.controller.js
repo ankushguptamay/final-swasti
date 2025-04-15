@@ -55,7 +55,7 @@ import {
   convertGivenTimeZoneToUTC,
   getDatesDay,
 } from "../../../Util/timeZone.js";
-const bunnyFolderName = "inst-doc";
+const bunnyFolderName = process.env.MASTER_PROFILE_FOLDER || "inst-doc";
 
 // Helper
 const chakraName = [

@@ -28,10 +28,18 @@ const validateYTRequirement = (data) => {
   });
   return schema.validate(data);
 };
+const validateBanner = (data) => {
+  const schema = joi.object().keys({
+    title: joi.string().required(),
+    redirectLink: joi.string().optional(),
+  });
+  return schema.validate(data);
+};
 
 export {
   validateSpecialization,
   validateYogaCategory,
   validateYTRule,
   validateYTRequirement,
+  validateBanner,
 };

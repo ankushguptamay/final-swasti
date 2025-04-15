@@ -10,6 +10,7 @@ import { classTimesForUser } from "../../Controller/User/Service/YogaTutorClass/
 import { getSpecialization } from "../../Controller/Master/specialization.controller.js";
 import { getYogaCategory } from "../../Controller/Master/yogaCategory.controller.js";
 import { verifyPayment } from "../../Controller/User/Service/serviceOrder.controller.js";
+import { getBanner } from "../../Controller/Master/banner.controller.js";
 
 router.get("/instructor", searchInstructor);
 router.get("/instructor/:id", instructorDetailsForLearner);
@@ -23,5 +24,7 @@ router.get("/specialization", getSpecialization);
 router.get("/y-c", getYogaCategory);
 
 router.post("/verifyPayment", verifyPayment);
+
+router.get("/banner", getBanner);
 
 export default router;

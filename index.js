@@ -11,6 +11,7 @@ import admin from "./Route/Admin/authAdmin.js";
 import authUser from "./Route/User/authUser.js";
 import instructor from "./Route/User/Instructor/index.js";
 import learner from "./Route/User/Learner/index.js";
+import multer from "multer";
 
 const app = express();
 const server = createServer(app);
@@ -43,6 +44,29 @@ app.use("/api/admin", admin);
 
 app.get("/", (req, res) => {
   res.send("Welcome to Swasti!");
+});
+
+// Multer error handler
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        success: false,
+        message: "File size should not exceed 1.5 MB.",
+      });
+    } // Too many files uploaded (for .array())
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Unexpected file upload. Please check file field name or upload limit.",
+      });
+    }
+    return res.status(400).json({ success: false, message: err.message });
+  } else if (err) {
+    return res.status(400).json({ success: false, message: err });
+  }
+  next();
 });
 
 const PORT = process.env.PORT || 5000;

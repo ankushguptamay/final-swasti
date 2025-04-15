@@ -41,10 +41,18 @@ const storage = multer.diskStorage({
   },
 });
 
+const limits = {
+  fileSize: 1.5 * 1024 * 1024, // 1.5 MB in bytes
+};
+
 // Only Image
-const uploadImage = multer({ storage, fileFilter: imageFilter });
+const uploadImage = multer({ storage, limits, fileFilter: imageFilter });
 // Image and PDF
-const uploadImageAndPDF = multer({ storage, fileFilter: imagePDFFilter });
+const uploadImageAndPDF = multer({
+  storage,
+  limits,
+  fileFilter: imagePDFFilter,
+});
 // Only PDF
 const uploadPDF = multer({ storage, fileFilter: pDFFilter });
 

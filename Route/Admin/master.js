@@ -9,6 +9,11 @@ import {
   updateSpecialization,
 } from "../../Controller/Master/specialization.controller.js";
 import {
+  addBanner,
+  getBanner,
+  deleteBanner,
+} from "../../Controller/Master/banner.controller.js";
+import {
   addYogaCategory,
   getYogaCategory,
   yogaCategoryDetails,
@@ -16,11 +21,20 @@ import {
   deleteYogaCategory,
 } from "../../Controller/Master/yogaCategory.controller.js";
 import {
-  addYTRequirement,deleteYTRequirement,updateYTRequirement,getYTRequirement
+  addYTRequirement,
+  deleteYTRequirement,
+  updateYTRequirement,
+  getYTRequirement,
 } from "../../Controller/Master/yTRequirement.controller.js";
 import {
-  addYTRule,getYTRule,updateYTRule,deleteYTRule
+  addYTRule,
+  getYTRule,
+  updateYTRule,
+  deleteYTRule,
 } from "../../Controller/Master/yTRules.controller.js";
+
+// MiddleWare
+import { uploadImage } from "../../MiddleWare/uploadFile.js";
 
 // specialization
 router.post("/specialization", addSpecialization);
@@ -47,5 +61,10 @@ router.post("/yTRequirement", addYTRequirement);
 router.get("/yTRequirement", getYTRequirement);
 router.put("/yTRequirement/:id", updateYTRequirement);
 router.delete("/yTRequirement/:id", deleteYTRequirement);
+
+// Banner
+router.post("/banner", uploadImage.single("bannerImage"), addBanner);
+router.get("/banner", getBanner);
+router.delete("/banner/:id", deleteBanner);
 
 export default router;

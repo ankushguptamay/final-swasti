@@ -11,7 +11,8 @@ import { generateReceiptNumber } from "../../../Helper/generateOTP.js";
 import { User } from "../../../Model/User/Profile/userModel.js";
 import { ServiceOrder } from "../../../Model/User/Services/serviceOrderModel.js";
 import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-const { SERVICE_OFFER, RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
+const { SERVICE_OFFER, RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID, PLATFROM_FEE } =
+  process.env;
 import Razorpay from "razorpay";
 import { purchaseServiceValidation } from "../../../MiddleWare/Validation/slots.js";
 import crypto from "crypto";
@@ -190,16 +191,19 @@ const verifyPayment = async (req, res) => {
               $set: { totalBookedSeat, isBooked: true, serviceOrder },
             });
             instructor = yogaTutor.instructor;
-            amount = amount + purchase.amount - (purchase.amount * 12) / 100;
+            amount =
+              amount +
+              purchase.amount -
+              (purchase.amount * parseInt(PLATFROM_FEE)) / 100;
           }
         } else {
           return failureResponse(res);
         }
         // Update wallet amount
-        const wallet = await Wallet.findOneAndUpdate(
-          { userId: instructor, status: "active" },
-          { $inc: { balance: amount } }
-        );
+        const wallet = await Wallet.findOne({
+          userId: instructor,
+          status: "active",
+        });
         // Transaction in Wallet
         const transaction = await UserTransaction.create({
           wallet: wallet._id,
@@ -212,7 +216,9 @@ const verifyPayment = async (req, res) => {
         });
         // Updatae wallet
         const transactions = [...wallet.transactions, transaction._id];
-        await wallet.updateOne({ $set: { transactions } });
+        await wallet.updateOne({
+          $set: { transactions, $inc: { balance: amount } },
+        });
         // Update Purchase
         await purchase.updateOne({
           $set: {
