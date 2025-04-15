@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
-import { YogaTutorClass } from "../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
+import { Certificate } from "../Model/User/Profile/certificateModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -35,4 +35,17 @@ async function dropCollection() {
   }
 }
 
-export { connectDB, dropCollection };
+async function updateCertificates() {
+  try {
+    const result = await Certificate.updateMany(
+      { approvalByAdmin: { $exists: false } }, // only update documents missing the field
+      { $set: { approvalByAdmin: "pending" } }
+    );
+
+    console.log(`Updated ${result.modifiedCount} certificates`);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export { connectDB, dropCollection, updateCertificates };

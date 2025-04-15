@@ -14,6 +14,7 @@ import { validateCerificate } from "../../../MiddleWare/Validation/userProfile.j
 import { Certificate } from "../../../Model/User/Profile/certificateModel.js";
 import { User } from "../../../Model/User/Profile/userModel.js";
 import { uploadFileToBunny } from "../../../Util/bunny.js";
+import { validateApprovalClassTimes } from "../../../MiddleWare/Validation/slots.js";
 const bunnyFolderName = process.env.MASTER_PROFILE_FOLDER || "inst-doc";
 const { SHOW_BUNNY_FILE_HOSTNAME } = process.env;
 
@@ -51,15 +52,11 @@ const addCerificate = async (req, res) => {
       url: `${SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`,
     };
     // Create this certificate
-    const certificate = await Certificate.create({
+    await Certificate.create({
       name,
       image,
       user: req.user._id,
     });
-    // Update certificate array in user profile
-    const user = await User.findById(req.user._id).select("certificate");
-    user.certificate = [...user.certificate, certificate._id];
-    await user.save();
     // Send final success response
     return successResponse(res, 201, `Certificate added successfully.`);
   } catch (err) {
@@ -73,15 +70,23 @@ const certificates = async (req, res) => {
     const certificates = await Certificate.find({
       user: req.user._id,
       isDelete: false,
+      approvalByAdmin: "accepted",
     })
-      .select("_id name image")
+      .select("_id name image approvalByAdmin")
       .sort({
         createdAt: -1,
       });
     // Transform
-    const transform = certificates.map(({ _id, name, image }) => {
-      return { _id, name, image: image ? image.url || null : null };
-    });
+    const transform = certificates.map(
+      ({ _id, name, image, approvalByAdmin }) => {
+        return {
+          _id,
+          name,
+          approvalByAdmin,
+          image: image ? image.url || null : null,
+        };
+      }
+    );
     // Send final success response
     return successResponse(res, 201, `Certificates fetched successfully!`, {
       certificates: transform,
@@ -95,7 +100,6 @@ const certificateById = async (req, res) => {
   try {
     const certificate = await Certificate.findOne({
       _id: req.params.id,
-      user: req.user._id,
       isDelete: false,
     }).select("_id name image");
     // tranform
@@ -124,16 +128,18 @@ const deleteCertificate = async (req, res) => {
     certificates.isDelete = true;
     certificates.deleted_at = new Date();
     certificates.save();
-    // Update certificate array in user profile
-    const user = await User.findById(req.user._id).select("certificate");
-    const certificate = [];
-    for (const cer of user._doc.certificate) {
-      if (cer.toString() !== certificates._doc._id.toString()) {
-        certificate.push(cer);
+    if (certificates.approvalByAdmin === "accepted") {
+      // Update certificate array in user profile
+      const user = await User.findById(req.user._id).select("certificate");
+      const certificate = [];
+      for (const cer of user._doc.certificate) {
+        if (cer.toString() !== certificates._doc._id.toString()) {
+          certificate.push(cer);
+        }
       }
+      user.certificate = certificate;
+      await user.save();
     }
-    user.certificate = certificate;
-    await user.save();
     // Send final success response
     return successResponse(res, 201, `Certificate deleted successfully.`);
   } catch (err) {
@@ -141,4 +147,100 @@ const deleteCertificate = async (req, res) => {
   }
 };
 
-export { addCerificate, certificates, certificateById, deleteCertificate };
+const certificatesForAdminApproval = async (req, res) => {
+  try {
+    // Pagination
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+
+    // Get required data
+    const [certificates, totalcertificates] = await Promise.all([
+      Certificate.find({ isDelete: false, approvalByAdmin: "pending" })
+        .select("_id name image approvalByAdmin")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .populate("user", "_id name profilePic")
+        .lean(),
+      Certificate.countDocuments({ isDelete: false }),
+    ]);
+    // Transform
+    const transform = certificates.map(
+      ({ _id, name, image, approvalByAdmin, user }) => {
+        return {
+          _id,
+          name,
+          approvalByAdmin,
+          user: {
+            _id: user._id,
+            name: user.name,
+            profilePic: user.profilePic ? user.profilePic.url || null : null,
+          },
+          image: image ? image.url || null : null,
+        };
+      }
+    );
+    const totalPages = Math.ceil(totalcertificates / resultPerPage) || 0;
+    // Send final success response
+    return successResponse(res, 201, `Successfully!`, {
+      data: transform,
+      totalPages: totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+const certifiacteApproval = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateApprovalClassTimes(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const approvalByAdmin = req.body.approvalByAdmin;
+    const _id = req.params.id;
+    // Find record
+    const certificate = await Certificate.findOne({
+      _id,
+      isDelete: false,
+    }).select("approvalByAdmin");
+    if (!certificate)
+      return failureResponse(
+        res,
+        400,
+        "This certificate is not present!",
+        null
+      );
+    // Save History
+    if (approvalByAdmin === "accepted") {
+      // Update certificate array in user profile
+      const user = await User.findById(req.user._id).select("certificate");
+      user.certificate = [...user.certificate, certificate._id];
+      await user.save();
+    }
+    // Save
+    await certificate.updateOne({ $set: { approvalByAdmin } });
+    // Send final success response
+    return successResponse(
+      res,
+      201,
+      `Certificate ${approvalByAdmin} successfully`
+    );
+  } catch (err) {
+    failureResponse(res, 500, err.message, null);
+  }
+};
+
+export {
+  addCerificate,
+  certificates,
+  certificateById,
+  deleteCertificate,
+  certificatesForAdminApproval,
+  certifiacteApproval,
+};

@@ -8,7 +8,15 @@ const schema = new Schema(
       fileName: { type: String },
       url: { type: String },
     },
-    verified: { type: Boolean, default: false },
+    // Approval
+    approvalByAdmin: {
+      type: String,
+      enum: {
+        values: ["pending", "accepted", "rejected"],
+        message: "{VALUE} is not supported",
+      },
+      default: "pending",
+    },
     user: { type: Types.ObjectId, ref: "User", required: true },
     isDelete: { type: Boolean, default: false },
     deleted_at: { type: Date },

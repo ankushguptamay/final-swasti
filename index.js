@@ -2,7 +2,11 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
-import { connectDB, dropCollection } from "./Util/mongoConnection.js";
+import {
+  connectDB,
+  dropCollection,
+  updateCertificates,
+} from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
 
@@ -20,6 +24,7 @@ const server = createServer(app);
   // Connect to database
   await connectDB(process.env.MONGO_URI);
   // await dropCollection();
+  // await updateCertificates();
 })();
 
 // Cors options
