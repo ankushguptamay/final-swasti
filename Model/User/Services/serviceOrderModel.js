@@ -12,7 +12,6 @@ const schema = new Schema(
     razorpayOrderId: { type: String, unique: true },
     razorpayPaymentId: { type: String },
     razorpayRefundId: { type: String },
-    learnerTransactions: [{ type: Types.ObjectId, ref: "learnerTransaction" }], // THis field added for only cancellation purpose when learner will cancelled then a wallet transaction will done
     status: {
       type: String,
       enum: ["pending", "completed", "cancelled", "refunded", "failed"],
