@@ -996,7 +996,7 @@ const searchInstructor = async (req, res) => {
       return {
         ...user,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
-        specialization: specialization.specialization,
+        specialization: specialization.map((spe) => spe.specialization),
       };
     });
     const totalPages = Math.ceil(totalInstructor / resultPerPage) || 0;
