@@ -194,7 +194,12 @@ const verifyPayment = async (req, res) => {
               parseInt(purchase.numberOfBooking);
             const serviceOrder = [...yogaTutor.serviceOrder, purchase._id];
             await yogaTutor.updateOne({
-              $set: { totalBookedSeat, isBooked: true, serviceOrder },
+              $set: {
+                totalBookedSeat,
+                isBooked: true,
+                serviceOrder,
+                classStatus: "upcoming",
+              },
             });
             instructor = yogaTutor.instructor;
             amount =
@@ -363,11 +368,20 @@ const cancelOrder = async (req, res) => {
           },
         }
       );
+      let isBooked = false,
+        classStatus = null;
+      if (ytc.classType === "group") {
+        const newSeat =
+          parseInt(ytc.totalBookedSeat) -
+          parseInt(serviceOrder.numberOfBooking);
+        isBooked = newSeat < 1 ? false : true;
+        classStatus = newSeat < 1 ? null : "upcoming";
+      }
       // Update Yoga tutor class
       await YogaTutorClass.updateOne(
         { _id: ytc._id },
         {
-          $set: { isBooked: false },
+          $set: { isBooked, classStatus },
           $inc: { totalBookedSeat: -serviceOrder.numberOfBooking },
           $pull: { serviceOrder: serviceOrder._id },
         }
@@ -385,4 +399,4 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-export { createPayment, verifyPayment,cancelOrder };
+export { createPayment, verifyPayment, cancelOrder };

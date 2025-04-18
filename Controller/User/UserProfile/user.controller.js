@@ -55,6 +55,7 @@ import {
   convertGivenTimeZoneToUTC,
   getDatesDay,
 } from "../../../Util/timeZone.js";
+import { Specialization } from "../../../Model/Master/specializationModel.js";
 const bunnyFolderName = process.env.MASTER_PROFILE_FOLDER || "inst-doc";
 
 // Helper
@@ -969,7 +970,13 @@ const searchInstructor = async (req, res) => {
     }
     // Specialization
     if (Array.isArray(spe) && spe.length > 0) {
-      query.$and.push({ specialization: { $in: spe } });
+      const speci = await Specialization.find({ specialization: spe })
+        .select("_id")
+        .lean();
+      if (speci.length > 0)
+        query.$and.push({
+          specialization: { $in: speci.map((spe) => spe._id) },
+        });
     }
     // Average rating
     if (sR) {
@@ -996,7 +1003,10 @@ const searchInstructor = async (req, res) => {
       return {
         ...user,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
-        specialization: specialization.map((spe) => spe.specialization),
+        specialization:
+          user.specialization.length > 0
+            ? user.specialization.map((spe) => spe.specialization)
+            : [],
       };
     });
     const totalPages = Math.ceil(totalInstructor / resultPerPage) || 0;

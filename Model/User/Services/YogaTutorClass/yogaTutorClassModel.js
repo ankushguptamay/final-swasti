@@ -34,10 +34,21 @@ const schema = new Schema(
     time: { type: String }, // 24 hours formate
     timeDurationInMin: { type: Number, required: true },
     datesOfClasses: [
-      { date: { type: Date }, meetingLink: { type: String, default: null } },
+      {
+        date: { type: Date },
+        meetingLink: { type: String, default: null },
+        joinedBy: [{ type: Types.ObjectId, ref: "User" }],
+      },
     ],
     price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
+    classStatus: {
+      type: String,
+      enum: {
+        values: ["upcoming", "completed", "missed"],
+        message: "{VALUE} is not supported",
+      },
+    },
     // Approval
     approvalByAdmin: {
       type: String,

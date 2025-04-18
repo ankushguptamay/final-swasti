@@ -94,6 +94,7 @@ async function filterQueryOfClassForUser(data) {
   }
   // Filter
   if (mOC) query.modeOfClass = mOC;
+  if (pt) query.packageType = pt;
   if (date) query.startDate = { $gte: new Date(date) };
   if (timing) query.time = timing;
   if (cT) query.classType = cT;
@@ -617,6 +618,74 @@ const classTimesForUser = async (req, res) => {
     failureResponse(res, 500, err.message, null);
   }
 };
+
+// const joinMeeting = async (req, res) => {
+//   try {
+//     // req.user._id
+//     // classId
+//     // find if user booked this class if instructor then check is this class created by instructor and booked
+//     // is this class time within 10 min of stating time
+//   } catch (err) {
+//     failureResponse(res, 500, err.message, null);
+//   }
+// };
+
+// const classTimesBookedForInstructor = async (req, res) => {
+//   try {
+//     const {
+//       modeOfClass,
+//       classType,
+//       search,
+//       approvalByAdmin = "accepted",
+//     } = req.query;
+//     // Pagination
+//     const resultPerPage = req.query.resultPerPage
+//       ? parseInt(req.query.resultPerPage)
+//       : 20;
+//     const page = req.query.page ? parseInt(req.query.page) : 1;
+//     const skip = (page - 1) * resultPerPage;
+//     // Query
+//     const query = { instructor: req.user._id, isDelete: false };
+//     // Search
+//     if (search) {
+//       const containInString = new RegExp(req.query.search, "i");
+//       query.$or = [
+//         { classType: containInString },
+//         { modeOfClass: containInString },
+//         { description: containInString },
+//       ];
+//     }
+//     // Filter
+//     if (modeOfClass) {
+//       query.modeOfClass = modeOfClass;
+//     }
+//     if (classType) {
+//       query.classType = classType;
+//     }
+//     query.approvalByAdmin = approvalByAdmin;
+//     // Get required data
+//     const [classes, totalClasses] = await Promise.all([
+//       YogaTutorClass.find(query)
+//         .select(
+//           "_id modeOfClass classType startDate endDate price time timeDurationInMin approvalByAdmin instructorTimeZone createdAt"
+//         )
+//         .sort({ startDate: -1, endDate: -1 })
+//         .skip(skip)
+//         .limit(resultPerPage)
+//         .lean(),
+//       YogaTutorClass.countDocuments(query),
+//     ]);
+//     const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
+//     // Send final success response
+//     return successResponse(res, 200, "Successfully", {
+//       data: classes,
+//       totalPages: totalPages,
+//       currentPage: page,
+//     });
+//   } catch (err) {
+//     failureResponse(res, 500, err.message, null);
+//   }
+// };
 
 export {
   addNewClassTimes,
