@@ -385,4 +385,4 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-export { createPayment, verifyPayment };
+export { createPayment, verifyPayment,cancelOrder };

@@ -982,10 +982,11 @@ const searchInstructor = async (req, res) => {
     // Get required data
     const [instructor, totalInstructor] = await Promise.all([
       User.find(query)
-        .select("_id name profilePic bio averageRating")
+        .select("_id name profilePic bio averageRating gender experience_year")
         .sort({ averageRating: -1, name: 1 })
         .skip(skip)
         .limit(resultPerPage)
+        .populate("specialization", "specialization")
         .lean(),
       User.countDocuments(query),
     ]);
@@ -993,11 +994,9 @@ const searchInstructor = async (req, res) => {
     // Transform Data
     const transformData = instructor.map((user) => {
       return {
-        _id: user._id,
-        name: user.name,
+        ...user,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
-        bio: user.bio,
-        averageRating: user.averageRating,
+        specialization: specialization.specialization,
       };
     });
     const totalPages = Math.ceil(totalInstructor / resultPerPage) || 0;
