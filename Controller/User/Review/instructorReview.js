@@ -103,9 +103,9 @@ const giveOrUpdateReviews = async (req, res) => {
     const averageRating = await calculateAverageRating(instructor);
     await User.updateOne({ _id: instructor }, { $set: { averageRating } });
     // Send final success response
-    return successResponse(res, 201, `Thanks to give review!`);
+    return successResponse(res, 201, `Review submitted successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -132,7 +132,7 @@ const deleteReviewByUser = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Review deleted!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -191,7 +191,7 @@ const getReviews = async (req, res) => {
       reviews: transformData,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -228,7 +228,7 @@ const giveUnGiveReactionOnReview = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, message);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -269,7 +269,7 @@ const replyOnMyReviews = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Replied successfully!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -308,7 +308,7 @@ const deleteMyReply = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Reply deleted successfully!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -358,7 +358,7 @@ const getReviewDetails = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Fetched successfully!", transformData);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

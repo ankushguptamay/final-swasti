@@ -43,7 +43,7 @@ const addEducation = async (req, res) => {
       `Education details have been added successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -62,7 +62,7 @@ const educations = async (req, res) => {
       education,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -78,7 +78,7 @@ const educationById = async (req, res) => {
       education,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -141,7 +141,7 @@ const updateEducation = async (req, res) => {
       `Education details have been updated successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -175,7 +175,7 @@ const deleteEducation = async (req, res) => {
       `Education details have been deleted successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

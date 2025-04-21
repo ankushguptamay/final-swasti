@@ -44,7 +44,7 @@ const addBankDetails = async (req, res) => {
       `Bank details have been added successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -63,7 +63,7 @@ const bankDetails = async (req, res) => {
       details,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -79,7 +79,7 @@ const bankDetailById = async (req, res) => {
       details,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -113,7 +113,7 @@ const deleteBankDetails = async (req, res) => {
       `Bank details have been deleted successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

@@ -58,9 +58,9 @@ const addContactUs = async (req, res) => {
       contactUsCode,
       user: isUser ? isUser._id : undefined,
     });
-    return successResponse(res, 201, `Submitted successfully!`);
+    return successResponse(res, 201, `Message sent to support team!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -103,7 +103,7 @@ const contactUs = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

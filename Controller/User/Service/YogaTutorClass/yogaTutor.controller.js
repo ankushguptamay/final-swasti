@@ -20,8 +20,11 @@ import { YTClassUpdateHistory } from "../../../../Model/User/Services/YogaTutorC
 import { YogaTutorClass } from "../../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
 import {
   convertGivenTimeZoneToUTC,
+  convertUTCToGivenTimeZone,
   getDatesDay,
 } from "../../../../Util/timeZone.js";
+import { ServiceOrder } from "../../../../Model/User/Services/serviceOrderModel.js";
+import { createGoogleMeet } from "../../../../Util/googleMeet.js";
 
 // Helper
 async function isOverlapping(existingSlots, newOne) {
@@ -101,11 +104,41 @@ async function filterQueryOfClassForUser(data) {
   // Price
   query.$expr = {
     $and: [
-      { $gte: [{ $divide: ["$price", "$numberOfClass"] }, miP] },
-      { $lte: [{ $divide: ["$price", "$numberOfClass"] }, maP] },
+      { $gte: [{ $divide: ["$price", "$numberOfClass"] }, parseInt(miP)] },
+      { $lte: [{ $divide: ["$price", "$numberOfClass"] }, parseInt(maP)] },
     ],
   };
   return query;
+}
+
+async function canUserJoin(times) {
+  const now = new Date().getTime();
+
+  for (const classDate of times.datesOfClasses) {
+    // Combine date and time
+    const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+      `${classDate.date.toISOString().split("T")[0]}T${times.time}:00.000`,
+      times.instructorTimeZone
+    );
+    const classStartUTC = new Date(
+      classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+    );
+    const joinWindowStart = new Date(classStartUTC.getTime() - 5 * 60000); // 5 mins before
+    const joinWindowEnd = new Date(
+      classStartUTC.getTime() + times.timeDurationInMin * 60000
+    ); // end of class
+
+    if (now >= joinWindowStart.getTime() && now <= joinWindowEnd.getTime()) {
+      return {
+        canJoin: true,
+        classDate,
+        joinWindowEnd,
+        joinWindowStart,
+      };
+    }
+  }
+
+  return { canJoin: false };
 }
 
 // Main Controller
@@ -205,8 +238,7 @@ const addNewClassTimes = async (req, res) => {
     });
     // Is over lapping present
     const checkOverLap = await isOverlapping(existingTimes, newTime);
-    const overLapMessage =
-      "This time slot overlaps with an existing time slot. Please view existing time slots!";
+    const overLapMessage = "Slot already taken!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
     // Password
     const password = generateFixedLengthRandomNumber(
@@ -237,11 +269,11 @@ const addNewClassTimes = async (req, res) => {
       instructor: req.user._id,
     });
 
-    const message = "Time slot has been created successfully.";
+    const message = "Class created successfully.";
     // Send final success response
     return successResponse(res, 201, message);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -298,7 +330,7 @@ const classTimesForInstructor = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -330,7 +362,7 @@ const updateYTClassTimes = async (req, res) => {
       return failureResponse(
         res,
         400,
-        "A booked yoga class can not be update.",
+        "You cannot update a booked class.",
         null
       );
     // Get Changed field
@@ -391,9 +423,9 @@ const updateYTClassTimes = async (req, res) => {
       });
     }
     // Send final success response
-    return successResponse(res, 201, "Updated Successfully!");
+    return successResponse(res, 201, "Slot updated!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -413,7 +445,7 @@ const deleteYTClassTimes = async (req, res) => {
       return failureResponse(
         res,
         400,
-        "A booked yoga class can not be delete.",
+        "You cannot delete a booked class.",
         null
       );
     // Update Class to soft delete
@@ -421,9 +453,9 @@ const deleteYTClassTimes = async (req, res) => {
       $set: { isDelete: true, deleted_at: new Date() },
     });
     // Send final success response
-    return successResponse(res, 201, "Updated Successfully!");
+    return successResponse(res, 200, "Deleted Successfully!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -480,7 +512,7 @@ const classTimesForAdmin = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -515,7 +547,7 @@ const approvalClassTimes = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Class ${approvalByAdmin} successfully`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -541,7 +573,7 @@ const classTimesDetailsForInstructor = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Successfully", classes);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -615,77 +647,198 @@ const classTimesForUser = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
-// const joinMeeting = async (req, res) => {
-//   try {
-//     // req.user._id
-//     // classId
-//     // find if user booked this class if instructor then check is this class created by instructor and booked
-//     // is this class time within 10 min of stating time
-//   } catch (err) {
-//     failureResponse(res, 500, err.message, null);
-//   }
-// };
+const joinMeeting = async (req, res) => {
+  try {
+    const _id = req.user._id;
+    const ytcId = req.params.id;
+    let ytc;
+    if (req.user.role === "learner") {
+      // Check is order present
+      const isOrder = await ServiceOrder.findOne({
+        learner: _id,
+        serviceId: ytcId,
+        status: "completed",
+      })
+        .select("_id numberOfBooking")
+        .lean();
+      if (!isOrder) {
+        return failureResponse(res, 400, "Purchase this order...");
+      }
+      // Is this class presnt
+      ytc = await YogaTutorClass.findOne({
+        _id: ytcId,
+        isDelete: false,
+      }).lean();
+      if (!ytc) return failureResponse(res, 500, "Something went wrong.");
+    } else if (req.user.role === "instructor") {
+      // Is this class presnt
+      ytc = await YogaTutorClass.findOne({
+        _id: ytcId,
+        instructor: _id,
+        isDelete: false,
+      }).lean();
+      if (!ytc) return failureResponse(res, 400, "This class is not present.");
+    } else {
+      return failureResponse(res);
+    }
+    // Is this class booked
+    if (!ytc.isBooked)
+      return failureResponse(res, 400, "This yoga class is not booked.");
+    // is this class time within 5 min of stating time
+    const min5 = await canUserJoin({
+      time: ytc.time,
+      timeDurationInMin: ytc.timeDurationInMin,
+      instructorTimeZone: ytc.instructorTimeZone,
+      datesOfClasses: ytc.datesOfClasses,
+    });
+    if (!min5.canJoin) {
+      return failureResponse(
+        res,
+        400,
+        "You can only join before 5 min of class starting time."
+      );
+    } else {
+      const newClassDate = min5.classDate;
+      let generateMeet = newClassDate.meetingLink;
+      if (!generateMeet) {
+        generateMeet = await createGoogleMeet(
+          min5.joinWindowStart,
+          min5.joinWindowEnd
+        );
+      }
+      const existingJoiner =
+        newClassDate.joinedBy.map((us) => us.toString()) || [];
+      const joinedBy = [...new Set(...existingJoiner, req.user._id.toString())];
+      const datesOfClasses = [];
+      for (let i = 0; i < ytc.datesOfClasses.length; i++) {
+        if (
+          ytc.datesOfClasses[i]._id.toString() == newClassDate._id.toString()
+        ) {
+          datesOfClasses.push({
+            _id: newClassDate._id,
+            joinedBy,
+            meetingLink: generateMeet,
+            date: newClassDate.date,
+          });
+        } else {
+          datesOfClasses.push(ytc.datesOfClasses[i]);
+        }
+      }
+      // Update YTC
+      await YogaTutorClass.updateOne(
+        { _id: ytc._id },
+        { $set: { datesOfClasses } }
+      );
 
-// const classTimesBookedForInstructor = async (req, res) => {
-//   try {
-//     const {
-//       modeOfClass,
-//       classType,
-//       search,
-//       approvalByAdmin = "accepted",
-//     } = req.query;
-//     // Pagination
-//     const resultPerPage = req.query.resultPerPage
-//       ? parseInt(req.query.resultPerPage)
-//       : 20;
-//     const page = req.query.page ? parseInt(req.query.page) : 1;
-//     const skip = (page - 1) * resultPerPage;
-//     // Query
-//     const query = { instructor: req.user._id, isDelete: false };
-//     // Search
-//     if (search) {
-//       const containInString = new RegExp(req.query.search, "i");
-//       query.$or = [
-//         { classType: containInString },
-//         { modeOfClass: containInString },
-//         { description: containInString },
-//       ];
-//     }
-//     // Filter
-//     if (modeOfClass) {
-//       query.modeOfClass = modeOfClass;
-//     }
-//     if (classType) {
-//       query.classType = classType;
-//     }
-//     query.approvalByAdmin = approvalByAdmin;
-//     // Get required data
-//     const [classes, totalClasses] = await Promise.all([
-//       YogaTutorClass.find(query)
-//         .select(
-//           "_id modeOfClass classType startDate endDate price time timeDurationInMin approvalByAdmin instructorTimeZone createdAt"
-//         )
-//         .sort({ startDate: -1, endDate: -1 })
-//         .skip(skip)
-//         .limit(resultPerPage)
-//         .lean(),
-//       YogaTutorClass.countDocuments(query),
-//     ]);
-//     const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
-//     // Send final success response
-//     return successResponse(res, 200, "Successfully", {
-//       data: classes,
-//       totalPages: totalPages,
-//       currentPage: page,
-//     });
-//   } catch (err) {
-//     failureResponse(res, 500, err.message, null);
-//   }
-// };
+      res.redirect(generateMeet);
+    }
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const classTimesBookedForInstructor = async (req, res) => {
+  try {
+    const { classStatus = "upcoming", days } = req.query;
+    const daysInt = parseInt(days) || 0;
+
+    const classDatesTimeInZone = await convertUTCToGivenTimeZone(
+      new Date(),
+      req.user.userTimeZone
+    );
+
+    const today = new Date(classDatesTimeInZone.replace(" ", "T") + ".000Z");
+    today.setUTCHours(0, 0, 0, 0);
+
+    const future = new Date(today.getTime() + daysInt * 24 * 60 * 60 * 1000);
+    future.setUTCHours(23, 59, 59, 999);
+
+    // Query
+    const query = {
+      instructor: req.user._id,
+      isDelete: false,
+      approvalByAdmin: "accepted",
+      isBooked: true,
+      classStatus,
+      datesOfClasses: {
+        $elemMatch: {
+          date: { $gte: today, $lte: future },
+        },
+      },
+    };
+    // Get required data
+    const data = await YogaTutorClass.find(query)
+      .select(
+        "_id modeOfClass classType startDate endDate price time timeDurationInMin isBooked approvalByAdmin datesOfClasses instructorTimeZone createdAt"
+      )
+      .sort({ startDate: -1, endDate: -1 })
+      .lean();
+    // Send final success response
+    return successResponse(res, 200, "Successfully", { data });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const myClassTimesForUser = async (req, res) => {
+  try {
+    // Find order
+    const isOrder = await ServiceOrder.find({
+      learner: _id,
+      service: "yogatutorclass",
+      status: "completed",
+    })
+      .select("_id numberOfBooking")
+      .lean();
+
+    const ytcId = [];
+    for (let i = 0; i < isOrder.length; i++) {
+      ytcId.push(isOrder._id);
+    }
+
+    const { classStatus = "upcoming", days } = req.query;
+    const daysInt = parseInt(days) || 0;
+    const classDatesTimeInZone = await convertUTCToGivenTimeZone(
+      new Date(),
+      req.user.userTimeZone
+    );
+
+    const today = new Date(classDatesTimeInZone.replace(" ", "T") + ".000Z");
+    today.setUTCHours(0, 0, 0, 0);
+
+    const future = new Date(today.getTime() + daysInt * 24 * 60 * 60 * 1000);
+    future.setUTCHours(23, 59, 59, 999);
+
+    // Query
+    const query = {
+      _id: ytcId,
+      isDelete: false,
+      approvalByAdmin: "accepted",
+      isBooked: true,
+      classStatus,
+      datesOfClasses: {
+        $elemMatch: {
+          date: { $gte: today, $lte: future },
+        },
+      },
+    };
+    // Get required data
+    const data = await YogaTutorClass.find(query)
+      .select(
+        "_id modeOfClass classType startDate endDate price time timeDurationInMin isBooked approvalByAdmin datesOfClasses createdAt"
+      )
+      .sort({ startDate: -1, endDate: -1 })
+      .lean();
+    // Send final success response
+    return successResponse(res, 200, "Successfully", { data });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
 
 export {
   addNewClassTimes,
@@ -696,4 +849,7 @@ export {
   classTimesDetailsForInstructor,
   classTimesForUser,
   deleteYTClassTimes,
+  joinMeeting,
+  classTimesBookedForInstructor,
+  myClassTimesForUser,
 };

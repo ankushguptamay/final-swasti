@@ -24,7 +24,7 @@ const addSpecialization = async (req, res) => {
     );
     return successResponse(res, 201, `Added successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -59,7 +59,7 @@ const getSpecialization = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -78,7 +78,7 @@ const specializationDetails = async (req, res) => {
     }
     return successResponse(res, 200, `Successfully!`, { specialization });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -118,7 +118,7 @@ const updateSpecialization = async (req, res) => {
     await specializations.updateOne({ specialization, description });
     return successResponse(res, 201, `Updated successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -142,7 +142,7 @@ const deleteSpecialization = async (req, res) => {
     await specialization.deleteOne();
     return successResponse(res, 200, `Deleted successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

@@ -61,7 +61,7 @@ const addCerificate = async (req, res) => {
     return successResponse(res, 201, `Certificate added successfully.`);
   } catch (err) {
     deleteSingleFile(req.file.path);
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -92,7 +92,7 @@ const certificates = async (req, res) => {
       certificates: transform,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -111,7 +111,7 @@ const certificateById = async (req, res) => {
       certificate,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -143,7 +143,7 @@ const deleteCertificate = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Certificate deleted successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -191,7 +191,7 @@ const certificatesForAdminApproval = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -232,7 +232,7 @@ const certifiacteApproval = async (req, res) => {
       `Certificate ${approvalByAdmin} successfully`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

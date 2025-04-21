@@ -20,7 +20,7 @@ const addYTRule = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Rule added successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -30,7 +30,7 @@ const getYTRule = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Rules fetched successfully.`, { rule });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -57,7 +57,7 @@ const updateYTRule = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Rule updated successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -82,7 +82,7 @@ const deleteYTRule = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Rule deleted successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

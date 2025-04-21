@@ -20,7 +20,7 @@ const addYTRequirement = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Requirement added successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -32,7 +32,7 @@ const getYTRequirement = async (req, res) => {
       requirement,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -59,7 +59,7 @@ const updateYTRequirement = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Requirement updated successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -84,7 +84,7 @@ const deleteYTRequirement = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Requirement deleted successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

@@ -72,7 +72,7 @@ const getBanner = async (req, res) => {
       banner,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -88,7 +88,7 @@ const deleteBanner = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Banner deleted successfully.`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

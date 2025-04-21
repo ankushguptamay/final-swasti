@@ -89,7 +89,7 @@ const searchUser = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -150,7 +150,7 @@ const getUserReferral = async (req, res) => {
       chakras,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -194,7 +194,7 @@ const usersReferral = async (req, res) => {
       allUser,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -227,7 +227,7 @@ const userCount = async (req, res) => {
       todayVerifiedUser,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 export { searchUser, getUserReferral, usersReferral, userCount };

@@ -74,12 +74,7 @@ const createPayment = async (req, res) => {
       if (ytc.classType === "individual") {
         // Individual
         if (ytc.isBooked) {
-          return failureResponse(
-            res,
-            400,
-            "Oops! This yoga tutor class has already booked.",
-            null
-          );
+          return failureResponse(res, 400, "This slot is already booked", null);
         } else {
           // Amount Verification
           if (amount !== parseInt(ytc.price) - offeredPricePerPerson) {
@@ -145,15 +140,15 @@ const createPayment = async (req, res) => {
               );
             })
             .catch((err) => {
-              return failureResponse(res, 500, err.message);
+              return failureResponse(res);
             });
         } else {
-          return failureResponse(res, 500, err.message);
+          return failureResponse(res);
         }
       }
     );
   } catch (err) {
-    return failureResponse(res, 500, err.message);
+    return failureResponse(res);
   }
 };
 
@@ -243,12 +238,12 @@ const verifyPayment = async (req, res) => {
           },
         });
       }
-      return successResponse(res, 201, "Payment has been verified");
+      return successResponse(res, 201, "Payment successful.");
     } else {
-      return failureResponse(res, 400, "Payment verification failed");
+      return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-    return failureResponse(res, 500, err.message);
+    return failureResponse(res);
   }
 };
 
@@ -395,7 +390,7 @@ const cancelOrder = async (req, res) => {
       return failureResponse(res);
     }
   } catch (err) {
-    return failureResponse(res, 500, err.message);
+    return failureResponse(res);
   }
 };
 

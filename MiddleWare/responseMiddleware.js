@@ -1,7 +1,7 @@
 const failureResponse = (
   res,
   statusCode = 500,
-  message = "Internal Server Error",
+  message = "Oops! Something went wrong on our end. We're fixing it — please try again in a few minutes.",
   data = null
 ) => {
   res.status(statusCode).json({

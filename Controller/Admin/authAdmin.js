@@ -21,7 +21,7 @@ const getAdmin = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Admin fetched successfully!", { admin });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -54,7 +54,7 @@ const register = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, "Admin created!", { admin, accessToken });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -82,7 +82,7 @@ const login = async (req, res) => {
       accessToken,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

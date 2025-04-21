@@ -257,7 +257,7 @@ const register = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -324,7 +324,7 @@ const loginByMobile = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -339,7 +339,7 @@ const verifyMobileOTP = async (req, res) => {
     // Is Email Otp exist
     const isOtp = await OTP.findOne({ otp });
     if (!isOtp) {
-      return failureResponse(res, 401, `Invalid OTP!`, null);
+      return failureResponse(res, 401, `Invalid OTP. Try again`, null);
     }
     // Checking is user present or not
     const user = await User.findOne(
@@ -407,13 +407,13 @@ const verifyMobileOTP = async (req, res) => {
     updateData.refreshToken = refreshToken;
     await user.updateOne(updateData);
     // Final Response
-    return successResponse(res, 201, `Welcome, ${user.name}`, {
+    return successResponse(res, 201, `Login successful. Welcome back!`, {
       accessToken,
       refreshToken,
       user,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -432,7 +432,7 @@ const myDetails = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Fetched successfully!", data);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -470,7 +470,7 @@ const rolePage = async (req, res) => {
       { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -569,10 +569,10 @@ const updateInstructor = async (req, res) => {
     return successResponse(
       res,
       201,
-      `Your profile has been updated successfully.`
+      `Profile updated successfully.`
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -616,7 +616,7 @@ const addUpdateProfilePic = async (req, res) => {
     // Final response
     return successResponse(res, 201, message);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -638,7 +638,7 @@ const deleteProfilePic = async (req, res) => {
     // Final response
     return successResponse(res, 200, "Profile pic deleted successfully!");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -676,7 +676,7 @@ const isProfileVisible = async (req, res) => {
     // Final response
     return successResponse(res, 200, message);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -706,7 +706,7 @@ const refreshAccessToken = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -715,7 +715,7 @@ const logout = async (req, res) => {
     await User.updateOne({ _id: req.user._id }, { refreshToken: null });
     return successResponse(res, 200, "Loged out successfully");
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -753,7 +753,7 @@ const sendAadharOTP = async (req, res) => {
       return failureResponse(res, 400, aadhar.data.message, null);
     }
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -821,7 +821,7 @@ const verifyAadharOTP = async (req, res) => {
       return failureResponse(res, 400, "Not verified", null);
     }
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -869,7 +869,7 @@ const getMyChakra = async (req, res) => {
       chakras,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -902,7 +902,7 @@ const chakraDetails = async (req, res) => {
       chakra: transform,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -926,7 +926,7 @@ const updateLearner = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, `Profile updated successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -1017,7 +1017,7 @@ const searchInstructor = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -1031,7 +1031,7 @@ const myWallet = async (req, res) => {
       wallet,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -1115,7 +1115,7 @@ const instructorDetailsForLearner = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { data });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -1189,7 +1189,7 @@ const register_login_learner = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 

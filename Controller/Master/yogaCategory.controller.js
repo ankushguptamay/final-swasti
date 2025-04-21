@@ -22,7 +22,7 @@ const addYogaCategory = async (req, res) => {
     );
     return successResponse(res, 201, `Added successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -57,7 +57,7 @@ const getYogaCategory = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -74,7 +74,7 @@ const yogaCategoryDetails = async (req, res) => {
     }
     return successResponse(res, 200, `Successfully!`, { yogaCategory });
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -114,7 +114,7 @@ const updateYogaCategory = async (req, res) => {
     });
     return successResponse(res, 201, `Updated successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
@@ -138,7 +138,7 @@ const deleteYogaCategory = async (req, res) => {
     await yogaCategory.deleteOne();
     return successResponse(res, 200, `Deleted successfully!`);
   } catch (err) {
-    failureResponse(res, 500, err.message, null);
+    failureResponse(res);
   }
 };
 
