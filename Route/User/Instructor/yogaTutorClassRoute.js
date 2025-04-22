@@ -14,10 +14,10 @@ import {
 // Add class
 router.post("/", addNewClassTimes);
 router.get("/", classTimesForInstructor);
-router.get("/:id", classTimesDetailsForInstructor);
 router.get("/booked", classTimesBookedForInstructor);
+router.get("/:id", classTimesDetailsForInstructor);
+router.put("/joinMeeting/:id", joinMeeting);
 router.put("/:id", updateYTClassTimes);
 router.delete("/:id", deleteYTClassTimes);
-router.put("/joinMeeting/:id", joinMeeting);
 
 export default router;
