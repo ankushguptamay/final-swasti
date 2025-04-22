@@ -14,7 +14,7 @@ const schema = new Schema(
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     razorpayRefundId: { type: String },
-    reference: { type: String, unique: true }, // Unique transaction ID
+    reference: { type: String }, // Unique transaction ID
     paymentType: { type: String, enum: ["debit", "credit"], required: true },
     reason: {
       type: String,
