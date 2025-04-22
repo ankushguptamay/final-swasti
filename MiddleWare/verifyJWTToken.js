@@ -31,7 +31,7 @@ const verifyUserJWT = async (req, res, next) => {
     req.user = user;
     return next();
   } catch (err) {
-    return failureResponse(res);
+    return failureResponse(res, 500, err.message);
   }
 };
 
@@ -55,7 +55,7 @@ const verifyAdminJWT = async (req, res, next) => {
     req.admin = decode;
     return next();
   } catch (err) {
-    return failureResponse(res);
+    return failureResponse(res, 500, err.message);
   }
 };
 
