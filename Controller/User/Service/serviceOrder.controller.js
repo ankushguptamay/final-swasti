@@ -213,6 +213,7 @@ const verifyPayment = async (req, res) => {
           userId: instructor,
           status: "active",
         });
+        const reference = await generateReceiptNumber("ytc");
         // Transaction in Wallet
         const transaction = await UserTransaction.create({
           wallet: wallet._id,
@@ -222,6 +223,7 @@ const verifyPayment = async (req, res) => {
           paymentType: "credit",
           reason: "servicebooked",
           status: "completed",
+          reference,
         });
         // Updatae wallet
         const transactions = [...wallet.transactions, transaction._id];
@@ -310,6 +312,7 @@ const cancelOrder = async (req, res) => {
       }
       // Transation for user Wallet
       const userWallet = await Wallet.findOne({ userId: req.user._id });
+      const reference1 = await generateReceiptNumber("ytc");
       const userTransaction = await UserTransaction.create({
         wallet: userWallet._id,
         serviceOrder: serviceOrder._id,
@@ -318,6 +321,7 @@ const cancelOrder = async (req, res) => {
         paymentType: "credit",
         reason: "servicecancelled",
         status: "completed",
+        reference: reference1,
       });
       // Update user wallet
       await Wallet.updateOne(
@@ -331,6 +335,7 @@ const cancelOrder = async (req, res) => {
       const instructorWallet = await Wallet.findOne({
         userId: serviceOrder.instructor,
       });
+      const reference2 = await generateReceiptNumber("ytc");
       const firstITransaction = await UserTransaction.create({
         wallet: instructorWallet._id,
         serviceOrder: serviceOrder._id,
@@ -339,9 +344,11 @@ const cancelOrder = async (req, res) => {
         paymentType: "debit",
         reason: "servicecancelled",
         status: "completed",
+        reference: reference2,
       });
       const transactions = [firstITransaction._id];
       if (creditAmountForInstructor > 0) {
+        const reference3 = await generateReceiptNumber("ytc");
         const secondITransaction = await UserTransaction.create({
           wallet: instructorWallet._id,
           serviceOrder: serviceOrder._id,
@@ -350,6 +357,7 @@ const cancelOrder = async (req, res) => {
           paymentType: "credit",
           reason: "servicecancelled",
           status: "completed",
+          reference: reference3,
         });
         transactions.push(secondITransaction._id);
       }

@@ -11,6 +11,7 @@ import {
   validateInstructorReview,
   validateReplyOnMyReviews,
 } from "../../../MiddleWare/Validation/review.js";
+import { ServiceOrder } from "../../../Model/User/Services/serviceOrderModel.js";
 
 // Helper Function
 function calculateAverageRating(instructor) {
@@ -79,7 +80,17 @@ const giveOrUpdateReviews = async (req, res) => {
       );
     }
     // Check Is user take any service from instructor or not
-
+    const serviceOrder = await ServiceOrder.findOne({
+      learner: req.user._id,
+      status: "completed",
+      verify: true,
+    }).lean();
+    if (!serviceOrder)
+      return failureResponse(
+        res,
+        400,
+        "You are not able to give review to this instructor!"
+      );
     // Check is any review present
     const review = await InstructorReview.findOne({
       learner,

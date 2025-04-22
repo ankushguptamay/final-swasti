@@ -93,6 +93,9 @@ function transformUserDetails(user) {
     userCode: user.userCode,
     dateOfBirth: user.dateOfBirth || null,
   };
+  let profileComplete = 60; // Name, email, mobileNumber
+  if (data.profilePic) profileComplete += 20;
+  if (data.gender) profileComplete += 20;
   if (user.role.toLowerCase() === "instructor") {
     data.language = user.language || [];
     data.specialization = user.specialization
@@ -105,16 +108,33 @@ function transformUserDetails(user) {
     data.isProfileVisible = user.isProfileVisible;
     data.averageRating = user.averageRating;
     // Calculate Profile
-    let profileComplete = 0;
-    if (data.name) profileComplete += 7;
-    if (data.profilePic) profileComplete += 2;
-    if (data.language.length > 0) profileComplete += 2;
-    if (data.bio) profileComplete += 2;
-    if (data.experience_year) profileComplete += 2;
-    if (data.dateOfBirth) profileComplete += 2;
-    if (data.email && data.phoneNumber) profileComplete += 13;
-    data.profileComplete = profileComplete;
+    profileComplete = 15; // Name, email, mobileNumber
+    if (data.profilePic) profileComplete += 3;
+    if (data.language.length > 0) profileComplete += 3;
+    if (data.bio) profileComplete += 3;
+    if (data.experience_year) profileComplete += 3;
+    if (data.gender) profileComplete += 3;
+    if (data.isAadharVerified) profileComplete += 20;
+    if (
+      user.bankDetail &&
+      Array.isArray(user.bankDetail) &&
+      user.bankDetail.length > 0
+    )
+      profileComplete += 15;
+    if (
+      user.education &&
+      Array.isArray(user.education) &&
+      user.education.length > 0
+    )
+      profileComplete += 15;
+    if (
+      user.certificate &&
+      Array.isArray(user.certificate) &&
+      user.certificate.length > 0
+    )
+      profileComplete += 20;
   }
+  data.profileComplete = profileComplete;
   return data;
 }
 
@@ -421,7 +441,7 @@ const myDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select(
-        "_id name email mobileNumber role profilePic language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
+        "_id name email mobileNumber role profilePic education certificate bankDetail language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
       )
       .populate("specialization", "specialization");
     if (!user) {
@@ -566,11 +586,7 @@ const updateInstructor = async (req, res) => {
     // Update
     await instructor.updateOne(changedData);
     // Send final success response
-    return successResponse(
-      res,
-      201,
-      `Profile updated successfully.`
-    );
+    return successResponse(res, 201, `Profile updated successfully.`);
   } catch (err) {
     failureResponse(res);
   }
