@@ -15,8 +15,8 @@ import {
 router.post("/", addNewClassTimes);
 router.get("/", classTimesForInstructor);
 router.get("/booked", classTimesBookedForInstructor);
-router.get("/:id", classTimesDetailsForInstructor);
 router.put("/joinMeeting/:id", joinMeeting);
+router.get("/:id", classTimesDetailsForInstructor);
 router.put("/:id", updateYTClassTimes);
 router.delete("/:id", deleteYTClassTimes);
 

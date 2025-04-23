@@ -141,6 +141,28 @@ async function canUserJoin(times) {
   return { canJoin: false };
 }
 
+async function extractLearner(order) {
+  const learnerMap = {};
+  for (const item of order) {
+    const id = item.learner._id;
+
+    if (!learnerMap[id]) {
+      learnerMap[id] = {
+        _id: id,
+        name: item.learner.name,
+        profilePic: item.learner.profilePic
+          ? item.learner.profilePic.url || null
+          : null,
+        numberOfBooking: 0,
+      };
+    }
+
+    learnerMap[id].numberOfBooking += item.numberOfBooking;
+  }
+  const result = Object.values(learnerMap);
+  return result;
+}
+
 // Main Controller
 const addNewClassTimes = async (req, res) => {
   try {
@@ -771,14 +793,57 @@ const classTimesBookedForInstructor = async (req, res) => {
       },
     };
     // Get required data
-    const data = await YogaTutorClass.find(query)
+    const classes = await YogaTutorClass.find(query)
       .select(
-        "_id modeOfClass classType startDate endDate price time timeDurationInMin isBooked approvalByAdmin datesOfClasses instructorTimeZone createdAt"
+        "_id modeOfClass classType startDate endDate time timeDurationInMin isBooked datesOfClasses instructorTimeZone createdAt"
       )
-      .sort({ startDate: -1, endDate: -1 })
+      .sort({ startDate: 1 })
+      .populate({
+        path: "serviceOrder",
+        select: "_id numberOfBooking",
+        populate: {
+          path: "learner",
+          model: "User",
+          select: "name profilePic",
+        },
+      })
       .lean();
+    const transformData = await Promise.all(
+      classes.map(async (times) => {
+        const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
+          `${times.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
+          times.instructorTimeZone
+        );
+        const datesOfClasses = [];
+        for (let i = 0; i < times.datesOfClasses.length; i++) {
+          const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+            `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
+              times.time
+            }:00.000`,
+            times.instructorTimeZone
+          );
+          const day = await getDatesDay(
+            classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+          );
+          datesOfClasses.push({
+            _id: times.datesOfClasses[i]._id,
+            date: times.datesOfClasses[i].date,
+            classDatesTimeInUTC,
+            day,
+          });
+        }
+        const learner = await extractLearner(times.serviceOrder);
+        delete times.serviceOrder;
+        return {
+          ...times,
+          classStartTimeInUTC,
+          datesOfClasses,
+          learner,
+        };
+      })
+    );
     // Send final success response
-    return successResponse(res, 200, "Successfully", { data });
+    return successResponse(res, 200, "Successfully", { data: transformData });
   } catch (err) {
     failureResponse(res);
   }
