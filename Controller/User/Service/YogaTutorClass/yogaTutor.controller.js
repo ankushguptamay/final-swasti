@@ -163,6 +163,23 @@ async function extractLearner(order) {
   return result;
 }
 
+async function checkUserProfile() {
+  const result = [];
+  const user = await User.findById(req.user._id)
+    .select(
+      "profilePic education language gender experience_year bio isAadharVerified"
+    )
+    .lean();
+  if (!user.profilePic || !user.profilePic.url) result.push("profilePic");
+  if (user.education.length < 1) result.push("education");
+  if (user.language.length < 1) result.push("language");
+  if (!user.gender) result.push("gender");
+  if (!user.experience_year) result.push("experience_year");
+  if (!user.bio) result.push("bio");
+  if (!user.isAadharVerified) result.push("isAadharVerified");
+  return result;
+}
+
 // Main Controller
 const addNewClassTimes = async (req, res) => {
   try {
@@ -292,8 +309,9 @@ const addNewClassTimes = async (req, res) => {
     });
 
     const message = "Class created successfully.";
+    const requiredProfileDetails = await checkUserProfile();
     // Send final success response
-    return successResponse(res, 201, message);
+    return successResponse(res, 201, message, { requiredProfileDetails });
   } catch (err) {
     failureResponse(res);
   }
@@ -795,7 +813,7 @@ const classTimesBookedForInstructor = async (req, res) => {
     // Get required data
     const classes = await YogaTutorClass.find(query)
       .select(
-        "_id modeOfClass classType startDate endDate time timeDurationInMin isBooked datesOfClasses instructorTimeZone createdAt"
+        "_id modeOfClass classType startDate endDate time timeDurationInMin isBooked datesOfClasses packageType instructorTimeZone createdAt"
       )
       .sort({ startDate: 1 })
       .populate({
