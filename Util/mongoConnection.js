@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { Certificate } from "../Model/User/Profile/certificateModel.js";
+import { YogaTutorClass } from "../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -48,4 +49,25 @@ async function updateCertificates() {
   }
 }
 
-export { connectDB, dropCollection, updateCertificates };
+async function updateClasses() {
+  try {
+    const result = await YogaTutorClass.find({ isBooked: true })
+      .select("datesOfClasses")
+      .lean();
+
+    for (let i = 0; i < result.length; i++) {
+      const datesOfClasses = result[i].datesOfClasses.map((cla) => {
+        return { ...cla, classStatus: "upcoming" };
+      });
+      await YogaTutorClass.updateOne(
+        { _id: result[i]._id },
+        { $set: { datesOfClasses } }
+      );
+    }
+    console.log(`Updated`);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export { connectDB, dropCollection, updateCertificates, updateClasses };
