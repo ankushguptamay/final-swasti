@@ -180,7 +180,7 @@ const verifyPayment = async (req, res) => {
             _id: purchase.serviceId,
             isDelete: false,
             approvalByAdmin: "accepted",
-          });
+          }).lean();
           if (!yogaTutor) {
             return failureResponse(res);
           } else {
@@ -188,14 +188,20 @@ const verifyPayment = async (req, res) => {
               parseInt(yogaTutor.totalBookedSeat) +
               parseInt(purchase.numberOfBooking);
             const serviceOrder = [...yogaTutor.serviceOrder, purchase._id];
-            await yogaTutor.updateOne({
-              $set: {
-                totalBookedSeat,
-                isBooked: true,
-                serviceOrder,
-                classStatus: "upcoming",
-              },
+            const datesOfClasses = yogaTutor.datesOfClasses.map((cla) => {
+              return { ...cla, classStatus: "upcoming" };
             });
+            await YogaTutorClass.updateOne(
+              { _id: yogaTutor._id },
+              {
+                $set: {
+                  totalBookedSeat,
+                  isBooked: true,
+                  serviceOrder,
+                  datesOfClasses,
+                },
+              }
+            );
             instructor = yogaTutor.instructor;
             amount =
               amount +
@@ -380,11 +386,14 @@ const cancelOrder = async (req, res) => {
         isBooked = newSeat < 1 ? false : true;
         classStatus = newSeat < 1 ? null : "upcoming";
       }
+      const datesOfClasses = ytc.datesOfClasses.map((cla) => {
+        return { ...cla, classStatus };
+      });
       // Update Yoga tutor class
       await YogaTutorClass.updateOne(
         { _id: ytc._id },
         {
-          $set: { isBooked, classStatus },
+          $set: { isBooked, datesOfClasses },
           $inc: { totalBookedSeat: -serviceOrder.numberOfBooking },
           $pull: { serviceOrder: serviceOrder._id },
         }

@@ -180,6 +180,52 @@ async function checkUserProfile() {
   return result;
 }
 
+async function transformBookedData(classes) {
+  const transformData = await Promise.all(
+    classes.map(async (times) => {
+      const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
+        `${times.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
+        times.instructorTimeZone
+      );
+      const datesOfClasses = [];
+      for (let i = 0; i < times.datesOfClasses.length; i++) {
+        const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+          `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
+            times.time
+          }:00.000`,
+          times.instructorTimeZone
+        );
+        const day = await getDatesDay(
+          classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+        );
+        datesOfClasses.push({
+          _id: times.datesOfClasses[i]._id,
+          date: times.datesOfClasses[i].date,
+          classDatesTimeInUTC,
+          day,
+          classStatus: times.datesOfClasses[i].classStatus,
+        });
+      }
+      // Data
+      const data = { ...times, classStartTimeInUTC, datesOfClasses };
+      if (!times.instructor) {
+        const learner = await extractLearner(times.serviceOrder);
+        data.learner = learner;
+        delete times.serviceOrder;
+      } else {
+        data.instructor = {
+          ...times.instructor,
+          profilePic: times.instructor.profilePic
+            ? times.instructor.profilePic.url || null
+            : null,
+        };
+      }
+      return data;
+    })
+  );
+  return transformData;
+}
+
 // Main Controller
 const addNewClassTimes = async (req, res) => {
   try {
@@ -784,7 +830,7 @@ const joinMeeting = async (req, res) => {
 const classTimesBookedForInstructor = async (req, res) => {
   try {
     const { classStatus = "upcoming", days } = req.query;
-    const daysInt = parseInt(days) || 0;
+    const daysInt = parseInt(days) || 30;
 
     const classDatesTimeInZone = await convertUTCToGivenTimeZone(
       new Date(),
@@ -803,10 +849,10 @@ const classTimesBookedForInstructor = async (req, res) => {
       isDelete: false,
       approvalByAdmin: "accepted",
       isBooked: true,
-      classStatus,
       datesOfClasses: {
         $elemMatch: {
           date: { $gte: today, $lte: future },
+          classStatus,
         },
       },
     };
@@ -826,40 +872,8 @@ const classTimesBookedForInstructor = async (req, res) => {
         },
       })
       .lean();
-    const transformData = await Promise.all(
-      classes.map(async (times) => {
-        const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
-          `${times.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
-          times.instructorTimeZone
-        );
-        const datesOfClasses = [];
-        for (let i = 0; i < times.datesOfClasses.length; i++) {
-          const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-            `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
-              times.time
-            }:00.000`,
-            times.instructorTimeZone
-          );
-          const day = await getDatesDay(
-            classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-          );
-          datesOfClasses.push({
-            _id: times.datesOfClasses[i]._id,
-            date: times.datesOfClasses[i].date,
-            classDatesTimeInUTC,
-            day,
-          });
-        }
-        const learner = await extractLearner(times.serviceOrder);
-        delete times.serviceOrder;
-        return {
-          ...times,
-          classStartTimeInUTC,
-          datesOfClasses,
-          learner,
-        };
-      })
-    );
+    // Transfrom
+    const transformData = await transformBookedData(classes);
     // Send final success response
     return successResponse(res, 200, "Successfully", { data: transformData });
   } catch (err) {
@@ -871,20 +885,20 @@ const myClassTimesForUser = async (req, res) => {
   try {
     // Find order
     const isOrder = await ServiceOrder.find({
-      learner: _id,
+      learner: req.user._id,
       service: "yogatutorclass",
       status: "completed",
     })
-      .select("_id numberOfBooking")
+      .select("_id serviceId numberOfBooking")
       .lean();
 
     const ytcId = [];
     for (let i = 0; i < isOrder.length; i++) {
-      ytcId.push(isOrder._id);
+      ytcId.push(isOrder[i].serviceId);
     }
 
     const { classStatus = "upcoming", days } = req.query;
-    const daysInt = parseInt(days) || 0;
+    const daysInt = parseInt(days) || 30;
     const classDatesTimeInZone = await convertUTCToGivenTimeZone(
       new Date(),
       req.user.userTimeZone
@@ -902,22 +916,25 @@ const myClassTimesForUser = async (req, res) => {
       isDelete: false,
       approvalByAdmin: "accepted",
       isBooked: true,
-      classStatus,
       datesOfClasses: {
         $elemMatch: {
           date: { $gte: today, $lte: future },
+          classStatus,
         },
       },
     };
     // Get required data
-    const data = await YogaTutorClass.find(query)
+    const classes = await YogaTutorClass.find(query)
       .select(
-        "_id modeOfClass classType startDate endDate price time timeDurationInMin isBooked approvalByAdmin datesOfClasses createdAt"
+        "_id modeOfClass classType startDate packageType endDate time timeDurationInMin isBooked password datesOfClasses instructorTimeZone createdAt"
       )
-      .sort({ startDate: -1, endDate: -1 })
+      .sort({ startDate: 1, endDate: -1 })
+      .populate("instructor", "name profilePic")
       .lean();
+    // Transfrom
+    const transformData = await transformBookedData(classes);
     // Send final success response
-    return successResponse(res, 200, "Successfully", { data });
+    return successResponse(res, 200, "Successfully", { data: transformData });
   } catch (err) {
     failureResponse(res);
   }

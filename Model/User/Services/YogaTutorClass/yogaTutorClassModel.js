@@ -38,17 +38,17 @@ const schema = new Schema(
         date: { type: Date },
         meetingLink: { type: String, default: null },
         joinedBy: [{ type: Types.ObjectId, ref: "User" }],
+        classStatus: {
+          type: String,
+          enum: {
+            values: ["upcoming", "completed", "missed"],
+            message: "{VALUE} is not supported",
+          },
+        },
       },
     ],
     price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
-    classStatus: {
-      type: String,
-      enum: {
-        values: ["upcoming", "completed", "missed"],
-        message: "{VALUE} is not supported",
-      },
-    },
     // Approval
     approvalByAdmin: {
       type: String,
