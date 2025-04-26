@@ -163,9 +163,9 @@ async function extractLearner(order) {
   return result;
 }
 
-async function checkUserProfile() {
+async function checkUserProfile(userId) {
   const result = [];
-  const user = await User.findById(req.user._id)
+  const user = await User.findById(userId)
     .select(
       "profilePic education language gender experience_year bio isAadharVerified"
     )
@@ -211,7 +211,8 @@ async function transformBookedData(classes) {
       if (!times.instructor) {
         const learner = await extractLearner(times.serviceOrder);
         data.learner = learner;
-        delete times.serviceOrder;
+        delete data.serviceOrder;
+        delete data.password;
       } else {
         data.instructor = {
           ...times.instructor,
@@ -355,7 +356,7 @@ const addNewClassTimes = async (req, res) => {
     });
 
     const message = "Class created successfully.";
-    const requiredProfileDetails = await checkUserProfile();
+    const requiredProfileDetails = await checkUserProfile(req.user._id);
     // Send final success response
     return successResponse(res, 201, message, { requiredProfileDetails });
   } catch (err) {
@@ -926,7 +927,7 @@ const myClassTimesForUser = async (req, res) => {
     // Get required data
     const classes = await YogaTutorClass.find(query)
       .select(
-        "_id modeOfClass classType startDate packageType endDate time timeDurationInMin isBooked password datesOfClasses instructorTimeZone createdAt"
+        "_id modeOfClass classType startDate packageType endDate serviceOrder time timeDurationInMin isBooked password datesOfClasses instructorTimeZone createdAt"
       )
       .sort({ startDate: 1, endDate: -1 })
       .populate("instructor", "name profilePic")

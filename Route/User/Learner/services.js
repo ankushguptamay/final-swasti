@@ -11,7 +11,7 @@ import {
 } from "../../../Controller/User/Service/YogaTutorClass/yogaTutor.controller.js";
 
 router.post("/createPayment", createPayment);
-router.post("/cancelOrder", cancelOrder);
+router.post("/cancelOrder/:id", cancelOrder);
 
 router.put("/joinMeeting/:id", joinMeeting);
 router.get("/ytc-booking", myClassTimesForUser);
