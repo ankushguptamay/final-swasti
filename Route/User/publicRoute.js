@@ -11,6 +11,10 @@ import { getSpecialization } from "../../Controller/Master/specialization.contro
 import { getYogaCategory } from "../../Controller/Master/yogaCategory.controller.js";
 import { verifyPayment } from "../../Controller/User/Service/serviceOrder.controller.js";
 import { getBanner } from "../../Controller/Master/banner.controller.js";
+import {
+  applyCourseCoupon,
+  verifyCoursePayment,
+} from "../../Controller/User/Service/Course/payment.controller.js";
 
 router.get("/instructor", searchInstructor);
 router.get("/instructor/:id", instructorDetailsForLearner);
@@ -26,5 +30,9 @@ router.get("/y-c", getYogaCategory);
 router.post("/verifyPayment", verifyPayment);
 
 router.get("/banner", getBanner);
+
+// Course Route
+router.post("/verifyCoursePayment", verifyCoursePayment);
+router.post("/applyCourseCoupon", applyCourseCoupon);
 
 export default router;
