@@ -13,8 +13,9 @@ function getOfferedAmount(courseName, couponName, courseAmount) {
 
   if (!isApplicable) return 0;
 
-  const calculatedDiscount = (coupon.offerPercent / 100) * courseAmount;
-  return Math.min(calculatedDiscount, coupon.maximumOfferInRupee);
+  //   const calculatedDiscount = (coupon.offerPercent / 100) * courseAmount;
+  //   return Math.min(calculatedDiscount, coupon.maximumOfferInRupee);
+  return courseCoupons.maximumOfferInRupee;
 }
 
 export { getOfferedAmount };

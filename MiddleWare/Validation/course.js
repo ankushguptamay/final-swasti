@@ -12,7 +12,7 @@ const validateCourseCoupon = (data) => {
 const courseOrderValidation = (data) => {
   const schema = joi.object().keys({
     courseName: joi.string().required(),
-    couponName: joi.string().required(),
+    couponName: joi.string().optional(),
     amount: joi.number().required(),
     startDate: joi.string().required(),
     currency: joi.string().required(),
