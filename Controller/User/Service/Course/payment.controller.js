@@ -13,6 +13,7 @@ import {
   validateCourseCoupon,
 } from "../../../../MiddleWare/Validation/course.js";
 import { CoursePayment } from "../../../../Model/User/Services/Course/coursePaymentModel.js";
+import { generateReceiptNumber } from "../../../../Helper/generateOTP.js";
 
 const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
 const razorpayInstance = new Razorpay({
@@ -26,7 +27,7 @@ const applyCourseCoupon = async (req, res) => {
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseName, couponName, courseAmount } = req.body;
 
-    const offer = getOfferedAmount(
+    const offer = await getOfferedAmount(
       courseName.trim().toLowerCase(),
       couponName,
       courseAmount
@@ -72,14 +73,17 @@ const createCourseOrder = async (req, res) => {
               );
             })
             .catch((err) => {
+              // console.log(err.message);
               return failureResponse(res);
             });
         } else {
+          // console.log(err);
           return failureResponse(res);
         }
       }
     );
   } catch (err) {
+    // console.log(err.message);
     return failureResponse(res);
   }
 };
