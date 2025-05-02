@@ -103,7 +103,6 @@ function transformUserDetails(user) {
       : [];
     data.experience_year = user.experience_year || null;
     data.bio = user.bio || null;
-    data.aadharDetails = user.aadharDetails || null;
     data.isAadharVerified = user.isAadharVerified;
     data.isProfileVisible = user.isProfileVisible;
     data.averageRating = user.averageRating;
@@ -441,7 +440,7 @@ const myDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select(
-        "_id name email mobileNumber role profilePic education certificate bankDetail language dateOfBirth gender experience_year bio userCode aadharDetails isAadharVerified isProfileVisible averageRating"
+        "_id name email mobileNumber role profilePic education certificate bankDetail language dateOfBirth gender experience_year bio userCode isAadharVerified isProfileVisible averageRating"
       )
       .populate("specialization", "specialization");
     if (!user) {

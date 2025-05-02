@@ -25,6 +25,8 @@ import {
 } from "../../../../Util/timeZone.js";
 import { ServiceOrder } from "../../../../Model/User/Services/serviceOrderModel.js";
 import { createGoogleMeet } from "../../../../Util/googleMeet.js";
+const { MEET_CAN_JOIN_BEFORE, PER_CLASS_PRICE_LIMIT, OTP_DIGITS_LENGTH } =
+  process.env;
 
 // Helper
 async function isOverlapping(existingSlots, newOne) {
@@ -123,7 +125,9 @@ async function canUserJoin(times) {
     const classStartUTC = new Date(
       classDatesTimeInUTC.replace(" ", "T") + ".000Z"
     );
-    const joinWindowStart = new Date(classStartUTC.getTime() - 5 * 60000); // 5 mins before
+    const joinWindowStart = new Date(
+      classStartUTC.getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60000
+    ); // 5 mins before
     const joinWindowEnd = new Date(
       classStartUTC.getTime() + times.timeDurationInMin * 60000
     ); // end of class
@@ -253,10 +257,7 @@ const addNewClassTimes = async (req, res) => {
       yTRule,
     } = req.body;
     // Price
-    if (
-      Math.ceil(price / numberOfClass) <
-      parseInt(process.env.PER_CLASS_PRICE_LIMIT)
-    )
+    if (Math.ceil(price / numberOfClass) < parseInt(PER_CLASS_PRICE_LIMIT))
       return failureResponse(
         res,
         400,
@@ -327,9 +328,7 @@ const addNewClassTimes = async (req, res) => {
     const overLapMessage = "Slot already taken!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
     // Password
-    const password = generateFixedLengthRandomNumber(
-      process.env.OTP_DIGITS_LENGTH
-    );
+    const password = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
     const dateObject = datesOfClasses.map((dates) => {
       return { date: new Date(dates), meetingLink: null };
     });
