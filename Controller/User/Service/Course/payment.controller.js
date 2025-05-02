@@ -77,13 +77,15 @@ const createCourseOrder = async (req, res) => {
               return failureResponse(res);
             });
         } else {
-          // console.log(err);
+          console.log("Here1")
+          console.log(err);
           return failureResponse(res);
         }
       }
     );
   } catch (err) {
-    // console.log(err.message);
+    console.log("Here2")
+    console.log(err);
     return failureResponse(res);
   }
 };

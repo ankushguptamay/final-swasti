@@ -799,7 +799,9 @@ const joinMeeting = async (req, res) => {
       }
       const existingJoiner =
         newClassDate.joinedBy.map((us) => us.toString()) || [];
-      const joinedBy = [...new Set(...existingJoiner, req.user._id.toString())];
+      const joinedBy = [
+        ...new Set([...existingJoiner, req.user._id.toString()]),
+      ];
       const datesOfClasses = [];
       for (let i = 0; i < ytc.datesOfClasses.length; i++) {
         if (
