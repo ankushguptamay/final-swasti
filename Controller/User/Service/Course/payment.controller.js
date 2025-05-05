@@ -90,7 +90,6 @@ const verifyCoursePayment = async (req, res) => {
     const orderId = req.body.razorpay_order_id;
     const paymentId = req.body.razorpay_payment_id;
     const razorpay_signature = req.body.razorpay_signature;
-    console.log(req.body);
     // Creating hmac object
     let hmac = crypto.createHmac("sha256", RAZORPAY_SECRET_ID);
     // Passing the data to be hashed
@@ -105,9 +104,7 @@ const verifyCoursePayment = async (req, res) => {
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
       }
-      console.log(order);
       if (!order.verify && order.status === "pending") {
-        console.log("here1");
         // Update Purchase
         await CoursePayment.updateOne(
           { _id: order._id },
@@ -125,8 +122,6 @@ const verifyCoursePayment = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-    console.log("Here");
-    console.log(err);
     return failureResponse(res);
   }
 };
