@@ -821,8 +821,8 @@ const joinMeeting = async (req, res) => {
         { _id: ytc._id },
         { $set: { datesOfClasses } }
       );
-
-      res.redirect(generateMeet);
+      // Send final success response
+      return successResponse(res, 200, "Successfully", { data: generateMeet });
     }
   } catch (err) {
     failureResponse(res);

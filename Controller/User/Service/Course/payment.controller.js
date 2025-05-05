@@ -60,7 +60,7 @@ const createCourseOrder = async (req, res) => {
             couponName,
             courseName,
             startDate: new Date(startDate),
-            amount,
+            amount: parseFloat(amount) / 100,
             razorpayOrderId: order.id,
             receipt,
           })
@@ -87,8 +87,8 @@ const createCourseOrder = async (req, res) => {
 
 const verifyCoursePayment = async (req, res) => {
   try {
-    const orderId = req.body.orderId;
-    const paymentId = req.body.paymentId;
+    const orderId = req.body.razorpay_order_id;
+    const paymentId = req.body.razorpay_payment_id;
     const razorpay_signature = req.body.razorpay_signature;
     console.log(req.body);
     // Creating hmac object
@@ -125,7 +125,7 @@ const verifyCoursePayment = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-    console.log("Here")
+    console.log("Here");
     console.log(err);
     return failureResponse(res);
   }
