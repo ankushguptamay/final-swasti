@@ -1232,9 +1232,6 @@ const instructorForLandingPage = async (req, res) => {
         },
       },
       {
-        $unwind: { path: "$specialization", preserveNullAndEmptyArrays: true },
-      },
-      {
         $project: {
           _id: 1,
           name: 1,
@@ -1259,6 +1256,10 @@ const instructorForLandingPage = async (req, res) => {
       return {
         ...user,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
+        // specialization:
+        //   user.specialization.length > 0
+        //     ? user.specialization.map((spe) => spe.specialization)
+        //     : [],
       };
     });
     console.log(transformData);
@@ -1274,7 +1275,7 @@ const instructorForLandingPage = async (req, res) => {
       data: { sectionA, sectionB },
     });
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     failureResponse(res);
   }
 };
