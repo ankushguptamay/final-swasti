@@ -1210,6 +1210,7 @@ const register_login_learner = async (req, res) => {
 
 const instructorForLandingPage = async (req, res) => {
   try {
+    console.log("here");
     // Data query
     let query = {
       $and: [
@@ -1252,7 +1253,7 @@ const instructorForLandingPage = async (req, res) => {
         },
       },
     ]);
-
+    console.log(instructor);
     // Transform Data
     const transformData = instructor.map((user) => {
       return {
@@ -1260,6 +1261,7 @@ const instructorForLandingPage = async (req, res) => {
         profilePic: user.profilePic ? user.profilePic.url || null : null,
       };
     });
+    console.log(transformData);
     // Split in Two
     const sectionA = transformData.slice(0, 20);
     const sectionB = transformData.slice(20, 40).map((user) => {
