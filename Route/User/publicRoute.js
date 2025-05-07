@@ -4,6 +4,7 @@ const router = express.Router();
 import {
   instructorDetailsForLearner,
   searchInstructor,
+  instructorForLandingPage,
 } from "../../Controller/User/UserProfile/user.controller.js";
 import { addContactUs } from "../../Controller/Admin/contactUs.controller.js";
 import { classTimesForUser } from "../../Controller/User/Service/YogaTutorClass/yogaTutor.controller.js";
@@ -17,6 +18,7 @@ import {
 } from "../../Controller/User/Service/Course/payment.controller.js";
 
 router.get("/instructor", searchInstructor);
+router.get("/landing-instructor", instructorForLandingPage);
 router.get("/instructor/:id", instructorDetailsForLearner);
 
 router.post("/contactUs", addContactUs);

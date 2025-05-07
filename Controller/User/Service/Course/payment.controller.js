@@ -117,7 +117,8 @@ const verifyCoursePayment = async (req, res) => {
           }
         );
       }
-      return successResponse(res, 201, "Payment successful.");
+      // return successResponse(res, 201, "Payment successful.");
+      return res.redirect(302, "https://course.swastibharat.com/thank-you/");
     } else {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }

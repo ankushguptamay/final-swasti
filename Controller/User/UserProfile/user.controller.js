@@ -1208,6 +1208,74 @@ const register_login_learner = async (req, res) => {
   }
 };
 
+const instructorForLandingPage = async (req, res) => {
+  try {
+    // Data query
+    let query = {
+      $and: [
+        { role: "instructor" },
+        { $expr: { $gte: [{ $size: "$education" }, 1] } }, // Atleast one educaion should present
+        { "profilePic.url": { $exists: true, $ne: null, $ne: "" } }, // profile pic should be present
+      ],
+    };
+    // Get required data
+    const instructor = await User.aggregate([
+      { $match: query },
+      { $sample: { size: 40 } },
+      {
+        $lookup: {
+          from: "specializations",
+          localField: "specialization",
+          foreignField: "_id",
+          as: "specialization",
+        },
+      },
+      {
+        $unwind: { path: "$specialization", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          profilePic: 1,
+          bio: 1,
+          averageRating: 1,
+          gender: 1,
+          experience_year: 1,
+          specialization: {
+            $map: {
+              input: "$specialization",
+              as: "spec",
+              in: "$$spec.specialization",
+            },
+          },
+        },
+      },
+    ]);
+
+    // Transform Data
+    const transformData = instructor.map((user) => {
+      return {
+        ...user,
+        profilePic: user.profilePic ? user.profilePic.url || null : null,
+      };
+    });
+    // Split in Two
+    const sectionA = transformData.slice(0, 20);
+    const sectionB = transformData.slice(20, 40).map((user) => {
+      const { bio, ...rest } = user;
+      return rest;
+    });
+
+    // Send final success response
+    return successResponse(res, 200, `Successfully!`, {
+      data: { sectionA, sectionB },
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -1229,4 +1297,5 @@ export {
   myWallet,
   instructorDetailsForLearner,
   register_login_learner,
+  instructorForLandingPage,
 };
