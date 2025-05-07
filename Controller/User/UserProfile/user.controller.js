@@ -1274,6 +1274,7 @@ const instructorForLandingPage = async (req, res) => {
       data: { sectionA, sectionB },
     });
   } catch (err) {
+    console.log(err.message)
     failureResponse(res);
   }
 };
