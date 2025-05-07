@@ -1267,9 +1267,7 @@ const instructorForLandingPage = async (req, res) => {
       .map(({ bio, ...rest }) => rest);
 
     // Send final success response
-    return successResponse(res, 200, `Successfully!`, {
-      data: { sectionA, sectionB },
-    });
+    return successResponse(res, 200, `Successfully!`, { sectionA, sectionB });
   } catch (err) {
     failureResponse(res);
   }
