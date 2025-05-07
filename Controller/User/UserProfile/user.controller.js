@@ -1210,7 +1210,6 @@ const register_login_learner = async (req, res) => {
 
 const instructorForLandingPage = async (req, res) => {
   try {
-    console.log("here");
     // Data query
     let query = {
       $and: [
@@ -1250,7 +1249,6 @@ const instructorForLandingPage = async (req, res) => {
         },
       },
     ]);
-    console.log(instructor);
     // Transform Data
     const transformData = instructor.map((user) => {
       return {
@@ -1262,20 +1260,17 @@ const instructorForLandingPage = async (req, res) => {
         //     : [],
       };
     });
-    console.log(transformData);
     // Split in Two
     const sectionA = transformData.slice(0, 20);
-    const sectionB = transformData.slice(20, 40).map((user) => {
-      const { bio, ...rest } = user;
-      return rest;
-    });
+    const sectionB = transformData
+      .slice(Math.max(0, transformData.length - 20), transformData.length)
+      .map(({ bio, ...rest }) => rest);
 
     // Send final success response
     return successResponse(res, 200, `Successfully!`, {
       data: { sectionA, sectionB },
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
