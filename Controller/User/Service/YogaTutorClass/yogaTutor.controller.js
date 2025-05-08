@@ -25,8 +25,12 @@ import {
 } from "../../../../Util/timeZone.js";
 import { ServiceOrder } from "../../../../Model/User/Services/serviceOrderModel.js";
 import { createGoogleMeet } from "../../../../Util/googleMeet.js";
-const { MEET_CAN_JOIN_BEFORE, PER_CLASS_PRICE_LIMIT, OTP_DIGITS_LENGTH } =
-  process.env;
+import {
+  FUTURE_CLASS_CREATION,
+  MEET_CAN_JOIN_BEFORE,
+  PER_CLASS_PRICE_LIMIT,
+} from "../../../../Config/class.const.js";
+const { OTP_DIGITS_LENGTH } = process.env;
 
 // Helper
 async function isOverlapping(existingSlots, newOne) {
@@ -72,7 +76,7 @@ async function filterQueryOfClassForUser(data) {
     date = new Date().toISOString().split("T")[0], // Default today
     timing,
     pt, // packageType
-    miP = 500, // minimumPrice,
+    miP = parseInt(PER_CLASS_PRICE_LIMIT), // minimumPrice,
     maP = 100000, // maximumPrice,
   } = data;
   // Find Instructor Whose education, profilePic present
@@ -274,7 +278,7 @@ const addNewClassTimes = async (req, res) => {
       );
       const hasPastDate =
         new Date(`${classDatesTimeInUTC.replace(" ", "T")}.000Z`).getTime() >=
-        new Date().getTime() + 24 * 60 * 60 * 1000;
+        new Date().getTime() + parseInt(FUTURE_CLASS_CREATION) * 60 * 60 * 1000;
       if (!hasPastDate)
         return failureResponse(
           res,

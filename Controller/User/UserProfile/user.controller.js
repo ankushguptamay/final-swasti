@@ -1110,6 +1110,7 @@ const instructorDetailsForLearner = async (req, res) => {
         .select("_id name profilePic bio averageRating")
         .sort({ averageRating: -1, name: 1 })
         .limit(20)
+        .populate("specialization", "specialization")
         .lean(),
       YogaTutorClass.find({
         startDate: {
@@ -1125,7 +1126,18 @@ const instructorDetailsForLearner = async (req, res) => {
         .populate("yogaCategory", "-_id yogaCategory description")
         .lean(),
     ]);
-    data.similarProfile = similarProfile;
+    // Transform Similar profile
+    const transformData = similarProfile.map((user) => {
+      return {
+        ...user,
+        profilePic: user.profilePic ? user.profilePic.url || null : null,
+        specialization:
+          user.specialization.length > 0
+            ? user.specialization.map((spe) => spe.specialization)
+            : [],
+      };
+    });
+    data.similarProfile = transformData;
     data.yTClassTime = await bindByPackageType(yogaClasses);
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { data });

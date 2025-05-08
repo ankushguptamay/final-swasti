@@ -23,7 +23,7 @@ const schema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "completed", "cancelled", "refunded", "failed"],
+      enum: ["pending", "completed", "failed"],
       default: "pending",
     },
     isDelete: { type: Boolean, default: false },

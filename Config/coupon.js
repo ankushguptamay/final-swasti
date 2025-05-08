@@ -1,6 +1,6 @@
 export const courseCoupons = [
   {
-    couponName: "WELCOME",
+    couponName: "NEWJOIN",
     offerPercent: 10,
     maximumOfferInRupee: 100,
     appliedTo:["yoga volunteer course"]

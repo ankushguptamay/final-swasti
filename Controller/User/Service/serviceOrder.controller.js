@@ -11,19 +11,20 @@ import { generateReceiptNumber } from "../../../Helper/generateOTP.js";
 import { User } from "../../../Model/User/Profile/userModel.js";
 import { ServiceOrder } from "../../../Model/User/Services/serviceOrderModel.js";
 import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-const {
-  SERVICE_OFFER,
-  RAZORPAY_KEY_ID,
-  RAZORPAY_SECRET_ID,
-  PLATFROM_FEE,
-  CANCELLATION_CHARGE,
-  CANCELLATION_BONUS_INSTRUCTOR,
-} = process.env;
+const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
 import Razorpay from "razorpay";
 import { purchaseServiceValidation } from "../../../MiddleWare/Validation/slots.js";
 import crypto from "crypto";
 import { Wallet } from "../../../Model/User/Profile/walletModel.js";
 import { UserTransaction } from "../../../Model/User/Profile/transactionModel.js";
+import {
+  CANCELLATION_CHARGE,
+  PLATFROM_FEE,
+  SERVICE_OFFER,
+  CANCELLATION_BONUS_INSTRUCTOR,
+  CLASS_CANCELATION_TIME,
+  CLASS_BOOKING_TIME,
+} from "../../../Config/class.const.js";
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -59,7 +60,10 @@ const createPayment = async (req, res) => {
       const dateObject = new Date(
         classDatesTimeInUTC.replace(" ", "T") + ".000Z"
       ).getTime();
-      if (new Date().getTime() + 24 * 60 * 60 * 1000 > dateObject) {
+      if (
+        new Date().getTime() + parseInt(CLASS_BOOKING_TIME) * 60 * 60 * 1000 >
+        dateObject
+      ) {
         return failureResponse(
           res,
           400,
@@ -300,7 +304,9 @@ const cancelOrder = async (req, res) => {
       if (new Date().getTime() > UTCFormate) {
         return failureResponse(res, 400, "Can not cancel this order.");
       } else if (
-        new Date().getTime() + 24 * 60 * 60 * 1000 > UTCFormate &&
+        new Date().getTime() +
+          parseInt(CLASS_CANCELATION_TIME) * 60 * 60 * 1000 >
+          UTCFormate &&
         UTCFormate >= new Date().getTime()
       ) {
         // Some charges

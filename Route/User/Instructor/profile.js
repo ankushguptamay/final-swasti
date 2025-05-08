@@ -23,6 +23,7 @@ import {
 
 // Middleware
 import { uploadImage } from "../../../MiddleWare/uploadFile.js";
+import { instructorDashBoard } from "../../../Controller/User/dashboard.js";
 
 router.get("/", myDetails);
 router.put("/", updateInstructor);
@@ -47,5 +48,8 @@ router.delete("/reply", deleteMyReply);
 
 // Wallet/Transcation
 router.get("/wallet", myWallet);
+
+// Dashboard
+router.get("/dashboard", instructorDashBoard);
 
 export default router;
