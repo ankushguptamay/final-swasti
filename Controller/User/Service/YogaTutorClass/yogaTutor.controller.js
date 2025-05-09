@@ -815,6 +815,7 @@ const joinMeeting = async (req, res) => {
             joinedBy,
             meetingLink: generateMeet,
             date: newClassDate.date,
+            classStatus: "upcoming",
           });
         } else {
           datesOfClasses.push(ytc.datesOfClasses[i]);
@@ -946,6 +947,80 @@ const myClassTimesForUser = async (req, res) => {
   }
 };
 
+const bookedClassTimesDetailsForInstructor = async (req, res) => {
+  try {
+    const query = {
+      _id: req.params.id,
+      instructor: req.user._id,
+      isDelete: false,
+      isBooked: true,
+    };
+    // Get required data
+    const classes = await YogaTutorClass.findOne(query)
+      .select(
+        "_id modeOfClass classType startDate endDate time description price timeDurationInMin instructorTimeZone numberOfSeats numberOfClass packageType datesOfClasses approvalByAdmin isBooked"
+      )
+      .populate("yogaCategory", "yogaCategory description")
+      .populate("yTRule", "rule")
+      .populate("yTRequirement", "requirement")
+      .populate({
+        path: "serviceOrder",
+        select: "_id receipt",
+        populate: {
+          path: "learner",
+          model: "User",
+          select: "name profilePic",
+        },
+      })
+      .populate("instructor", "name profilePic averageRating bio")
+      .lean();
+
+    if (!classes)
+      return failureResponse(res, 400, "This class is not present!", null);
+
+    // Modify data
+    classes.learner = classes.serviceOrder.map(({ learner }) => {
+      return {
+        ...learner,
+        profilePic: learner.profilePic ? learner.profilePic.url || null : null,
+      };
+    });
+    classes.serviceOrder = classes.serviceOrder.map((ord) => {
+      return { _id: ord._id, receipt: ord.receipt };
+    });
+    classes.instructor = {
+      ...classes.instructor,
+      profilePic: classes.instructor.profilePic
+        ? classes.instructor.profilePic.url || null
+        : null,
+    };
+    const datesOfClasses = [];
+    for (let i = 0; i < classes.datesOfClasses.length; i++) {
+      const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+        `${classes.datesOfClasses[i].date.toISOString().split("T")[0]}T${
+          classes.time
+        }:00.000`,
+        classes.instructorTimeZone
+      );
+      const day = await getDatesDay(
+        classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+      );
+      datesOfClasses.push({
+        _id: classes.datesOfClasses[i]._id,
+        date: classes.datesOfClasses[i].date,
+        classDatesTimeInUTC,
+        day,
+        classStatus: classes.datesOfClasses[i].classStatus,
+      });
+    }
+    classes.datesOfClasses = datesOfClasses;
+    // Send final success response
+    return successResponse(res, 200, "Successfully", classes);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   addNewClassTimes,
   classTimesForInstructor,
@@ -957,5 +1032,5 @@ export {
   deleteYTClassTimes,
   joinMeeting,
   classTimesBookedForInstructor,
-  myClassTimesForUser,
+  myClassTimesForUser,bookedClassTimesDetailsForInstructor
 };

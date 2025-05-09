@@ -9,12 +9,14 @@ import {
   deleteYTClassTimes,
   joinMeeting,
   classTimesBookedForInstructor,
+  bookedClassTimesDetailsForInstructor,
 } from "../../../Controller/User/Service/YogaTutorClass/yogaTutor.controller.js";
 
 // Add class
 router.post("/", addNewClassTimes);
 router.get("/", classTimesForInstructor);
 router.get("/booked", classTimesBookedForInstructor);
+router.get("/booked/:id", bookedClassTimesDetailsForInstructor);
 router.put("/joinMeeting/:id", joinMeeting);
 router.get("/:id", classTimesDetailsForInstructor);
 router.put("/:id", updateYTClassTimes);

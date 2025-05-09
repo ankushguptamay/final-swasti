@@ -223,7 +223,6 @@ const verifyPayment = async (req, res) => {
           userId: instructor,
           status: "active",
         });
-        const reference = await generateReceiptNumber("ytc");
         // Transaction in Wallet
         const transaction = await UserTransaction.create({
           wallet: wallet._id,
@@ -233,7 +232,7 @@ const verifyPayment = async (req, res) => {
           paymentType: "credit",
           reason: "servicebooked",
           status: "completed",
-          reference,
+          reference: purchase.receipt,
         });
         // Updatae wallet
         const transactions = [...wallet.transactions, transaction._id];
