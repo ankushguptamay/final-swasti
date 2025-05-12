@@ -25,6 +25,7 @@ import {
   CLASS_CANCELATION_TIME,
   CLASS_BOOKING_TIME,
 } from "../../../Config/class.const.js";
+import { YTClassDate } from "../../../Model/User/Services/YogaTutorClass/yTClassDatesModel.js";
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -192,9 +193,6 @@ const verifyPayment = async (req, res) => {
               parseInt(yogaTutor.totalBookedSeat) +
               parseInt(purchase.numberOfBooking);
             const serviceOrder = [...yogaTutor.serviceOrder, purchase._id];
-            const datesOfClasses = yogaTutor.datesOfClasses.map((cla) => {
-              return { ...cla, classStatus: "upcoming" };
-            });
             await YogaTutorClass.updateOne(
               { _id: yogaTutor._id },
               {
@@ -202,9 +200,12 @@ const verifyPayment = async (req, res) => {
                   totalBookedSeat,
                   isBooked: true,
                   serviceOrder,
-                  datesOfClasses,
                 },
               }
+            );
+            await YTClassDate.updateMany(
+              { yogaTutorClass: yogaTutor._id },
+              { $set: { classStatus: "upcoming" } }
             );
             instructor = yogaTutor.instructor;
             amount =
@@ -391,17 +392,18 @@ const cancelOrder = async (req, res) => {
         isBooked = newSeat < 1 ? false : true;
         classStatus = newSeat < 1 ? null : "upcoming";
       }
-      const datesOfClasses = ytc.datesOfClasses.map((cla) => {
-        return { ...cla, classStatus };
-      });
       // Update Yoga tutor class
       await YogaTutorClass.updateOne(
         { _id: ytc._id },
         {
-          $set: { isBooked, datesOfClasses },
+          $set: { isBooked },
           $inc: { totalBookedSeat: -serviceOrder.numberOfBooking },
           $pull: { serviceOrder: serviceOrder._id },
         }
+      );
+      await YTClassDate.updateMany(
+        { yogaTutorClass: ytc._id },
+        { $set: { classStatus } }
       );
       // Update Serive Order
       await ServiceOrder.updateOne(

@@ -4,22 +4,17 @@ import {
 } from "../../MiddleWare/responseMiddleware.js";
 import { UserTransaction } from "../../Model/User/Profile/transactionModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
-import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
-import { convertUTCToGivenTimeZone } from "../../Util/timeZone.js";
+import { YTClassDate } from "../../Model/User/Services/YogaTutorClass/yTClassDatesModel.js";
 
 const instructorDashBoard = async (req, res) => {
   try {
     const { daysForClass, daysForEarning } = req.query;
     const daysIntClass = parseInt(daysForClass) || 1;
     const daysIntTrans = parseInt(daysForEarning) || 1;
-    // Get datetime according to user
-    const classDatesTimeInZone = await convertUTCToGivenTimeZone(
-      new Date(),
-      req.user.userTimeZone
-    );
     // condition for class times
-    const today = new Date(classDatesTimeInZone.replace(" ", "T") + ".000Z");
-    today.setUTCHours(0, 0, 0, 0);
+    const today = new Date()(
+      new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
+    );
     const future = new Date(
       today.getTime() + daysIntClass * 24 * 60 * 60 * 1000
     );
@@ -32,15 +27,8 @@ const instructorDashBoard = async (req, res) => {
     // Query
     const queryForClass = {
       instructor: req.user._id,
-      isDelete: false,
-      approvalByAdmin: "accepted",
-      isBooked: true,
-      datesOfClasses: {
-        $elemMatch: {
-          date: { $gte: today, $lte: future },
-          classStatus: "upcoming",
-        },
-      },
+      startDateTimeUTC: { $gte: today, $lte: future },
+      classStatus: "upcoming",
     };
     const queryForTrans = {
       user: req.user._id,
@@ -51,7 +39,7 @@ const instructorDashBoard = async (req, res) => {
     };
     // Get required data
     const [classes, transactions, user] = await Promise.all([
-      YogaTutorClass.countDocuments(queryForClass),
+      YTClassDate.countDocuments(queryForClass),
       UserTransaction.find(queryForTrans).select("amount paymentType").lean(),
       User.findById(req.user._id).select("averageRating").lean(),
     ]);

@@ -170,39 +170,22 @@ async function bindByPackageType(data) {
     let group = grouped.find(
       (g) => g.packageType.toLowerCase() === packageType.toLowerCase()
     );
-
     if (!group) {
       group = { packageType, yogaClasses: [] };
       grouped.push(group);
     }
-
     // Convert class start time to UTC
     const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
       `${rest.startDate.toISOString().split("T")[0]}T${rest.time}:00.000`,
       rest.instructorTimeZone
     );
-
     // Convert each class date
     const datesOfClasses = await Promise.all(
-      rest.datesOfClasses.map(async ({ date, meetingLink }) => {
-        const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-          `${date.toISOString().split("T")[0]}T${rest.time}:00.000`,
-          rest.instructorTimeZone
-        );
-
-        const day = await getDatesDay(
-          classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-        );
-
-        return {
-          date,
-          classDatesTimeInUTC,
-          day,
-          meetingLink,
-        };
+      rest.datesOfClasses.map(async (classe) => {
+        const day = await getDatesDay(classe.startDateTimeUTC);
+        return { ...classe, day };
       })
     );
-
     // Add processed class to group
     group.yogaClasses.push({
       ...rest,
@@ -323,8 +306,8 @@ const loginByMobile = async (req, res) => {
     }
 
     // Generate OTP for Email
-    const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    // console.log(otp);
+    const otp =await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
+    console.log(otp);
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
     //  Store OTP
@@ -1121,9 +1104,13 @@ const instructorDetailsForLearner = async (req, res) => {
         approvalByAdmin: "accepted",
       })
         .select(
-          "_id modeOfClass classType startDate endDate packageType numberOfClass time price datesOfClasses timeDurationInMin totalBookedSeat numberOfSeats isBooked instructorTimeZone"
+          "_id modeOfClass classType startDate endDate packageType numberOfClass time price timeDurationInMin totalBookedSeat numberOfSeats isBooked instructorTimeZone"
         )
         .populate("yogaCategory", "-_id yogaCategory description")
+        .populate(
+          "datesOfClasses",
+          "_id date startDateTimeUTC endDateTimeUTC classStatus"
+        )
         .lean(),
     ]);
     // Transform Similar profile

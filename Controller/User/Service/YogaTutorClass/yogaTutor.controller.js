@@ -30,6 +30,7 @@ import {
   MEET_CAN_JOIN_BEFORE,
   PER_CLASS_PRICE_LIMIT,
 } from "../../../../Config/class.const.js";
+import { YTClassDate } from "../../../../Model/User/Services/YogaTutorClass/yTClassDatesModel.js";
 const { OTP_DIGITS_LENGTH } = process.env;
 
 // Helper
@@ -121,14 +122,7 @@ async function canUserJoin(times) {
   const now = new Date().getTime();
 
   for (const classDate of times.datesOfClasses) {
-    // Combine date and time
-    const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-      `${classDate.date.toISOString().split("T")[0]}T${times.time}:00.000`,
-      times.instructorTimeZone
-    );
-    const classStartUTC = new Date(
-      classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-    );
+    const classStartUTC = classDate.startDateTimeUTC;
     const joinWindowStart = new Date(
       classStartUTC.getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60000
     ); // 5 mins before
@@ -197,22 +191,8 @@ async function transformBookedData(classes) {
       );
       const datesOfClasses = [];
       for (let i = 0; i < times.datesOfClasses.length; i++) {
-        const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-          `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
-            times.time
-          }:00.000`,
-          times.instructorTimeZone
-        );
-        const day = await getDatesDay(
-          classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-        );
-        datesOfClasses.push({
-          _id: times.datesOfClasses[i]._id,
-          date: times.datesOfClasses[i].date,
-          classDatesTimeInUTC,
-          day,
-          classStatus: times.datesOfClasses[i].classStatus,
-        });
+        const day = await getDatesDay(times.datesOfClasses.startDateTimeUTC);
+        datesOfClasses.push({ ...times.datesOfClasses, day });
       }
       // Data
       const data = { ...times, classStartTimeInUTC, datesOfClasses };
@@ -220,7 +200,6 @@ async function transformBookedData(classes) {
         const learner = await extractLearner(times.serviceOrder);
         data.learner = learner;
         delete data.serviceOrder;
-        delete data.password;
       } else {
         data.instructor = {
           ...times.instructor,
@@ -316,7 +295,8 @@ const addNewClassTimes = async (req, res) => {
       isDelete: false,
       endDate: { $gte: new Date(defaultToday) },
     })
-      .select("time startDate endDate timeDurationInMin datesOfClasses")
+      .select("time startDate endDate timeDurationInMin")
+      .populate("datesOfClasses", "date")
       .lean();
     const newTime = { time, timeDurationInMin, datesOfClasses };
     // trans form Change
@@ -331,24 +311,17 @@ const addNewClassTimes = async (req, res) => {
     const checkOverLap = await isOverlapping(existingTimes, newTime);
     const overLapMessage = "Slot already taken!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
-    // Password
-    const password = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    const dateObject = datesOfClasses.map((dates) => {
-      return { date: new Date(dates), meetingLink: null };
-    });
     // Create Yoga class
-    await YogaTutorClass.create({
+    const ytcClass = await YogaTutorClass.create({
       instructorTimeZone: req.user.userTimeZone,
       modeOfClass,
       classType,
-      password,
       time,
       yogaCategory: yogaCategory?.length > 0 ? yogaCategory : [],
       yTRequirement: yTRequirement?.length > 0 ? yTRequirement : [],
       yTRule: yTRule?.length > 0 ? yTRule : [],
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      datesOfClasses: dateObject,
       numberOfSeats,
       numberOfClass,
       packageType,
@@ -357,12 +330,47 @@ const addNewClassTimes = async (req, res) => {
       timeDurationInMin,
       instructor: req.user._id,
     });
-
+    // Insert dates
+    const dateObject = await Promise.all(
+      datesOfClasses.map(async (dates) => {
+        const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
+          `${dates}T${time}:00.000`,
+          req.user.userTimeZone
+        );
+        const startDateTimeUTC = new Date(
+          `${classDatesTimeInUTC.replace(" ", "T")}.000Z`
+        );
+        const endDateTimeUTC = new Date(
+          new Date(`${classDatesTimeInUTC.replace(" ", "T")}.000Z`).getTime() +
+            parseInt(timeDurationInMin) * 60 * 1000
+        );
+        const password = await generateFixedLengthRandomNumber(
+          OTP_DIGITS_LENGTH
+        );
+        return {
+          date: new Date(dates),
+          meetingLink: null,
+          password,
+          startDateTimeUTC,
+          endDateTimeUTC,
+          instructor: req.user._id,
+          yogaTutorClass: ytcClass._id,
+        };
+      })
+    );
+    const datesOf = await YTClassDate.insertMany(dateObject, { ordered: true });
+    const classTimesId = datesOf.map((time) => time._id);
+    // Update
+    await YogaTutorClass.updateOne(
+      { _id: ytcClass._id },
+      { $set: { datesOfClasses: classTimesId } }
+    );
     const message = "Class created successfully.";
     const requiredProfileDetails = await checkUserProfile(req.user._id);
     // Send final success response
     return successResponse(res, 201, message, { requiredProfileDetails });
   } catch (err) {
+    console.log(err.message)
     failureResponse(res);
   }
 };
@@ -651,9 +659,10 @@ const classTimesDetailsForInstructor = async (req, res) => {
     // Get required data
     const classes = await YogaTutorClass.findOne(query)
       .select(
-        "_id modeOfClass classType startDate endDate time description price timeDurationInMin numberOfSeats numberOfClass packageType datesOfClasses approvalByAdmin createdAt"
+        "_id modeOfClass classType startDate endDate time description price timeDurationInMin numberOfSeats numberOfClass packageType approvalByAdmin createdAt"
       )
       .populate("yogaCategory", "yogaCategory description")
+      .populate("datesOfClasses", "_id date startDateTimeUTC classStatus")
       .populate("yTRule", "rule")
       .populate("yTRequirement", "requirement")
       .lean();
@@ -681,12 +690,16 @@ const classTimesForUser = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin datesOfClasses instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
+          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
         )
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
         .limit(resultPerPage)
         .populate("instructor", "name profilePic")
+        .populate(
+          "datesOfClasses",
+          "_id date startDateTimeUTC endDateTimeUTC classStatus"
+        )
         .populate("yogaCategory", "-_id yogaCategory description")
         .lean(),
       YogaTutorClass.countDocuments(query),
@@ -702,21 +715,10 @@ const classTimesForUser = async (req, res) => {
         );
         const datesOfClasses = [];
         for (let i = 0; i < times.datesOfClasses.length; i++) {
-          const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-            `${times.datesOfClasses[i].date.toISOString().split("T")[0]}T${
-              times.time
-            }:00.000`,
-            times.instructorTimeZone
-          );
           const day = await getDatesDay(
-            classDatesTimeInUTC.replace(" ", "T") + ".000Z"
+            times.datesOfClasses[i].startDateTimeUTC
           );
-          datesOfClasses.push({
-            date: times.datesOfClasses[i].date,
-            classDatesTimeInUTC,
-            day,
-            meetingLink: times.datesOfClasses[i].meetingLink,
-          });
+          datesOfClasses.push({ ...times.datesOfClasses[i], day });
         }
         return {
           ...times,
@@ -744,6 +746,8 @@ const classTimesForUser = async (req, res) => {
 const joinMeeting = async (req, res) => {
   try {
     const _id = req.user._id;
+    const dateId = req.body.dateId;
+    if (!dateId) return failureResponse(res, 400, "Date id required!");
     const ytcId = req.params.id;
     let ytc;
     if (req.user.role === "learner") {
@@ -778,12 +782,19 @@ const joinMeeting = async (req, res) => {
     // Is this class booked
     if (!ytc.isBooked)
       return failureResponse(res, 400, "This yoga class is not booked.");
+    // Find dateOfClass
+    const datesOfClass = await YTClassDate.findOne({
+      _id: dateId,
+      yogaTutorClass: ytcId,
+    }).lean();
+    if (!datesOfClass)
+      return failureResponse(res, 400, "This yoga class date is not present.");
     // is this class time within 5 min of stating time
     const min5 = await canUserJoin({
       time: ytc.time,
       timeDurationInMin: ytc.timeDurationInMin,
       instructorTimeZone: ytc.instructorTimeZone,
-      datesOfClasses: ytc.datesOfClasses,
+      datesOfClasses: [datesOfClass],
     });
     if (!min5.canJoin) {
       return failureResponse(
@@ -805,26 +816,10 @@ const joinMeeting = async (req, res) => {
       const joinedBy = [
         ...new Set([...existingJoiner, req.user._id.toString()]),
       ];
-      const datesOfClasses = [];
-      for (let i = 0; i < ytc.datesOfClasses.length; i++) {
-        if (
-          ytc.datesOfClasses[i]._id.toString() == newClassDate._id.toString()
-        ) {
-          datesOfClasses.push({
-            _id: newClassDate._id,
-            joinedBy,
-            meetingLink: generateMeet,
-            date: newClassDate.date,
-            classStatus: "upcoming",
-          });
-        } else {
-          datesOfClasses.push(ytc.datesOfClasses[i]);
-        }
-      }
       // Update YTC
-      await YogaTutorClass.updateOne(
-        { _id: ytc._id },
-        { $set: { datesOfClasses } }
+      await YTClassDate.updateOne(
+        { _id: dateId },
+        { $set: { joinedBy, meetingLink: generateMeet } }
       );
       // Send final success response
       return successResponse(res, 200, "Successfully", { data: generateMeet });
@@ -839,13 +834,14 @@ const classTimesBookedForInstructor = async (req, res) => {
     const { classStatus = "upcoming", days } = req.query;
     const daysInt = parseInt(days) || 30;
 
-    const classDatesTimeInZone = await convertUTCToGivenTimeZone(
-      new Date(),
-      req.user.userTimeZone
-    );
-
-    const today = new Date(classDatesTimeInZone.replace(" ", "T") + ".000Z");
-    today.setUTCHours(0, 0, 0, 0);
+    let today = new Date();
+    if (classStatus === "upcoming") {
+      today = new Date()(
+        new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
+      );
+    } else {
+      today.setUTCHours(0, 0, 0, 0);
+    }
 
     const future = new Date(today.getTime() + daysInt * 24 * 60 * 60 * 1000);
     future.setUTCHours(23, 59, 59, 999);
@@ -853,34 +849,36 @@ const classTimesBookedForInstructor = async (req, res) => {
     // Query
     const query = {
       instructor: req.user._id,
-      isDelete: false,
-      approvalByAdmin: "accepted",
-      isBooked: true,
-      datesOfClasses: {
-        $elemMatch: {
-          date: { $gte: today, $lte: future },
-          classStatus,
-        },
-      },
+      startDateTimeUTC: { $gte: today, $lte: future },
+      classStatus,
     };
     // Get required data
-    const classes = await YogaTutorClass.find(query)
-      .select(
-        "_id modeOfClass classType startDate endDate time timeDurationInMin isBooked datesOfClasses packageType instructorTimeZone createdAt"
-      )
+    const classes = await YTClassDate.find(query)
+      .select("_id date startDateTimeUTC endDateTimeUTC classStatus")
       .sort({ startDate: 1 })
       .populate({
-        path: "serviceOrder",
-        select: "_id numberOfBooking",
+        path: "yogaTutorClass",
+        model: "YogaTutorClass",
+        select:
+          "_id modeOfClass classType startDate endDate time timeDurationInMin isBooked packageType instructorTimeZone createdAt",
         populate: {
-          path: "learner",
-          model: "User",
-          select: "name profilePic",
+          path: "serviceOrder",
+          model: "ServiceOrder",
+          select: "_id numberOfBooking",
+          populate: {
+            path: "learner",
+            model: "User",
+            select: "name profilePic",
+          },
         },
       })
       .lean();
+    // Change
+    const trans = classes.map(({ yogaTutorClass, ...rest }) => {
+      return { ...yogaTutorClass, datesOfClasses: [rest] };
+    });
     // Transfrom
-    const transformData = await transformBookedData(classes);
+    const transformData = await transformBookedData(trans);
     // Send final success response
     return successResponse(res, 200, "Successfully", { data: transformData });
   } catch (err) {
@@ -911,35 +909,47 @@ const myClassTimesForUser = async (req, res) => {
       req.user.userTimeZone
     );
 
-    const today = new Date(classDatesTimeInZone.replace(" ", "T") + ".000Z");
-    today.setUTCHours(0, 0, 0, 0);
+    let today = new Date();
+    if (classStatus === "upcoming") {
+      today = new Date()(
+        new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
+      );
+    } else {
+      today.setUTCHours(0, 0, 0, 0);
+    }
 
     const future = new Date(today.getTime() + daysInt * 24 * 60 * 60 * 1000);
     future.setUTCHours(23, 59, 59, 999);
 
     // Query
     const query = {
-      _id: ytcId,
-      isDelete: false,
-      approvalByAdmin: "accepted",
-      isBooked: true,
-      datesOfClasses: {
-        $elemMatch: {
-          date: { $gte: today, $lte: future },
-          classStatus,
-        },
-      },
+      yogaTutorClass: ytcId,
+      startDateTimeUTC: { $gte: today, $lte: future },
+      classStatus,
     };
     // Get required data
     const classes = await YogaTutorClass.find(query)
-      .select(
-        "_id modeOfClass classType startDate packageType endDate serviceOrder time timeDurationInMin isBooked password datesOfClasses instructorTimeZone createdAt"
-      )
-      .sort({ startDate: 1, endDate: -1 })
+      .select("_id date startDateTimeUTC endDateTimeUTC classStatus")
+      .sort({ startDate: 1 })
+      .populate({
+        path: "yogaTutorClass",
+        model: "YogaTutorClass",
+        select:
+          "_id modeOfClass classType startDate packageType endDate serviceOrder time timeDurationInMin isBooked instructorTimeZone",
+        populate: {
+          path: "serviceOrder",
+          model: "ServiceOrder",
+          select: "_id numberOfBooking",
+        },
+      })
       .populate("instructor", "name profilePic")
       .lean();
+    // Change
+    const trans = classes.map(({ yogaTutorClass, instructor, ...rest }) => {
+      return { ...yogaTutorClass, instructor, datesOfClasses: [rest] };
+    });
     // Transfrom
-    const transformData = await transformBookedData(classes);
+    const transformData = await transformBookedData(trans);
     // Send final success response
     return successResponse(res, 200, "Successfully", { data: transformData });
   } catch (err) {
@@ -947,20 +957,20 @@ const myClassTimesForUser = async (req, res) => {
   }
 };
 
-const bookedClassTimesDetailsForInstructor = async (req, res) => {
+const bookedClassTimesDetails = async (req, res) => {
   try {
     const query = {
       _id: req.params.id,
-      instructor: req.user._id,
       isDelete: false,
       isBooked: true,
     };
     // Get required data
     const classes = await YogaTutorClass.findOne(query)
       .select(
-        "_id modeOfClass classType startDate endDate time description price timeDurationInMin instructorTimeZone numberOfSeats numberOfClass packageType datesOfClasses approvalByAdmin isBooked"
+        "_id modeOfClass classType startDate endDate time description price timeDurationInMin instructorTimeZone password numberOfSeats numberOfClass packageType approvalByAdmin isBooked"
       )
       .populate("yogaCategory", "yogaCategory description")
+      .populate("_id date startDateTimeUTC endDateTimeUTC classStatus")
       .populate("yTRule", "rule")
       .populate("yTRequirement", "requirement")
       .populate({
@@ -979,12 +989,17 @@ const bookedClassTimesDetailsForInstructor = async (req, res) => {
       return failureResponse(res, 400, "This class is not present!", null);
 
     // Modify data
-    classes.learner = classes.serviceOrder.map(({ learner }) => {
-      return {
-        ...learner,
-        profilePic: learner.profilePic ? learner.profilePic.url || null : null,
-      };
-    });
+    if (req.user.role === "instructor") {
+      classes.learner = classes.serviceOrder.map(({ learner }) => {
+        return {
+          ...learner,
+          profilePic: learner.profilePic
+            ? learner.profilePic.url || null
+            : null,
+        };
+      });
+      delete classes.password;
+    }
     classes.serviceOrder = classes.serviceOrder.map((ord) => {
       return { _id: ord._id, receipt: ord.receipt };
     });
@@ -996,22 +1011,8 @@ const bookedClassTimesDetailsForInstructor = async (req, res) => {
     };
     const datesOfClasses = [];
     for (let i = 0; i < classes.datesOfClasses.length; i++) {
-      const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-        `${classes.datesOfClasses[i].date.toISOString().split("T")[0]}T${
-          classes.time
-        }:00.000`,
-        classes.instructorTimeZone
-      );
-      const day = await getDatesDay(
-        classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-      );
-      datesOfClasses.push({
-        _id: classes.datesOfClasses[i]._id,
-        date: classes.datesOfClasses[i].date,
-        classDatesTimeInUTC,
-        day,
-        classStatus: classes.datesOfClasses[i].classStatus,
-      });
+      const day = await getDatesDay(classes.datesOfClasses[i].startDateTimeUTC);
+      datesOfClasses.push({ ...classes.datesOfClasses[i], day });
     }
     classes.datesOfClasses = datesOfClasses;
     // Send final success response
@@ -1032,5 +1033,6 @@ export {
   deleteYTClassTimes,
   joinMeeting,
   classTimesBookedForInstructor,
-  myClassTimesForUser,bookedClassTimesDetailsForInstructor
+  myClassTimesForUser,
+  bookedClassTimesDetails,
 };

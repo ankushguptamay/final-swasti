@@ -49,25 +49,4 @@ async function updateCertificates() {
   }
 }
 
-async function updateClasses() {
-  try {
-    const result = await YogaTutorClass.find({ isBooked: true })
-      .select("datesOfClasses")
-      .lean();
-
-    for (let i = 0; i < result.length; i++) {
-      const datesOfClasses = result[i].datesOfClasses.map((cla) => {
-        return { ...cla, classStatus: "upcoming" };
-      });
-      await YogaTutorClass.updateOne(
-        { _id: result[i]._id },
-        { $set: { datesOfClasses } }
-      );
-    }
-    console.log(`Updated`);
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-export { connectDB, dropCollection, updateCertificates, updateClasses };
+export { connectDB, dropCollection, updateCertificates };

@@ -34,18 +34,7 @@ const schema = new Schema(
     time: { type: String }, // 24 hours formate
     timeDurationInMin: { type: Number, required: true },
     datesOfClasses: [
-      {
-        date: { type: Date },
-        meetingLink: { type: String, default: null },
-        joinedBy: [{ type: Types.ObjectId, ref: "User" }],
-        classStatus: {
-          type: String,
-          enum: {
-            values: ["upcoming", "completed", "missed"],
-            message: "{VALUE} is not supported",
-          },
-        },
-      },
+      { type: Types.ObjectId, ref: "YTClassDate", required: true },
     ],
     price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
@@ -61,7 +50,6 @@ const schema = new Schema(
     numberOfSeats: { type: Number, default: 1 },
     // For Booking Purpose
     instructorTimeZone: { type: String }, // Note 1.
-    password: { type: Number, required: true },
     isBooked: { type: Boolean, default: false },
     totalBookedSeat: { type: Number, default: 0 },
     // Associations
