@@ -12,7 +12,7 @@ const instructorDashBoard = async (req, res) => {
     const daysIntClass = parseInt(daysForClass) || 1;
     const daysIntTrans = parseInt(daysForEarning) || 1;
     // condition for class times
-    const today = new Date()(
+    const today = new Date(
       new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
     );
     const future = new Date(

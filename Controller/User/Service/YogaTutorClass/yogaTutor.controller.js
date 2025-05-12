@@ -836,7 +836,7 @@ const classTimesBookedForInstructor = async (req, res) => {
 
     let today = new Date();
     if (classStatus === "upcoming") {
-      today = new Date()(
+      today = new Date(
         new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
       );
     } else {
@@ -904,14 +904,10 @@ const myClassTimesForUser = async (req, res) => {
 
     const { classStatus = "upcoming", days } = req.query;
     const daysInt = parseInt(days) || 30;
-    const classDatesTimeInZone = await convertUTCToGivenTimeZone(
-      new Date(),
-      req.user.userTimeZone
-    );
 
     let today = new Date();
     if (classStatus === "upcoming") {
-      today = new Date()(
+      today = new Date(
         new Date().getTime() - parseInt(MEET_CAN_JOIN_BEFORE) * 60 * 1000
       );
     } else {
