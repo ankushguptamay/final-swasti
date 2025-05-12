@@ -370,7 +370,7 @@ const addNewClassTimes = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, message, { requiredProfileDetails });
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -794,7 +794,7 @@ const joinMeeting = async (req, res) => {
       time: ytc.time,
       timeDurationInMin: ytc.timeDurationInMin,
       instructorTimeZone: ytc.instructorTimeZone,
-      datesOfClasses: [datesOfClass],
+      datesOfClasses: [{ ...datesOfClass }],
     });
     if (!min5.canJoin) {
       return failureResponse(
@@ -875,7 +875,7 @@ const classTimesBookedForInstructor = async (req, res) => {
       .lean();
     // Change
     const trans = classes.map(({ yogaTutorClass, ...rest }) => {
-      return { ...yogaTutorClass, datesOfClasses: [rest] };
+      return { ...yogaTutorClass, datesOfClasses: [{ ...rest }] };
     });
     // Transfrom
     const transformData = await transformBookedData(trans);
@@ -942,7 +942,7 @@ const myClassTimesForUser = async (req, res) => {
       .lean();
     // Change
     const trans = classes.map(({ yogaTutorClass, instructor, ...rest }) => {
-      return { ...yogaTutorClass, instructor, datesOfClasses: [rest] };
+      return { ...yogaTutorClass, instructor, datesOfClasses: [{ ...rest }] };
     });
     // Transfrom
     const transformData = await transformBookedData(trans);
