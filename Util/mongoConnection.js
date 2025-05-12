@@ -3,7 +3,7 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { Certificate } from "../Model/User/Profile/certificateModel.js";
-import { YogaTutorClass } from "../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
+import { User } from "../Model/User/Profile/userModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -49,4 +49,22 @@ async function updateCertificates() {
   }
 }
 
-export { connectDB, dropCollection, updateCertificates };
+async function updateCertificatesForUser() {
+  try {
+    const result = await User.updateMany(
+      { createdAt: { $exists: true } }, // only update documents missing the field
+      { $set: { certificate: [] } }
+    );
+
+    console.log(`Updated ${result.modifiedCount} certificates user`);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export {
+  connectDB,
+  dropCollection,
+  updateCertificates,
+  updateCertificatesForUser,
+};

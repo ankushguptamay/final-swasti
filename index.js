@@ -6,6 +6,7 @@ import {
   connectDB,
   dropCollection,
   updateCertificates,
+  updateCertificatesForUser,
 } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
@@ -25,6 +26,7 @@ const server = createServer(app);
   await connectDB(process.env.MONGO_URI);
   // await dropCollection();
   // await updateCertificates();
+  // await updateCertificatesForUser();
 })();
 
 // Cors options

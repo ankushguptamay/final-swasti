@@ -191,8 +191,8 @@ async function transformBookedData(classes) {
       );
       const datesOfClasses = [];
       for (let i = 0; i < times.datesOfClasses.length; i++) {
-        const day = await getDatesDay(times.datesOfClasses.startDateTimeUTC);
-        datesOfClasses.push({ ...times.datesOfClasses, day });
+        const day = await getDatesDay(times.datesOfClasses[i].startDateTimeUTC);
+        datesOfClasses.push({ ...times.datesOfClasses[i], day });
       }
       // Data
       const data = { ...times, classStartTimeInUTC, datesOfClasses };
@@ -924,7 +924,7 @@ const myClassTimesForUser = async (req, res) => {
       classStatus,
     };
     // Get required data
-    const classes = await YogaTutorClass.find(query)
+    const classes = await YTClassDate.find(query)
       .select("_id date startDateTimeUTC endDateTimeUTC classStatus")
       .sort({ startDate: 1 })
       .populate({
