@@ -970,7 +970,10 @@ const bookedClassTimesDetails = async (req, res) => {
         "_id modeOfClass classType startDate endDate time description price timeDurationInMin instructorTimeZone password numberOfSeats numberOfClass packageType approvalByAdmin isBooked"
       )
       .populate("yogaCategory", "yogaCategory description")
-      .populate("_id date startDateTimeUTC endDateTimeUTC classStatus")
+      .populate(
+        "datesOfClasses",
+        "_id date startDateTimeUTC endDateTimeUTC classStatus password joinedBy"
+      )
       .populate("yTRule", "rule")
       .populate("yTRequirement", "requirement")
       .populate({
@@ -998,7 +1001,6 @@ const bookedClassTimesDetails = async (req, res) => {
             : null,
         };
       });
-      delete classes.password;
     }
     classes.serviceOrder = classes.serviceOrder.map((ord) => {
       return { _id: ord._id, receipt: ord.receipt };
@@ -1012,7 +1014,13 @@ const bookedClassTimesDetails = async (req, res) => {
     const datesOfClasses = [];
     for (let i = 0; i < classes.datesOfClasses.length; i++) {
       const day = await getDatesDay(classes.datesOfClasses[i].startDateTimeUTC);
-      datesOfClasses.push({ ...classes.datesOfClasses[i], day });
+      if (req.user.role === "instructor")
+        delete classes.datesOfClasses[i].password;
+      datesOfClasses.push({
+        ...classes.datesOfClasses[i],
+        day,
+        joinedBy: classes.datesOfClasses[i].joinedBy.length,
+      });
     }
     classes.datesOfClasses = datesOfClasses;
     // Send final success response
