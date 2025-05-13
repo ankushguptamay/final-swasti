@@ -76,6 +76,7 @@ async function filterQueryOfClassForUser(data) {
     search,
     date = new Date().toISOString().split("T")[0], // Default today
     timing,
+    yc, // yogaCategory,
     pt, // packageType
     miP = parseInt(PER_CLASS_PRICE_LIMIT), // minimumPrice,
     maP = 100000, // maximumPrice,
@@ -108,6 +109,9 @@ async function filterQueryOfClassForUser(data) {
   if (date) query.startDate = { $gte: new Date(date) };
   if (timing) query.time = timing;
   if (cT) query.classType = cT;
+  if (Array.isArray(yc) && yc.length > 1) {
+    query.yogaCategory = { $in: yc };
+  }
   // Price
   query.$expr = {
     $and: [
