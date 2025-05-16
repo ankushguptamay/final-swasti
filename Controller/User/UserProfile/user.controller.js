@@ -961,7 +961,7 @@ const searchInstructor = async (req, res) => {
     }
 
     // Filter
-    if ((eLL, eUL)) {
+    if (eLL && eUL) {
       query.$and.push({
         experience_year: { $gte: parseInt(eLL), $lte: parseInt(eUL) },
       });

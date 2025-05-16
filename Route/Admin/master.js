@@ -44,16 +44,16 @@ router.put("/specialization/:id", updateSpecialization);
 router.delete("/specialization/:id", deleteSpecialization);
 
 // yoga category
-router.post("/y-c", addYogaCategory);
+router.post("/y-c", uploadImage.single("image"), addYogaCategory);
 router.get("/y-c", getYogaCategory);
 router.get("/y-c/:id", yogaCategoryDetails);
-router.put("/y-c/:id", updateYogaCategory);
+router.put("/y-c/:id", updateYogaCategory); // Lagana nahi he . agar laga ho to ankush ko batana
 router.delete("/y-c/:id", deleteYogaCategory);
 
 // YTRules
 router.post("/yTRule", addYTRule);
 router.get("/yTRule", getYTRule);
-router.put("/yTRule/:id", updateYTRule);
+router.put("/yTRule/:id", updateYTRule); 
 router.delete("/yTRule/:id", deleteYTRule);
 
 // YTRequirement

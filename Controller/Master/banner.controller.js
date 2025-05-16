@@ -50,9 +50,6 @@ const addBanner = async (req, res) => {
       fileName: compressedImagePath.imageName,
       url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`,
     };
-    console.log(
-      `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`
-    );
     // Store in database
     await Banner.create({ bannerImage, title, redirectLink });
     // Send final success response

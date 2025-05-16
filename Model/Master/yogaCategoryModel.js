@@ -3,6 +3,10 @@ const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema(
   {
+    image: {
+      fileName: { type: String },
+      url: { type: String },
+    },
     yogaCategory: { type: String, required: true },
     description: { type: String },
   },

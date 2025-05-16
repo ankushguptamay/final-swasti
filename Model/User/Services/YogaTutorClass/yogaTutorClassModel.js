@@ -58,6 +58,7 @@ const schema = new Schema(
     yTRequirement: [{ type: Types.ObjectId, ref: "YogaTutorRequirement" }],
     instructor: { type: Types.ObjectId, ref: "User", required: true },
     serviceOrder: [{ type: Types.ObjectId, ref: "ServiceOrder" }],
+    classStartTimeInUTC: { type: Date },
     // Soft delete
     isDelete: { type: Boolean, default: false },
     deleted_at: { type: Date },

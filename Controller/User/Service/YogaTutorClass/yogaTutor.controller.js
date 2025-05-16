@@ -106,7 +106,7 @@ async function filterQueryOfClassForUser(data) {
   // Filter
   if (mOC) query.modeOfClass = mOC;
   if (pt) query.packageType = pt;
-  if (date) query.startDate = { $gte: new Date(date) };
+  if (date) query.classStartTimeInUTC = { $gte: new Date(date) };
   if (timing) query.time = timing;
   if (cT) query.classType = cT;
   if (Array.isArray(yc) && yc.length > 1) {
@@ -315,6 +315,10 @@ const addNewClassTimes = async (req, res) => {
     const checkOverLap = await isOverlapping(existingTimes, newTime);
     const overLapMessage = "Slot already taken!";
     if (checkOverLap) return failureResponse(res, 400, overLapMessage);
+    const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
+      `${startDate.toISOString().split("T")[0]}T${time}:00.000`,
+      req.user.userTimeZone
+    );
     // Create Yoga class
     const ytcClass = await YogaTutorClass.create({
       instructorTimeZone: req.user.userTimeZone,
@@ -332,6 +336,7 @@ const addNewClassTimes = async (req, res) => {
       price,
       description,
       timeDurationInMin,
+      classStartTimeInUTC,
       instructor: req.user._id,
     });
     // Insert dates
