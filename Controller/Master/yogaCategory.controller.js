@@ -29,21 +29,14 @@ const addYogaCategory = async (req, res) => {
       return failureResponse(res, 400, error.details[0].message, null);
     }
     const yogaCategory = req.body.yogaCategory;
-    // Compress File
-    const buffer = fs.readFileSync(req.file.path);
-    const compressedImagePath = await compressImageFile(buffer, req.file);
     // Upload file to bunny
-    const fileStream = fs.createReadStream(compressedImagePath.imagePath);
-    await uploadFileToBunny(
-      bunnyFolderName,
-      fileStream,
-      compressedImagePath.imageName
-    );
+    const fileStream = fs.createReadStream(req.file.path);
+    await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
     // Delete file from server
-    deleteSingleFile(compressedImagePath.imagePath);
+    deleteSingleFile(req.file.path);
     const image = {
-      fileName: compressedImagePath.imageName,
-      url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${compressedImagePath.imageName}`,
+      fileName: req.file.filename,
+      url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
     };
     // Find in data
     const category = await YogaCategory.findOne({ yogaCategory }).lean();
