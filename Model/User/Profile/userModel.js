@@ -59,20 +59,6 @@ const schema = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     isMobileNumberVerified: { type: Boolean, default: false },
     refreshToken: { type: String },
-    // activeDevices: [
-    //   {
-    //     deviceToken: { type: String, required: true },
-    //     deviceType: {
-    //       type: String,
-    //       enum: ["windows", "mac", "linux", "android", "ios"],
-    //       required: true,
-    //     },
-    //     deviceId: { type: String }, // Unique for each mobile device
-    //     browserInfo: { type: String }, // Unique for each browser (only for web)
-    //     firstLoginDate: { type: Date, default: Date.now },
-    //     lastLoginDate: { type: Date, default: Date.now },
-    //   },
-    // ],
     isDelete: { type: Boolean, default: false },
     deleted_at: { type: Date },
   },

@@ -123,8 +123,8 @@ const getYogaCategoryWithImage = async (req, res) => {
     //Search
     let query = {};
     if (req.query.search) {
-      const startWith = new RegExp("^" + req.query.search.toLowerCase(), "i");
-      query = { yogaCategory: startWith };
+      const containInString = new RegExp(req.query.search, "i");
+      query = { yogaCategory: containInString };
     }
     const [yogaCategory, totalYogaCategory] = await Promise.all([
       YogaCategory.find(query)
