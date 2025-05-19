@@ -19,6 +19,7 @@ import {
   applyCourseCoupon,
   verifyCoursePayment,
 } from "../../Controller/User/Service/Course/payment.controller.js";
+import { recordForHero } from "../../Controller/User/dashboard.js";
 
 router.get("/instructor", searchInstructor);
 router.get("/landing-instructor", instructorForLandingPage);
@@ -40,5 +41,7 @@ router.get("/banner", getBanner);
 // Course Route
 router.post("/verifyCoursePayment", verifyCoursePayment);
 router.post("/applyCourseCoupon", applyCourseCoupon);
+
+router.get("/recordForHero", recordForHero);
 
 export default router;

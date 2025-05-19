@@ -1011,7 +1011,8 @@ const searchInstructor = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, `Successfully!`, {
       data: transformData,
-      totalPages: totalPages,
+      totalPages,
+      totalResults: totalInstructor,
       currentPage: page,
     });
   } catch (err) {

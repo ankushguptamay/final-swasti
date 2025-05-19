@@ -2,8 +2,10 @@ import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
+import { YogaCategory } from "../../Model/Master/yogaCategoryModel.js";
 import { UserTransaction } from "../../Model/User/Profile/transactionModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
+import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
 import { YTClassDate } from "../../Model/User/Services/YogaTutorClass/yTClassDatesModel.js";
 
 const instructorDashBoard = async (req, res) => {
@@ -62,4 +64,32 @@ const instructorDashBoard = async (req, res) => {
   }
 };
 
-export { instructorDashBoard };
+const recordForHero = async (req, res) => {
+  try {
+    const date = new Date().toISOString().split("T")[0];
+    // Query
+    const queryForClass = {
+      classStartTimeInUTC: { $gte: new Date(date) },
+      isDelete: false,
+      approvalByAdmin: "accepted",
+    };
+    // Get required data
+    const [classes, learner, instructor, yogaCategories] = await Promise.all([
+      YogaTutorClass.countDocuments(queryForClass),
+      User.countDocuments({ role: "learner" }),
+      User.countDocuments({ role: "instructor" }),
+      YogaCategory.countDocuments(),
+    ]);
+    // Send final success response
+    return successResponse(res, 200, "Successfully", {
+      classes,
+      learner,
+      instructor,
+      yogaCategories,
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+export { instructorDashBoard, recordForHero };
