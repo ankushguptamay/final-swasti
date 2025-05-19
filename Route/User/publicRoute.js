@@ -42,6 +42,6 @@ router.get("/banner", getBanner);
 router.post("/verifyCoursePayment", verifyCoursePayment);
 router.post("/applyCourseCoupon", applyCourseCoupon);
 
-router.get("/recordForHero", recordForHero);
+router.get("/heroRecord", recordForHero);
 
 export default router;
