@@ -71,7 +71,7 @@ const getYogaCategory = async (req, res) => {
     }
     const [yogaCategory, totalYogaCategory] = await Promise.all([
       YogaCategory.find(query)
-        .sort({ yogaCategory: -1 })
+        .sort({ yogaCategory: 1 })
         .skip(skip)
         .limit(resultPerPage)
         .select("yogaCategory description")
@@ -128,7 +128,7 @@ const getYogaCategoryWithImage = async (req, res) => {
     }
     const [yogaCategory, totalYogaCategory] = await Promise.all([
       YogaCategory.find(query)
-        .sort({ yogaCategory: -1 })
+        .sort({ yogaCategory: 1 })
         .skip(skip)
         .limit(resultPerPage)
         .select("_id yogaCategory description image")
@@ -163,18 +163,15 @@ const getYogaCategoryWithImage = async (req, res) => {
   }
 };
 
-const updateYogaCategory = async (req, res) => {
+const updateYogaCategoryImage = async (req, res) => {
   try {
-    // Body Validation
-    const { error } = validateYogaCategory(req.body);
-    if (error) {
-      return failureResponse(res, 400, error.details[0].message, null);
-    }
-    const yogaCategory = req.body.yogaCategory;
-    const yogaCategories = await YogaCategory.findOne({
-      _id: req.params.id,
-    });
+    // File should be exist
+    if (!req.file)
+      return failureResponse(res, 400, "Please..upload an image!", null);
+    const id = req.params.id;
+    const yogaCategories = await YogaCategory.findById(id).lean();
     if (!yogaCategories) {
+      deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(
         res,
         400,
@@ -182,21 +179,21 @@ const updateYogaCategory = async (req, res) => {
         null
       );
     }
-    if (yogaCategory !== yogaCategories.yogaCategory) {
-      const isPresnt = await YogaCategory.findOne({ yogaCategory });
-      if (isPresnt) {
-        return failureResponse(
-          res,
-          400,
-          "This yoga category already present!",
-          null
-        );
-      }
+    // Upload file to bunny
+    const fileStream = fs.createReadStream(req.file.path);
+    await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
+    // Delete file from server
+    deleteSingleFile(req.file.path);
+    const image = {
+      fileName: req.file.filename,
+      url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
+    };
+    // Delete file from bunny if exist
+    if (yogaCategories.image && yogaCategories.image.fileName) {
+      deleteFileToBunny(bunnyFolderName, yogaCategories.image.fileName);
     }
-    await yogaCategories.updateOne({
-      yogaCategory,
-      description: req.body.description || undefined,
-    });
+    // Update record
+    await YogaCategory.updateOne({ _id: id }, { $set: { image } });
     return successResponse(res, 201, `Updated successfully!`);
   } catch (err) {
     failureResponse(res);
@@ -235,7 +232,7 @@ export {
   addYogaCategory,
   getYogaCategory,
   yogaCategoryDetails,
-  updateYogaCategory,
+  updateYogaCategoryImage,
   deleteYogaCategory,
   getYogaCategoryWithImage,
 };

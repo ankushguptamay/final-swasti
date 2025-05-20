@@ -17,7 +17,7 @@ import {
   addYogaCategory,
   getYogaCategory,
   yogaCategoryDetails,
-  updateYogaCategory,
+  updateYogaCategoryImage,
   deleteYogaCategory,
 } from "../../Controller/Master/yogaCategory.controller.js";
 import {
@@ -47,13 +47,13 @@ router.delete("/specialization/:id", deleteSpecialization);
 router.post("/y-c", uploadImage.single("image"), addYogaCategory);
 router.get("/y-c", getYogaCategory);
 router.get("/y-c/:id", yogaCategoryDetails);
-router.put("/y-c/:id", updateYogaCategory); // Lagana nahi he . agar laga ho to ankush ko batana
+router.put("/y-c/:id", updateYogaCategoryImage);
 router.delete("/y-c/:id", deleteYogaCategory);
 
 // YTRules
 router.post("/yTRule", addYTRule);
 router.get("/yTRule", getYTRule);
-router.put("/yTRule/:id", updateYTRule); 
+router.put("/yTRule/:id", updateYTRule);
 router.delete("/yTRule/:id", deleteYTRule);
 
 // YTRequirement

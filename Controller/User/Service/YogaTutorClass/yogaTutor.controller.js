@@ -699,7 +699,7 @@ const classTimesForUser = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType startDate endDate price time description timeDurationInMin approvalByAdmin instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
+          "_id modeOfClass classType startDate endDate price time description packageType timeDurationInMin approvalByAdmin instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
         )
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
