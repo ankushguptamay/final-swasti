@@ -47,7 +47,7 @@ router.delete("/specialization/:id", deleteSpecialization);
 router.post("/y-c", uploadImage.single("image"), addYogaCategory);
 router.get("/y-c", getYogaCategory);
 router.get("/y-c/:id", yogaCategoryDetails);
-router.put("/y-c/:id", updateYogaCategoryImage);
+router.put("/y-c/:id", uploadImage.single("image"), updateYogaCategoryImage);
 router.delete("/y-c/:id", deleteYogaCategory);
 
 // YTRules
