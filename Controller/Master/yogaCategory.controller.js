@@ -74,7 +74,7 @@ const getYogaCategory = async (req, res) => {
         .sort({ yogaCategory: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select("yogaCategory description")
+        .select("_id yogaCategory description")
         .lean(),
       YogaCategory.countDocuments(query),
     ]);
