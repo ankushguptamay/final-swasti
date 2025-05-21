@@ -704,7 +704,7 @@ const classTimesForUser = async (req, res) => {
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
         .limit(resultPerPage)
-        .populate("instructor", "name profilePic")
+        .populate("instructor", "name profilePic averageRating")
         .populate(
           "datesOfClasses",
           "_id date startDateTimeUTC endDateTimeUTC classStatus"
@@ -734,6 +734,7 @@ const classTimesForUser = async (req, res) => {
           classStartTimeInUTC,
           datesOfClasses,
           instructor: {
+            averageRating: times.instructor.averageRating,
             _id: times.instructor._id,
             name: times.instructor.name,
             profilePic: times.instructor.profilePic.url,
@@ -745,6 +746,7 @@ const classTimesForUser = async (req, res) => {
     return successResponse(res, 200, "Successfully", {
       data: transformData,
       totalPages: totalPages,
+      totalClasses: totalClasses,
       currentPage: page,
     });
   } catch (err) {
