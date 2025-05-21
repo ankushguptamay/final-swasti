@@ -64,6 +64,9 @@ const getBanner = async (req, res) => {
     const banner = await Banner.find()
       .select("title redirectLink bannerImage")
       .lean();
+    for (let i = 0; i < banner.length; i++) {
+      banner[i].bannerImage = banner[i].bannerImage.url;
+    }
     // Send final success response
     return successResponse(res, 200, `Banner fetched successfully.`, {
       banner,
