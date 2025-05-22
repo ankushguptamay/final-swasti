@@ -20,6 +20,7 @@ import {
   verifyCoursePayment,
 } from "../../Controller/User/Service/Course/payment.controller.js";
 import { recordForHero } from "../../Controller/User/dashboard.js";
+import { createSubscribedUser } from "../../Controller/User/UserProfile/subscribedUser.controller.js";
 
 router.get("/instructor", searchInstructor);
 router.get("/landing-instructor", instructorForLandingPage);
@@ -43,5 +44,7 @@ router.post("/verifyCoursePayment", verifyCoursePayment);
 router.post("/applyCourseCoupon", applyCourseCoupon);
 
 router.get("/heroRecord", recordForHero);
+
+router.post("/subscrib", createSubscribedUser);
 
 export default router;

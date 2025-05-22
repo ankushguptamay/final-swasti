@@ -113,7 +113,13 @@ const validateUpdateLearner = (data) => {
   });
   return schema.validate(data);
 };
-
+const validateSubscribedUser = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().min(3).max(30).optional(),
+    email: joi.string().email().required().label("Email"),
+  });
+  return schema.validate(data);
+};
 export {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -126,4 +132,5 @@ export {
   validateCerificate,
   validateEducation,
   validateUpdateLearner,
+  validateSubscribedUser,
 };
