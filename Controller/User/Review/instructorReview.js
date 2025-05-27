@@ -54,6 +54,7 @@ function tranformReview(data) {
             : null,
         },
         createdAt,
+        replies,
         noOfReplies: replies.length,
         noOfReactions: reactions.length,
       };

@@ -21,10 +21,14 @@ const createSubscribedUser = async (req, res) => {
       : undefined;
     // Find user
     const user = await User.findOne({ email }).lean();
-    const data = { name, email };
+    const data = { name, updatedAt: new Date() };
     if (user) data.user = user._id;
     // Store
-    await SubscribedUser.create(data);
+    await SubscribedUser.findOneAndUpdate({ email }, data, {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    });
     // Send final success response
     return successResponse(res, 201, "Subscribed successfully.");
   } catch (err) {
