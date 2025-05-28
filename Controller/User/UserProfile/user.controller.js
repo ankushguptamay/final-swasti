@@ -56,7 +56,7 @@ import {
   getDatesDay,
 } from "../../../Util/timeZone.js";
 import { Specialization } from "../../../Model/Master/specializationModel.js";
-const bunnyFolderName = process.env.MASTER_PROFILE_FOLDER || "inst-doc";
+const bunnyFolderName = process.env.INSTRUCTOR_PROFILE_FOLDER || "inst-doc";
 
 // Helper
 const chakraName = [
@@ -238,7 +238,7 @@ const register = async (req, res) => {
       term_condition_accepted,
     });
     // Generate OTP for Email
-    const otp = generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
+    const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
     // Store OTP
@@ -307,7 +307,7 @@ const loginByMobile = async (req, res) => {
 
     // Generate OTP for Email
     const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    // console.log(otp);
+    console.log(otp);
     // Sending OTP to mobile number
     await sendOTPToNumber(mobileNumber, otp);
     //  Store OTP
@@ -740,7 +740,6 @@ const sendAadharOTP = async (req, res) => {
       { $set: { aadharDetails: { aadharNumber } } }
     );
     const aadhar = await axios.post(url, JSON.stringify(data), { headers });
-
     if (aadhar.data.status) {
       // Final response
       return successResponse(res, 200, "OTP sent successfully", {
@@ -774,7 +773,7 @@ const verifyAadharOTP = async (req, res) => {
       authorisedkey: SPRINT_AADHAR_AUTHORISED_KEY,
       "User-Agent": SPRINT_AADHAR_PARTNER_ID,
     };
-    const refid = generateFixedLengthRandomNumber(6);
+    const refid = await generateFixedLengthRandomNumber(6);
     const data = {
       client_id: client_id,
       otp: aadharOTP,

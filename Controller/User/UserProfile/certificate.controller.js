@@ -15,7 +15,7 @@ import { Certificate } from "../../../Model/User/Profile/certificateModel.js";
 import { User } from "../../../Model/User/Profile/userModel.js";
 import { uploadFileToBunny } from "../../../Util/bunny.js";
 import { validateApprovalClassTimes } from "../../../MiddleWare/Validation/slots.js";
-const bunnyFolderName = process.env.MASTER_PROFILE_FOLDER || "inst-doc";
+const bunnyFolderName = process.env.INSTRUCTOR_PROFILE_FOLDER || "inst-doc";
 const { SHOW_BUNNY_FILE_HOSTNAME } = process.env;
 
 // Main Controller
