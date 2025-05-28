@@ -244,7 +244,7 @@ const addNewClassTimes = async (req, res) => {
       yTRule,
     } = req.body;
     // Price
-    if (Math.ceil(price / numberOfClass) < parseInt(PER_CLASS_PRICE_LIMIT))
+    if (Math.floor(price / numberOfClass) < parseInt(PER_CLASS_PRICE_LIMIT))
       return failureResponse(
         res,
         400,
