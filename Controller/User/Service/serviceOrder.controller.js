@@ -271,7 +271,7 @@ const cancelOrder = async (req, res) => {
     if (!serviceOrder)
       return failureResponse(res, 400, "This order is not present!");
     // Yoga Tutor
-    if (serviceOrder.toLowerCase() === "yogatutorclass") {
+    if (serviceOrder.service.toLowerCase() === "yogatutorclass") {
       const ytc = await YogaTutorClass.findOne({
         _id: serviceOrder.serviceId,
         isDelete: false,
@@ -285,14 +285,10 @@ const cancelOrder = async (req, res) => {
           "This yoga tutor class is not present.",
           null
         );
+        console.log(ytc)
       // Validate time
-      const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-        `${ytc.startDate.toISOString().split("T")[0]}T${ytc.time}:00.000`,
-        ytc.instructorTimeZone
-      );
-      const UTCFormate = new Date(
-        classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-      ).getTime();
+      const UTCFormate = new Date(ytc.classStartTimeInUTC).getTime();
+      console.log(UTCFormate);
       let refundAmountForuser = 0,
         debitAmountForInstructor =
           parseInt(ytc.price) * parseInt(serviceOrder.numberOfBooking) -
@@ -302,6 +298,7 @@ const cancelOrder = async (req, res) => {
             100,
         creditAmountForInstructor = 0;
       if (new Date().getTime() > UTCFormate) {
+        console.log("here1");
         return failureResponse(res, 400, "Can not cancel this order.");
       } else if (
         new Date().getTime() +
@@ -309,6 +306,7 @@ const cancelOrder = async (req, res) => {
           UTCFormate &&
         UTCFormate >= new Date().getTime()
       ) {
+        console.log("here2");
         // Some charges
         refundAmountForuser =
           parseFloat(serviceOrder.amount) -
@@ -320,6 +318,7 @@ const cancelOrder = async (req, res) => {
           100;
       } else {
         // Full refund
+        console.log("here3");
         refundAmountForuser = serviceOrder.amount;
       }
       // Transation for user Wallet
