@@ -70,7 +70,7 @@ const certificates = async (req, res) => {
     const certificates = await Certificate.find({
       user: req.user._id,
       isDelete: false,
-      approvalByAdmin: "accepted",
+      // approvalByAdmin: "accepted",
     })
       .select("_id name image approvalByAdmin")
       .sort({

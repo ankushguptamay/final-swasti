@@ -15,6 +15,7 @@ const addBankDetails = async (req, res) => {
       return failureResponse(res, 400, error.details[0].message, null);
     }
     const { IFSCCode, accountNumber, bankName, branch } = req.body;
+    console.log(req.body);
     // Find in RECORDS
     const isPresent = await BankDetail.findOne({
       IFSCCode,
@@ -34,9 +35,10 @@ const addBankDetails = async (req, res) => {
       user: req.user._id,
     });
     // Update bankdetails array in user profile
-    const user = await User.findById(req.user._id).select("bankDetail");
-    user.bankDetail = [...user.bankDetail, details._id];
-    await user.save();
+    const user = await User.findById(req.user._id).select("bankDetail").lean();
+    console.log(user);
+    const bankDetail = [...user.bankDetail, details._id];
+    await User.updateOne({ _id: req.user._id }, { $set: { bankDetail } });
     // Send final success response
     return successResponse(
       res,
@@ -44,6 +46,7 @@ const addBankDetails = async (req, res) => {
       `Bank details have been added successfully.`
     );
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
