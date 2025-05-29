@@ -16,8 +16,8 @@ router.put("/y-t-class/:id", approvalClassTimes);
 router.get("/y-t-class", classTimesForAdmin);
 
 // certificate
-router.put("/certificate/:id", certificatesForAdminApproval);
-router.get("/certificate", certifiacteApproval);
+router.get("/certificate", certificatesForAdminApproval);
+router.put("/certificate/:id", certifiacteApproval);
 router.get("/certificate/:id", certificateById);
 
 export default router;
