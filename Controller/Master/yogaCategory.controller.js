@@ -129,11 +129,11 @@ const getYogaCategoryWithImage = async (req, res) => {
     //Search
     let query,
       yogaCategory,
-      data,
+      data = {},
       totalYogaCategory = {};
     if (req.query.search) {
-      const userEmbedding = await getEmbedding(req.query.query);
-      allCategory = await YogaCategory.find()
+      const userEmbedding = await getEmbedding(req.query.search);
+      const allCategory = await YogaCategory.find()
         .select("_id yogaCategory image embedding")
         .lean();
       const scoredCategories = allCategory.map((cat) => ({
@@ -173,6 +173,7 @@ const getYogaCategoryWithImage = async (req, res) => {
         cat.numberOfClass = numberOfClass;
         cat.image = cat.image ? cat.image.url || null : null;
         delete cat.similarity; // Only present if search was done
+        delete cat.embedding;
       })
     );
     data.data = yogaCategory;
