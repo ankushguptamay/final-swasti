@@ -4,6 +4,8 @@ dotenv.config();
 import mongoose from "mongoose";
 import { Certificate } from "../Model/User/Profile/certificateModel.js";
 import { User } from "../Model/User/Profile/userModel.js";
+import { YogaCategory } from "../Model/Master/yogaCategoryModel.js";
+import { getEmbedding } from "./AIFunction.js";
 
 const connectDB = async (uri) => {
   try {
@@ -19,52 +21,27 @@ const connectDB = async (uri) => {
 // await mongoose.connection.db.dropDatabase();
 // console.log("Database dropped");
 
-async function dropCollection() {
+async function updateCategory() {
   try {
-    await mongoose.connection.db.dropCollection("ytclassslots");
-    console.log("Collection YTClassSlot deleted successfully.");
-    await mongoose.connection.db.dropCollection("yogatutorclasses");
-    console.log("Collection YogaTutorClass deleted successfully.");
-    await mongoose.connection.db.dropCollection("ytclassupdatehistories");
-    console.log("Collection YTClassUpdateHistory deleted successfully.");
-    await mongoose.connection.db.dropCollection("yogatutorpackages");
-    console.log("Collection YogaTutorPackage deleted successfully.");
-    await mongoose.connection.db.dropCollection("yogatutorpackagehistories");
-    console.log("Collection YogaTutorPackageHistory deleted successfully.");
-  } catch (error) {
-    console.error("Error deleting collection:", error);
-  }
-}
-
-async function updateCertificates() {
-  try {
-    const result = await Certificate.updateMany(
-      { approvalByAdmin: { $exists: false } }, // only update documents missing the field
-      { $set: { approvalByAdmin: "pending" } }
-    );
-
-    console.log(`Updated ${result.modifiedCount} certificates`);
+    let done = 0;
+    const category = await YogaCategory.find()
+      .select("_id yogaCategory embedding")
+      .lean();
+    for (let i = 0; i < category.length; i++) {
+      // Get Embedding
+      if (category[i].embedding && category[i].embedding.length <= 0) {
+        const embedding = await getEmbedding(category[i].yogaCategory);
+        await YogaCategory.updateOne(
+          { _id: category[i]._id },
+          { $set: { embedding } }
+        );
+        done = done + 1;
+      }
+    }
+    console.log(done);
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-async function updateCertificatesForUser() {
-  try {
-    const result = await User.updateMany(
-      { createdAt: { $exists: true } }, // only update documents missing the field
-      { $set: { certificate: [] } }
-    );
-
-    console.log(`Updated ${result.modifiedCount} certificates user`);
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-
-export {
-  connectDB,
-  dropCollection,
-  updateCertificates,
-  updateCertificatesForUser,
-};
+export { connectDB, updateCategory };

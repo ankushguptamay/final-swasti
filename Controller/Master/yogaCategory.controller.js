@@ -15,6 +15,8 @@ import { YogaTutorClass } from "../../Model/User/Services/YogaTutorClass/yogaTut
 import { deleteFileToBunny, uploadFileToBunny } from "../../Util/bunny.js";
 const bunnyFolderName = process.env.MASTER_FOLDER;
 import fs from "fs";
+import { getEmbedding } from "../../Util/AIFunction.js";
+import cosineSimilarity from "cosine-similarity";
 
 const addYogaCategory = async (req, res) => {
   try {
@@ -24,11 +26,16 @@ const addYogaCategory = async (req, res) => {
     // Body Validation
     const { error } = validateYogaCategory(req.body);
     if (error) {
-      // Delete file from server
-      deleteSingleFile(req.file.path);
+      deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(res, 400, error.details[0].message, null);
     }
     const yogaCategory = req.body.yogaCategory;
+    // Find in data
+    const category = await YogaCategory.findOne({ yogaCategory }).lean();
+    if (category) {
+      deleteSingleFile(req.file.path); // Delete file from server
+      return failureResponse(res, 400, "Category already exist!");
+    }
     // Upload file to bunny
     const fileStream = fs.createReadStream(req.file.path);
     await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
@@ -38,17 +45,16 @@ const addYogaCategory = async (req, res) => {
       fileName: req.file.filename,
       url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
     };
-    // Find in data
-    const category = await YogaCategory.findOne({ yogaCategory }).lean();
-    if (category && category.image && category.image.fileName) {
-      deleteFileToBunny(bunnyFolderName, category.image.fileName);
-    }
+    // Get Embedding
+    const embedding = await getEmbedding(yogaCategory);
     // Create or update
-    await YogaCategory.findOneAndUpdate(
-      { yogaCategory },
-      { updatedAt: new Date(), description: req.body.description, image },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    await YogaCategory.create({
+      yogaCategory,
+      description: req.body.description,
+      tags: req.body.tags,
+      image,
+      embedding,
+    });
     return successResponse(res, 201, `Added successfully!`);
   } catch (err) {
     failureResponse(res);
@@ -121,43 +127,56 @@ const getYogaCategoryWithImage = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
 
     //Search
-    let query = {};
+    let query,
+      yogaCategory,
+      data,
+      totalYogaCategory = {};
     if (req.query.search) {
-      const containInString = new RegExp(req.query.search, "i");
-      query = { yogaCategory: containInString };
+      const userEmbedding = await getEmbedding(req.query.query);
+      allCategory = await YogaCategory.find()
+        .select("_id yogaCategory image embedding")
+        .lean();
+      const scoredCategories = allCategory.map((cat) => ({
+        ...cat,
+        similarity: cosineSimilarity(userEmbedding, cat.embedding),
+      }));
+      scoredCategories.sort((a, b) => b.similarity - a.similarity); // Descending order
+      yogaCategory = scoredCategories.slice(0, 5); // Top 5 categories
+    } else {
+      [yogaCategory, totalYogaCategory] = await Promise.all([
+        YogaCategory.find()
+          .sort({ yogaCategory: 1 })
+          .skip(skip)
+          .limit(resultPerPage)
+          .select("_id yogaCategory image")
+          .lean(),
+        YogaCategory.countDocuments(query),
+      ]);
+      const totalPages = Math.ceil(totalYogaCategory / resultPerPage) || 0;
+      data.totalPages = totalPages;
+      data.currentPage = page;
     }
-    const [yogaCategory, totalYogaCategory] = await Promise.all([
-      YogaCategory.find(query)
-        .sort({ yogaCategory: 1 })
-        .skip(skip)
-        .limit(resultPerPage)
-        .select("_id yogaCategory description image")
-        .lean(),
-      YogaCategory.countDocuments(query),
-    ]);
-    for (let i = 0; i < yogaCategory.length; i++) {
-      const id = yogaCategory[i]._id;
-      const queryForYogaTutor = {
-        yogaCategory: { $in: [id] },
-        classStartTimeInUTC: {
-          $gte: new Date(new Date().toISOString().split("T")[0]),
-        },
-        isDelete: false,
-      };
-      const numberOfClass = await YogaTutorClass.countDocuments(
-        queryForYogaTutor
-      );
-      yogaCategory[i].numberOfClass = numberOfClass;
-      yogaCategory[i].image = yogaCategory[i].image
-        ? yogaCategory[i].image.url || null
-        : null;
-    }
-    const totalPages = Math.ceil(totalYogaCategory / resultPerPage) || 0;
-    return successResponse(res, 200, `Successfully!`, {
-      data: yogaCategory,
-      totalPages: totalPages,
-      currentPage: page,
-    });
+    // Optimized Parallel Counting for numberOfClass
+    await Promise.all(
+      yogaCategory.map(async (cat) => {
+        const queryForYogaTutor = {
+          yogaCategory: { $in: [cat._id] },
+          classStartTimeInUTC: {
+            $gte: new Date(new Date().toISOString().split("T")[0]),
+          },
+          isDelete: false,
+        };
+        const numberOfClass = await YogaTutorClass.countDocuments(
+          queryForYogaTutor
+        );
+
+        cat.numberOfClass = numberOfClass;
+        cat.image = cat.image ? cat.image.url || null : null;
+        delete cat.similarity; // Only present if search was done
+      })
+    );
+    data.data = yogaCategory;
+    return successResponse(res, 200, `Successfully!`, data);
   } catch (err) {
     failureResponse(res);
   }

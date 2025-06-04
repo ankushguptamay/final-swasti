@@ -41,7 +41,7 @@ router.get("/chakra/:chakraNumber", chakraDetails);
 
 // Review
 router.get("/review", getReviews);
-router.get("/review/:id", getReviewDetails);
+// router.get("/review/:id", getReviewDetails);
 router.post("/reaction/:id", giveUnGiveReactionOnReview);
 router.post("/reply", replyOnMyReviews);
 router.delete("/reply", deleteMyReply);

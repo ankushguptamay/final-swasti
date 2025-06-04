@@ -248,7 +248,7 @@ const addNewClassTimes = async (req, res) => {
       return failureResponse(
         res,
         400,
-        "Price for individual person per day should be greater then 500.",
+        "Price for individual person per day should be greater than 500.",
         null
       );
     if (numberOfClass !== datesOfClasses.length)
@@ -480,7 +480,7 @@ const updateYTClassTimes = async (req, res) => {
         return failureResponse(
           res,
           400,
-          "Price for individual person per day should be greater then 500.",
+          "Price for individual person per day should be greater than 500.",
           null
         );
       } else {

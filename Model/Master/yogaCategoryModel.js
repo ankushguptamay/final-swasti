@@ -9,6 +9,8 @@ const schema = new Schema(
     },
     yogaCategory: { type: String, required: true },
     description: { type: String },
+    tags: [String], // extra keywords for better search
+    embedding: { type: [Number] }, // vector (array of floats)
   },
   { timestamps: true }
 );
