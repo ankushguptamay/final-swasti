@@ -29,7 +29,7 @@ async function updateCategory() {
       .lean();
     for (let i = 0; i < category.length; i++) {
       // Get Embedding
-      if (category[i].embedding && category[i].embedding.length <= 0) {
+      if (!category[i].embedding || category[i].embedding.length <= 0) {
         const embedding = await getEmbedding(category[i].yogaCategory);
         await YogaCategory.updateOne(
           { _id: category[i]._id },
