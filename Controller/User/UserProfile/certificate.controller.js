@@ -219,7 +219,8 @@ const certifiacteApproval = async (req, res) => {
     // Save History
     if (approvalByAdmin === "accepted") {
       // Update certificate array in user profile
-      const user = await User.findById(req.user._id).select("certificate");
+      const user = await User.findById(req.user._id)
+        .select("certificate");
       user.certificate = [...user.certificate, certificate._id];
       await user.save();
     }
@@ -229,9 +230,10 @@ const certifiacteApproval = async (req, res) => {
     return successResponse(
       res,
       201,
-      `Certificate ${approvalByAdmin} successfully`
+      `Certificate ${approvalByAdmin} successfully.`
     );
   } catch (err) {
+    console.log(err);
     failureResponse(res);
   }
 };
