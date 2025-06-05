@@ -11,7 +11,6 @@ import {
   isProfileVisible,
   getMyChakra,
   chakraDetails,
-  myWallet,
 } from "../../../Controller/User/UserProfile/user.controller.js";
 import {
   getReviews,
@@ -24,6 +23,10 @@ import {
 // Middleware
 import { uploadImage } from "../../../MiddleWare/uploadFile.js";
 import { instructorDashBoard } from "../../../Controller/User/dashboard.js";
+import {
+  myWallet,
+  transactionHistory,
+} from "../../../Controller/User/UserProfile/wallet.js";
 
 router.get("/", myDetails);
 router.put("/", updateInstructor);
@@ -48,6 +51,7 @@ router.delete("/reply", deleteMyReply);
 
 // Wallet/Transcation
 router.get("/wallet", myWallet);
+router.get("/transaction", transactionHistory);
 
 // Dashboard
 router.get("/dashboard", instructorDashBoard);

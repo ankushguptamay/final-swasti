@@ -8,11 +8,14 @@ import {
   deleteProfilePic,
   getMyChakra,
   chakraDetails,
-  myWallet,
 } from "../../../Controller/User/UserProfile/user.controller.js";
 
 // Middleware
 import { uploadImage } from "../../../MiddleWare/uploadFile.js";
+import {
+  myWallet,
+  transactionHistory,
+} from "../../../Controller/User/UserProfile/wallet.js";
 
 router.get("/", myDetails);
 router.put("/", updateLearner);
@@ -26,5 +29,6 @@ router.get("/chakra/:chakraNumber", chakraDetails);
 
 // Wallet/Transcation
 router.get("/wallet", myWallet);
+router.get("/transaction", transactionHistory);
 
 export default router;

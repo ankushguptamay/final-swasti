@@ -1019,20 +1019,6 @@ const searchInstructor = async (req, res) => {
   }
 };
 
-const myWallet = async (req, res) => {
-  try {
-    const wallet = await Wallet.findOne({
-      userId: req.user._id,
-    }).select("-createdAt -updatedAt");
-    // Final Response
-    return successResponse(res, 200, "Fetched successfully!", {
-      wallet,
-    });
-  } catch (err) {
-    failureResponse(res);
-  }
-};
-
 const instructorDetailsForLearner = async (req, res) => {
   try {
     const instructor = await User.findOne({
@@ -1290,7 +1276,6 @@ export {
   chakraDetails,
   updateLearner,
   searchInstructor,
-  myWallet,
   instructorDetailsForLearner,
   register_login_learner,
   instructorForLandingPage,
