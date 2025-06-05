@@ -1138,13 +1138,16 @@ const register_login_learner = async (req, res) => {
     // Is user already present
     let user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
     if (user) {
-      if (user.role === "instructor")
+      if (!user.role) {
+        await User.updateOne({ _id: user._id }, { $set: { role: "learner" } });
+      } else if (user.role === "instructor") {
         return failureResponse(
           res,
           400,
           "You are already register as instructor.",
           null
         );
+      }
     } else {
       // Capital First Letter
       const name = capitalizeFirstLetter(req.body.name);
@@ -1189,6 +1192,7 @@ const register_login_learner = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
+    console.log(err.message)
     failureResponse(res);
   }
 };
