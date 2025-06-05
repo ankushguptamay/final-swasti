@@ -181,7 +181,6 @@ const getReviews = async (req, res) => {
       },
       { $project: { _id: 1, averageRating: 1, totalReviews: 1 } },
     ]);
-    console.log(instructor);
     // Get data
     const query = { $and: [{ isDelete: false }, { instructor: instructorId }] };
     const [reviews, totalReview] = await Promise.all([

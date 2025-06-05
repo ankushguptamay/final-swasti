@@ -379,7 +379,6 @@ const addNewClassTimes = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, message, { requiredProfileDetails });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

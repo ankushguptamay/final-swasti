@@ -208,7 +208,7 @@ const certifiacteApproval = async (req, res) => {
     const certificate = await Certificate.findOne({
       _id,
       isDelete: false,
-    }).select("approvalByAdmin");
+    }).select("approvalByAdmin user");
     if (!certificate)
       return failureResponse(
         res,
@@ -219,8 +219,7 @@ const certifiacteApproval = async (req, res) => {
     // Save History
     if (approvalByAdmin === "accepted") {
       // Update certificate array in user profile
-      const user = await User.findById(req.user._id)
-        .select("certificate");
+      const user = await User.findById(certificate.user).select("certificate");
       user.certificate = [...user.certificate, certificate._id];
       await user.save();
     }
@@ -233,7 +232,6 @@ const certifiacteApproval = async (req, res) => {
       `Certificate ${approvalByAdmin} successfully.`
     );
   } catch (err) {
-    console.log(err);
     failureResponse(res);
   }
 };
