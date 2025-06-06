@@ -19,6 +19,7 @@ import {
   yogaCategoryDetails,
   updateYogaCategoryImage,
   deleteYogaCategory,
+  getYogaCategoryWithImage,
 } from "../../Controller/Master/yogaCategory.controller.js";
 import {
   addYTRequirement,
@@ -47,6 +48,7 @@ router.delete("/specialization/:id", deleteSpecialization);
 router.post("/y-c", uploadImage.single("image"), addYogaCategory);
 router.get("/y-c", getYogaCategory);
 router.get("/y-c/:id", yogaCategoryDetails);
+router.get("/y-c-i", getYogaCategoryWithImage);
 router.put("/y-c/:id", uploadImage.single("image"), updateYogaCategoryImage);
 router.delete("/y-c/:id", deleteYogaCategory);
 

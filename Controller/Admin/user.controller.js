@@ -19,6 +19,7 @@ const { DELETECODE, INSTRUCTOR_PROFILE_FOLDER } = process.env;
 
 const searchUser = async (req, res) => {
   try {
+    console.log(req.query);
     const {
       search,
       experienceLowerLimit,
