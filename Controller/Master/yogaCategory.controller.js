@@ -63,6 +63,7 @@ const addYogaCategory = async (req, res) => {
 
 const getYogaCategory = async (req, res) => {
   try {
+    const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
       : 20;
@@ -70,17 +71,17 @@ const getYogaCategory = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
 
     //Search
-    let query = {};
-    if (req.query.search) {
-      const startWith = new RegExp("^" + req.query.search.toLowerCase(), "i");
-      query = { yogaCategory: startWith };
+    const query = {};
+    if (search) {
+      const startWith = new RegExp("^" + search.toLowerCase(), "i");
+      query.yogaCategory = startWith;
     }
     const [yogaCategory, totalYogaCategory] = await Promise.all([
       YogaCategory.find(query)
         .sort({ yogaCategory: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select("_id yogaCategory description")
+        .select("_id yogaCategory")
         .lean(),
       YogaCategory.countDocuments(query),
     ]);
@@ -88,7 +89,7 @@ const getYogaCategory = async (req, res) => {
     const totalPages = Math.ceil(totalYogaCategory / resultPerPage) || 0;
     return successResponse(res, 200, `Successfully!`, {
       data: yogaCategory,
-      totalPages: totalPages,
+      totalPages,
       currentPage: page,
     });
   } catch (err) {

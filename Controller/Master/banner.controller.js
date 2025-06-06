@@ -61,15 +61,38 @@ const addBanner = async (req, res) => {
 
 const getBanner = async (req, res) => {
   try {
-    const banner = await Banner.find()
-      .select("title redirectLink bannerImage")
-      .lean();
+    const search = req.query.search?.trim();
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+    // Search
+    const query = {};
+    if (search) {
+      const containInString = new RegExp(search, "i");
+      query.title = containInString;
+    }
+
+    const [banner, totalBanner] = await Promise.all([
+      Banner.find(query)
+        .sort({ createdAt: 1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .select("title redirectLink bannerImage")
+        .lean(),
+      Banner.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalBanner / resultPerPage) || 0;
     for (let i = 0; i < banner.length; i++) {
       banner[i].bannerImage = banner[i].bannerImage.url;
     }
     // Send final success response
     return successResponse(res, 200, `Banner fetched successfully.`, {
       banner,
+      totalPages,
+      currentPage: page,
     });
   } catch (err) {
     failureResponse(res);

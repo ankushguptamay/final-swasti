@@ -26,9 +26,35 @@ const addYTRule = async (req, res) => {
 
 const getYTRule = async (req, res) => {
   try {
-    const rule = await YogaTutorRule.find().select("rule");
+    const search = req.query.search?.trim();
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+    // Search
+    const query = {};
+    if (search) {
+      const containInString = new RegExp(search, "i");
+      query.rule = containInString;
+    }
+    const [rule, totalRule] = await Promise.all([
+      YogaTutorRule.find(query)
+        .sort({ rule: 1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .select("rule")
+        .lean(),
+      YogaTutorRule.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalRule / resultPerPage) || 0;
     // Send final success response
-    return successResponse(res, 200, `Rules fetched successfully.`, { rule });
+    return successResponse(res, 200, `Rules fetched successfully.`, {
+      rule,
+      totalPages,
+      currentPage: page,
+    });
   } catch (err) {
     failureResponse(res);
   }

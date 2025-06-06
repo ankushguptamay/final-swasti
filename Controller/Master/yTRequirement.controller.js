@@ -26,10 +26,34 @@ const addYTRequirement = async (req, res) => {
 
 const getYTRequirement = async (req, res) => {
   try {
-    const requirement = await YogaTutorRequirement.find().select("requirement");
+    const search = req.query.search?.trim();
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+    // Search
+    const query = {};
+    if (search) {
+      const containInString = new RegExp(search, "i");
+      query.requirement = containInString;
+    }
+    const [requirement, totalRequirement] = await Promise.all([
+      YogaTutorRequirement.find(query)
+        .sort({ requirement: 1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .select("requirement")
+        .lean(),
+      YogaTutorRequirement.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalRequirement / resultPerPage) || 0;
     // Send final success response
     return successResponse(res, 200, `Requirements fetched successfully.`, {
       requirement,
+      totalPages,
+      currentPage: page,
     });
   } catch (err) {
     failureResponse(res);

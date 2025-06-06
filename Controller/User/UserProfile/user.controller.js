@@ -1192,7 +1192,6 @@ const register_login_learner = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
-    console.log(err.message)
     failureResponse(res);
   }
 };

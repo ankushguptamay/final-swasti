@@ -30,6 +30,7 @@ const addSpecialization = async (req, res) => {
 
 const getSpecialization = async (req, res) => {
   try {
+    const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
       : 20;
@@ -37,10 +38,10 @@ const getSpecialization = async (req, res) => {
     const skip = (page - 1) * resultPerPage;
 
     //Search
-    let query = {};
-    if (req.query.search) {
-      const startWith = new RegExp("^" + req.query.search.toLowerCase(), "i");
-      query = { specialization: startWith };
+    const query = {};
+    if (search) {
+      const containInString = new RegExp(search, "i");
+      query.specialization = containInString;
     }
     const [specialization, totalSpecialization] = await Promise.all([
       Specialization.find(query)
@@ -55,7 +56,7 @@ const getSpecialization = async (req, res) => {
     const totalPages = Math.ceil(totalSpecialization / resultPerPage) || 0;
     return successResponse(res, 200, `Successfully!`, {
       specialization,
-      totalPages: totalPages,
+      totalPages,
       currentPage: page,
     });
   } catch (err) {
