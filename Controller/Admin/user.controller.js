@@ -43,7 +43,7 @@ const searchUser = async (req, res) => {
 
     // Filter
     if (role === "instructor") {
-      if ((experienceLowerLimit, experienceUpperLimit)) {
+      if (experienceLowerLimit && experienceUpperLimit) {
         query.$and.push({
           experience_year: {
             $gte: parseInt(experienceLowerLimit),
@@ -101,6 +101,7 @@ const searchUser = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
