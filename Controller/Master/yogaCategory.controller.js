@@ -242,9 +242,10 @@ const deleteYogaCategory = async (req, res) => {
       deleteFileToBunny(bunnyFolderName, category.image.url);
     }
     // delete
-    await yogaCategory.deleteOne();
+    await YogaCategory.deleteOne({ _id: req.params.id });
     return successResponse(res, 200, `Deleted successfully!`);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
