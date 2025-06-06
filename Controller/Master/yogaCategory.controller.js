@@ -238,14 +238,13 @@ const deleteYogaCategory = async (req, res) => {
       { $pull: { yogaCategory: yogaCategory._id } }
     );
     // Delete image
-    if (yogaCategory.image && yogaCategory.image.url) {
-      deleteFileToBunny(bunnyFolderName, category.image.url);
+    if (yogaCategory.image && yogaCategory.image.fileName) {
+      deleteFileToBunny(bunnyFolderName, yogaCategory.image.fileName);
     }
     // delete
     await YogaCategory.deleteOne({ _id: req.params.id });
     return successResponse(res, 200, `Deleted successfully!`);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
