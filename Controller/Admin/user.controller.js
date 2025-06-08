@@ -8,18 +8,9 @@ import {
 } from "../../MiddleWare/responseMiddleware.js";
 import { UserChakras } from "../../Model/User/Profile/chakrasModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
-import { BankDetail } from "../../Model/User/Profile/bankDetailsModel.js";
-import { Certificate } from "../../Model/User/Profile/certificateModel.js";
-import { deleteFileToBunny } from "../../Util/bunny.js";
-import { Education } from "../../Model/User/Profile/educationModel.js";
-import { InstructorUpdateHistory } from "../../Model/User/Profile/instructorUpdateHistoryModel.js";
-import { SubscribedUser } from "../../Model/User/Profile/subscribedUserModel.js";
-
-const { DELETECODE, INSTRUCTOR_PROFILE_FOLDER } = process.env;
 
 const searchUser = async (req, res) => {
   try {
-    console.log(req.query);
     const {
       search,
       experienceLowerLimit,
@@ -101,7 +92,6 @@ const searchUser = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -243,45 +233,5 @@ const userCount = async (req, res) => {
     failureResponse(res);
   }
 };
-
-// const deleteUserAllData = async (req, res) => {
-//   try {
-//     const deleteCode = req.body.deleteCode;
-//     if (!deleteCode) return failureResponse(res, 400, "Send Delete Code!");
-
-//     if (deleteCode !== DELETECODE)
-//       return failureResponse(res, 400, "Wrong Code!");
-//     const userId = req.params.id;
-//     // Delete Bank Details
-//     await BankDetail.deleteMany({ user: userId });
-//     // Delete Certificate
-//     const certificate = await Certificate.find({ user: userId })
-//       .select("image")
-//       .lean();
-//     for (let i = 0; i < certificate.length; i++) {
-//       if (certificate[i].image && certificate[i].image.fileName) {
-//         deleteFileToBunny(
-//           INSTRUCTOR_PROFILE_FOLDER,
-//           certificate[i].image.fileName
-//         );
-//       }
-//     }
-//     await Certificate.deleteMany({ user: userId });
-//     // Delete their refferals
-//     await UserChakras.deleteMany({
-//       $or: [{ referrer: userId }, { joiner: userId }],
-//     });
-//     // Delete Education
-//     await Education.deleteMany({ user: userId });
-//     // Delete Histroy
-//     await InstructorUpdateHistory.deleteMany({instructor:userId});
-//     // Delete Subscription
-//     await SubscribedUser.deleteOne({ user: userId });
-//     // Send final success response
-//     return successResponse(res, 200, `Successfully!`);
-//   } catch (err) {
-//     failureResponse(res);
-//   }
-// };
 
 export { searchUser, getUserReferral, usersReferral, userCount };

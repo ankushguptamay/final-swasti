@@ -12,7 +12,7 @@ const validateYogaCategory = (data) => {
   const schema = joi.object().keys({
     yogaCategory: joi.string().required(),
     description: joi.string().optional(),
-    tags: joi.array().optional(),
+    tags: joi.array().min(1).items(joi.string().required()).required(),
   });
   return schema.validate(data);
 };
