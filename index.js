@@ -23,8 +23,8 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
-  await deleteYogaCategoryInBulk();
-  await updateYogaCategoryInBulk();
+  // await deleteYogaCategoryInBulk();
+  // await updateYogaCategoryInBulk();
 })();
 
 // Cors options
