@@ -1152,7 +1152,7 @@ const getYogaCategoryWithImage = async (req, res) => {
       data = {},
       totalYogaCategory = {};
     if (req.query.search) {
-      const queryForSearch = await finalQuery(req.body.search); // Query for first search
+      const queryForSearch = await finalQuery(req.query.search); // Query for first search
       const someCat = await YogaCategory.find(queryForSearch) // Search any data present
         .select("_id yogaCategory image")
         .lean();
@@ -1218,6 +1218,7 @@ const getYogaCategoryWithImage = async (req, res) => {
     data.data = yogaCategory;
     return successResponse(res, 200, `Successfully!`, data);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
