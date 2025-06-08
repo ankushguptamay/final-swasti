@@ -12,10 +12,6 @@ import authUser from "./Route/User/authUser.js";
 import instructor from "./Route/User/Instructor/index.js";
 import learner from "./Route/User/Learner/index.js";
 import multer from "multer";
-import {
-  deleteYogaCategoryInBulk,
-  updateYogaCategoryInBulk,
-} from "./Controller/Master/yogaCategory.controller.js";
 
 const app = express();
 const server = createServer(app);
@@ -23,8 +19,6 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
-  // await deleteYogaCategoryInBulk();
-  // await updateYogaCategoryInBulk();
 })();
 
 // Cors options

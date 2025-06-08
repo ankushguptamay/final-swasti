@@ -17,6 +17,7 @@ const bunnyFolderName = process.env.MASTER_FOLDER;
 import fs from "fs";
 import { getEmbedding } from "../../Util/AIFunction.js";
 import cosineSimilarity from "cosine-similarity";
+import { compareArrays } from "../../Helper/formatChange.js";
 
 async function removeSomeWord(input) {
   const wordsToRemove = ["yoga", "for", "from", "to"];
@@ -1157,6 +1158,7 @@ const getYogaCategoryWithImage = async (req, res) => {
         .select("_id yogaCategory image")
         .lean();
       if (someCat.length > 2) {
+        console.log("here");
         if (someCat.length >= 5) {
           yogaCategory = someCat.slice(0, 5);
         } else {
@@ -1288,58 +1290,62 @@ const deleteYogaCategory = async (req, res) => {
   }
 };
 
-const deleteYogaCategoryInBulk = async () => {
+const updateYogaCategory = async (req, res) => {
   try {
-    let hi = 0;
-    for (let i = 0; i < newUnique.length; i++) {
-      const yogaCategory = await YogaCategory.findById(newUnique[i]._id).lean();
-      if (yogaCategory) {
-        // Delete from all place
-        await YogaTutorClass.updateMany(
-          { yogaCategory: yogaCategory._id },
-          { $pull: { yogaCategory: yogaCategory._id } }
+    // Body Validation
+    const { error } = validateYogaCategory(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { yogaCategory, tags, description } = req.body;
+    // Find Category
+    const category = await YogaCategory.findById(req.params.id).lean();
+    if (!category) {
+      return failureResponse(
+        res,
+        400,
+        `This yoga category is not present!`,
+        null
+      );
+    }
+    // Check is new category present
+    if (category.yogaCategory !== yogaCategory) {
+      const category = await YogaCategory.findOne({ yogaCategory })
+        .select("_id")
+        .lean();
+      if (category) {
+        return failureResponse(
+          res,
+          400,
+          `This yoga category is already present!`,
+          null
         );
-        // Delete image
-        if (yogaCategory.image?.fileName) {
-          deleteFileToBunny(bunnyFolderName, yogaCategory.image.fileName);
-        }
-        // delete
-        await YogaCategory.deleteOne({ _id: yogaCategory._id });
-        hi = hi + 1;
       }
     }
-    console.log(hi);
-  } catch (err) {
-    console.log(err.message);
-  }
-};
-
-const updateYogaCategoryInBulk = async () => {
-  try {
-    let hi = 0;
-    for (let i = 0; i < newCat.length; i++) {
-      const yogaCategory = await YogaCategory.findById(newCat[i]._id).lean();
-      if (yogaCategory) {
-        // Get Embedding
-        const filterCategory = await removeSomeWord(newCat[i].newName);
-        const combinedText = `${filterCategory} ${newCat[i].tags.join(" ")}`;
-        const embedding = await getEmbedding(combinedText);
-        await YogaCategory.updateOne(
-          { _id: newCat[i]._id },
-          {
-            $set: {
-              yogaCategory: newCat[i].newName,
-              tags: newCat[i].tags,
-              embedding,
-            },
-          }
-        );
-        hi = hi + 1;
-      }
+    // Compare tags
+    let embedding = category.embedding;
+    const tagCam = await compareArrays(category.tags, tags);
+    if (category.yogaCategory !== yogaCategory || !tagCam) {
+      // Get Embedding
+      const filterCategory = await removeSomeWord(yogaCategory);
+      const combinedText = `${filterCategory} ${tags.join(" ")}`;
+      embedding = await getEmbedding(combinedText);
     }
-    console.log(hi);
+    // Update
+    await YogaCategory.updateOne(
+      { _id: req.params.id },
+      {
+        $set: {
+          yogaCategory,
+          tags,
+          embedding,
+          description,
+        },
+      }
+    );
+    return successResponse(res, 200, `Updated successfully!`);
   } catch (err) {
-    console.log(err.message);
+    failureResponse(res);
   }
 };
 
@@ -1350,6 +1356,5 @@ export {
   updateYogaCategoryImage,
   deleteYogaCategory,
   getYogaCategoryWithImage,
-  deleteYogaCategoryInBulk,
-  updateYogaCategoryInBulk,
+  updateYogaCategory,
 };
