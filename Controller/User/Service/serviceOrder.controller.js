@@ -137,12 +137,12 @@ const createPayment = async (req, res) => {
             receipt,
           })
             .then(() => {
-              return successResponse(
-                res,
-                201,
-                `Order craeted successfully!`,
-                order
-              );
+              return successResponse(res, 201, `Order craeted successfully!`, {
+                ...order,
+                name: req.user.name,
+                email: req.user.email,
+                mobileNumber: req.user.mobileNumber,
+              });
             })
             .catch((err) => {
               return failureResponse(res);

@@ -1030,7 +1030,7 @@ const instructorDetailsForLearner = async (req, res) => {
         "_id name role profilePic language dateOfBirth gender experience_year bio isProfileVisible averageRating isAadharVerified"
       )
       .populate("specialization", "specialization")
-      .populate("certificate", "name")
+      .populate("certificate", "name createdAt")
       .lean();
     if (!instructor)
       return failureResponse(
@@ -1052,9 +1052,7 @@ const instructorDetailsForLearner = async (req, res) => {
             )
           : [],
       certificate:
-        instructor.certificate?.length > 0
-          ? instructor.certificate.map(({ name }) => name)
-          : [],
+        instructor.certificate?.length > 0 ? instructor.certificate : [],
     };
     // Find other user
     const specialization =

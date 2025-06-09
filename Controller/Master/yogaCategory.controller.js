@@ -1158,7 +1158,6 @@ const getYogaCategoryWithImage = async (req, res) => {
         .select("_id yogaCategory image")
         .lean();
       if (someCat.length > 2) {
-        console.log("here");
         if (someCat.length >= 5) {
           yogaCategory = someCat.slice(0, 5);
         } else {
