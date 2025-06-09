@@ -810,7 +810,7 @@ const joinMeeting = async (req, res) => {
       return failureResponse(
         res,
         400,
-        "You can only join before 5 min of class starting time."
+        "Thanks for checking in! The class isn't open yet — you can join 5 minutes before the start time."
       );
     } else {
       const newClassDate = min5.classDate;
