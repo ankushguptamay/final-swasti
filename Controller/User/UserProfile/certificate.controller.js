@@ -159,7 +159,7 @@ const certificatesForAdminApproval = async (req, res) => {
     // Get required data
     const [certificates, totalcertificates] = await Promise.all([
       Certificate.find({ isDelete: false, approvalByAdmin: "pending" })
-        .select("_id name image approvalByAdmin")
+        .select("_id name image createdAt approvalByAdmin")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(resultPerPage)
@@ -169,7 +169,7 @@ const certificatesForAdminApproval = async (req, res) => {
     ]);
     // Transform
     const transform = certificates.map(
-      ({ _id, name, image, approvalByAdmin, user }) => {
+      ({ _id, name, image, approvalByAdmin, createdAt, user }) => {
         return {
           _id,
           name,
@@ -180,6 +180,7 @@ const certificatesForAdminApproval = async (req, res) => {
             profilePic: user.profilePic ? user.profilePic.url || null : null,
           },
           image: image ? image.url || null : null,
+          createdAt,
         };
       }
     );

@@ -607,6 +607,7 @@ const classTimesForAdmin = async (req, res) => {
         .sort({ createdAt: 1 })
         .skip(skip)
         .limit(resultPerPage)
+        .populate("instructor", "name")
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);

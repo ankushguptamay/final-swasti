@@ -201,6 +201,31 @@ const usersReferral = async (req, res) => {
   }
 };
 
+const userDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .populate("specialization", "specialization")
+      .populate("certificate", "name")
+      .populate("bankDetail", "bankName")
+      .populate("education", "qualificationName")
+      .lean();
+    if (!user)
+      return failureResponse(
+        res,
+        400,
+        "This user profile is not available!",
+        null
+      );
+    delete user.chakraBreakNumber;
+    user.profilePic = user.profilePic ? user.profilePic.url || null : null;
+    delete user.isProfileVisible;
+    // Send final success response
+    return successResponse(res, 200, `Successfully!`, { user });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 const userCount = async (req, res) => {
   try {
     const utcDate = new Date();
@@ -234,4 +259,4 @@ const userCount = async (req, res) => {
   }
 };
 
-export { searchUser, getUserReferral, usersReferral, userCount };
+export { searchUser, getUserReferral, usersReferral, userCount, userDetails };
