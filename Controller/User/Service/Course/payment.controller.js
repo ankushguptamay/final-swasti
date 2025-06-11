@@ -51,35 +51,26 @@ const createCourseOrder = async (req, res) => {
     const userId = req.user._id;
     const receipt = await generateReceiptNumber("ytc");
     // initiate payment
-    razorpayInstance.orders.create(
-      { amount, currency, receipt },
-      (err, order) => {
-        if (!err) {
-          CoursePayment.create({
-            learner: userId,
-            couponName,
-            courseName,
-            startDate: new Date(startDate),
-            amount: parseFloat(amount) / 100,
-            razorpayOrderId: order.id,
-            receipt,
-          })
-            .then(() => {
-              return successResponse(res, 201, `Order craeted successfully!`, {
-                ...order,
-                name: req.user.name,
-                email: req.user.email,
-                mobileNumber: req.user.mobileNumber,
-              });
-            })
-            .catch((err) => {
-              return failureResponse(res);
-            });
-        } else {
-          return failureResponse(res);
-        }
-      }
-    );
+    const order = await razorpayInstance.orders.create({
+      amount,
+      currency,
+      receipt,
+    });
+    await CoursePayment.create({
+      learner: userId,
+      couponName,
+      courseName,
+      startDate: new Date(startDate),
+      amount: parseFloat(amount) / 100,
+      razorpayOrderId: order.id,
+      receipt,
+    });
+    return successResponse(res, 201, `Order craeted successfully!`, {
+      ...order,
+      name: req.user.name,
+      email: req.user.email,
+      mobileNumber: req.user.mobileNumber,
+    });
   } catch (err) {
     return failureResponse(res);
   }
