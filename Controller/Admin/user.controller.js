@@ -217,10 +217,22 @@ const userDetails = async (req, res) => {
         null
       );
     delete user.chakraBreakNumber;
+    delete user.refreshToken;
     user.profilePic = user.profilePic ? user.profilePic.url || null : null;
     delete user.isProfileVisible;
+    if (user.role !== "instructor") {
+      delete user.experience_year;
+      delete user.averageRating;
+      delete user.bio;
+      delete user.isAadharVerified;
+      delete user.aadharDetails;
+      delete user.specialization;
+      delete user.certificate;
+      delete user.education;
+      delete user.bankDetail;
+    }
     // Send final success response
-    return successResponse(res, 200, `Successfully!`, { user });
+    return successResponse(res, 200, `Successfully!`, { ...user });
   } catch (err) {
     failureResponse(res);
   }
