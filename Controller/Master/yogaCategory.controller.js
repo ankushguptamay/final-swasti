@@ -164,6 +164,7 @@ const getYogaCategoryWithImage = async (req, res) => {
       const someCat = await YogaCategory.find(queryForSearch) // Search any data present
         .select("_id yogaCategory image")
         .lean();
+      console.log(someCat.length);
       if (someCat.length > 2) {
         if (someCat.length >= 5) {
           yogaCategory = someCat.slice(0, 5);

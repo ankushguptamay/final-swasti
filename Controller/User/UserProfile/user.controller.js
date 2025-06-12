@@ -56,6 +56,7 @@ import {
   getDatesDay,
 } from "../../../Util/timeZone.js";
 import { Specialization } from "../../../Model/Master/specializationModel.js";
+import { UserNotification } from "../../../Model/User/notificationModel.js";
 const bunnyFolderName = process.env.INSTRUCTOR_PROFILE_FOLDER || "inst-doc";
 
 // Helper
@@ -249,6 +250,15 @@ const register = async (req, res) => {
     });
     // Create Wallet
     await Wallet.create({ userId: user._id });
+    // Send Notification
+    await UserNotification.create({
+      recipient: user._id,
+      type: "welcome",
+      redirectTo: "profile",
+      title: "Welcome to Swasti Bharat!",
+      message: `Hello ${name}, Your account has been created successfully.`,
+      createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
+    });
     // Send final success response
     return successResponse(
       res,
@@ -259,6 +269,7 @@ const register = async (req, res) => {
       { mobileNumber }
     );
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -408,6 +419,17 @@ const verifyMobileOTP = async (req, res) => {
     await InstructorUpdateHistory.create(historyData);
     updateData.refreshToken = refreshToken;
     await user.updateOne(updateData);
+    // Send Notification
+    if (user.isEmailVerified || user.isMobileNumberVerified) {
+      await UserNotification.create({
+        recipient: user._id,
+        type: "welcome",
+        redirectTo: "profile",
+        title: "Login from a new device detected!",
+        message: `Hello ${user.name}, Welcome back to Swasti Bharat.`,
+        createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
+      });
+    }
     // Final Response
     return successResponse(res, 201, `Login successful. Welcome back!`, {
       accessToken,
@@ -415,6 +437,7 @@ const verifyMobileOTP = async (req, res) => {
       user,
     });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -463,7 +486,20 @@ const rolePage = async (req, res) => {
     } else {
       role = req.user.role;
     }
+    const message =
+      role === "instructor"
+        ? "Now list your class."
+        : "Find your instructor here and book now.";
     const accessToken = createUserAccessToken({ _id: req.user._id, role });
+    // Send Notification
+    await UserNotification.create({
+      recipient: req.user._id,
+      type: "welcome",
+      redirectTo: "profile",
+      title: `You choose ${role}.`,
+      message: `Hello ${role}, ${message}`,
+      createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
+    });
     // Final response
     return successResponse(
       res,
@@ -472,6 +508,7 @@ const rolePage = async (req, res) => {
       { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };

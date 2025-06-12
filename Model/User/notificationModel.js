@@ -18,7 +18,8 @@ const redirect = [
   "certificate",
   "chakras",
   "review",
-  "yogatutor",
+  "yogatutorclass",
+  "wallet",
   "transaction",
 ];
 

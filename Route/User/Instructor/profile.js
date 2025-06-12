@@ -27,6 +27,12 @@ import {
   myWallet,
   transactionHistory,
 } from "../../../Controller/User/UserProfile/wallet.js";
+import {
+  myNotification,
+  notificationDetails,
+  readNotification,
+  seenNotification,
+} from "../../../Controller/Notification/notification.js";
 
 router.get("/", myDetails);
 router.put("/", updateInstructor);
@@ -55,5 +61,11 @@ router.get("/transaction", transactionHistory);
 
 // Dashboard
 router.get("/dashboard", instructorDashBoard);
+
+// Notification
+router.get("/noti", myNotification);
+router.get("/noti/:id", notificationDetails);
+router.put("/noti-seen", seenNotification);
+router.put("/noti-read", readNotification);
 
 export default router;
