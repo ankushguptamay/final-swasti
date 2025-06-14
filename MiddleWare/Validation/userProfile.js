@@ -14,6 +14,7 @@ const validateUserRegistration = (data) => {
       .required(),
     referralCode: joi.string().optional(),
     term_condition_accepted: joi.boolean().required(),
+    registerBy: joi.string().valid("email", "mobile").required(),
   });
   return schema.validate(data);
 };
@@ -113,6 +114,7 @@ const validateUpdateLearner = (data) => {
   });
   return schema.validate(data);
 };
+
 const validateSubscribedUser = (data) => {
   const schema = joi.object().keys({
     name: joi.string().min(3).max(30).optional(),
@@ -120,6 +122,27 @@ const validateSubscribedUser = (data) => {
   });
   return schema.validate(data);
 };
+
+const validateVerifyEmailOTP = (data) => {
+  const schema = joi.object().keys({
+    email: joi.string().email().required().label("Email"),
+    otp: joi
+      .string()
+      .length(parseInt(process.env.OTP_DIGITS_LENGTH))
+      .required(),
+  });
+  return schema.validate(data);
+};
+
+const validateUserEmailLogin = (data) => {
+  const schema = joi.object().keys({
+    email: joi.string().email().required().label("Email"),
+    referralCode: joi.string().optional(),
+    term_condition_accepted: joi.boolean().required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateUserRegistration,
   validateUserMobileLogin,
@@ -133,4 +156,6 @@ export {
   validateEducation,
   validateUpdateLearner,
   validateSubscribedUser,
+  validateVerifyEmailOTP,
+  validateUserEmailLogin,
 };

@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
-import { connectDB } from "./Util/mongoConnection.js";
+import { addBrevoEmail, connectDB } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
 
@@ -19,6 +19,7 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
+  // await addBrevoEmail();
 })();
 
 // Cors options

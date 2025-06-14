@@ -28,6 +28,8 @@ import {
   validateProfileVisible,
   validateAadharVerification,
   validateUpdateLearner,
+  validateVerifyEmailOTP,
+  validateUserEmailLogin,
 } from "../../../MiddleWare/Validation/userProfile.js";
 import { OTP } from "../../../Model/User/otpModel.js";
 import { UserChakras } from "../../../Model/User/Profile/chakrasModel.js";
@@ -57,6 +59,11 @@ import {
 } from "../../../Util/timeZone.js";
 import { Specialization } from "../../../Model/Master/specializationModel.js";
 import { UserNotification } from "../../../Model/User/notificationModel.js";
+import {
+  finaliseEmailCredential,
+  sendOTPToEmail,
+} from "../../../Util/sendEmail.js";
+import { OTPEMAIL } from "../../../Config/emailFormate.js";
 const bunnyFolderName = process.env.INSTRUCTOR_PROFILE_FOLDER || "inst-doc";
 
 // Helper
@@ -205,8 +212,13 @@ const register = async (req, res) => {
     if (error) {
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { email, mobileNumber, referralCode, term_condition_accepted } =
-      req.body;
+    const {
+      email,
+      mobileNumber,
+      registerBy,
+      referralCode,
+      term_condition_accepted,
+    } = req.body;
     if (!term_condition_accepted)
       return failureResponse(
         res,
@@ -240,8 +252,34 @@ const register = async (req, res) => {
     });
     // Generate OTP for Email
     const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
-    // Sending OTP to mobile number
-    await sendOTPToNumber(mobileNumber, otp);
+    let data = { mobileNumber },
+      msg = "OTP send to mobile number successfully";
+    if (registerBy === "email") {
+      data = { email };
+      msg = "OTP send to email successfully";
+      // Sending OTP to mobile number
+      const emailCredential = await finaliseEmailCredential();
+      if (emailCredential) {
+        const options = {
+          subject: "Email Verification",
+          brevoEmail: emailCredential.email,
+          brevoKey: emailCredential.EMAIL_API_KEY,
+          headers: { "OTP for email verification": "123A" },
+          htmlContent: await OTPEMAIL({
+            otp: String(otp),
+            name: name,
+            time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+            senderMail: emailCredential.email,
+          }),
+          userEmail: email,
+          userName: name,
+        };
+        await sendOTPToEmail(options);
+      }
+    } else {
+      // Sending OTP to mobile number
+      await sendOTPToNumber(mobileNumber, otp);
+    }
     // Store OTP
     await OTP.create({
       validTill: new Date().getTime() + parseInt(OTP_VALIDITY_IN_MILLISECONDS),
@@ -263,10 +301,10 @@ const register = async (req, res) => {
     return successResponse(
       res,
       201,
-      `OTP send successfully! Valid for ${
+      `${msg}! Valid for ${
         OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
       } minutes!`,
-      { mobileNumber }
+      data
     );
   } catch (err) {
     console.log(err.message);
@@ -331,7 +369,7 @@ const loginByMobile = async (req, res) => {
     return successResponse(
       res,
       201,
-      `OTP send successfully! Valid for ${
+      `OTP send to mobile number successfully! Valid for ${
         OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
       } minutes!`,
       { mobileNumber }
@@ -377,12 +415,14 @@ const verifyMobileOTP = async (req, res) => {
         return failureResponse(res, 403, `OTP expired!`, null);
       }
     }
-    const updateData = { lastLogin: new Date() };
+    user.lastLogin = new Date();
     const historyData = { instructor: user._id, lastLogin: user.lastLogin };
+    if (!user.isMobileNumberVerified) {
+      user.isMobileNumberVerified = true;
+      historyData.isMobileNumberVerified = user.isMobileNumberVerified;
+    }
     // Chakra
     if (!user.isEmailVerified && !user.isMobileNumberVerified) {
-      updateData.isMobileNumberVerified = true;
-      historyData.isMobileNumberVerified = user.isMobileNumberVerified;
       if (user.referralCode) {
         const referrer = await User.findOne(
           { userCode: user.referralCode },
@@ -417,8 +457,8 @@ const verifyMobileOTP = async (req, res) => {
     const accessToken = createUserAccessToken(data);
     // Update user
     await InstructorUpdateHistory.create(historyData);
-    updateData.refreshToken = refreshToken;
-    await user.updateOne(updateData);
+    user.refreshToken = refreshToken;
+    await user.save();
     // Send Notification
     if (user.isEmailVerified || user.isMobileNumberVerified) {
       await UserNotification.create({
@@ -1298,6 +1338,166 @@ const instructorForLandingPage = async (req, res) => {
   }
 };
 
+const loginByEmail = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateUserEmailLogin(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { email, referralCode, term_condition_accepted } = req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
+    // Find User in collection
+    const data = { email };
+    if (referralCode) {
+      data.referralCode = referralCode;
+    }
+    const isUser = await User.findOne({ email });
+    if (!isUser) {
+      return failureResponse(res, 401, "NOTPRESENT", data);
+    }
+    isUser.term_condition_accepted = term_condition_accepted;
+    await isUser.save();
+    // Generate OTP for Email
+    const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
+    // Sending OTP to mobile number
+    const emailCredential = await finaliseEmailCredential();
+    if (emailCredential) {
+      const options = {
+        subject: "Email Verification",
+        brevoEmail: emailCredential.email,
+        brevoKey: emailCredential.EMAIL_API_KEY,
+        headers: { "OTP for email verification": "123A" },
+        htmlContent: await OTPEMAIL({
+          otp: String(otp),
+          name: isUser.name,
+          time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+          senderMail: emailCredential.email,
+        }),
+        userEmail: email,
+        userName: isUser.name,
+      };
+      await sendOTPToEmail(options);
+    }
+    //  Store OTP
+    await OTP.create({
+      validTill: new Date().getTime() + parseInt(OTP_VALIDITY_IN_MILLISECONDS),
+      otp: otp,
+      receiverId: isUser._id,
+    });
+    // Send final success response
+    return successResponse(
+      res,
+      201,
+      `OTP send to email successfully! Valid for ${
+        OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
+      } minutes!`,
+      { email }
+    );
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const verifyEmailOTP = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = validateVerifyEmailOTP(req.body);
+    if (error) {
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { email, otp } = req.body;
+    // Is Email Otp exist
+    const isOtp = await OTP.findOne({ otp });
+    if (!isOtp) {
+      return failureResponse(res, 401, `Invalid OTP. Try again`, null);
+    }
+    // Checking is user present or not
+    const user = await User.findOne(
+      { $and: [{ email }, { _id: isOtp.receiverId }] },
+      "_id name email mobileNumber role lastLogin isEmailVerified isMobileNumberVerified referralCode"
+    );
+    if (!user) {
+      return failureResponse(res, 401, `Invalid OTP!`, null);
+    }
+    // is email otp expired?
+    const isOtpExpired = new Date().getTime() > parseInt(isOtp.validTill);
+    await OTP.deleteMany({ receiverId: isOtp.receiverId });
+    if (isOtpExpired) {
+      return failureResponse(res, 403, `OTP expired!`, null);
+    }
+    user.lastLogin = new Date();
+    const historyData = { instructor: user._id, lastLogin: user.lastLogin };
+    if (!user.isEmailVerified) {
+      user.isEmailVerified = true;
+      historyData.isEmailVerified = user.isEmailVerified;
+    }
+    // Chakra
+    if (!user.isEmailVerified && !user.isMobileNumberVerified) {
+      if (user.referralCode) {
+        const referrer = await User.findOne(
+          { userCode: user.referralCode },
+          "_id chakraBreakNumber"
+        );
+        if (referrer) {
+          const chakraBreakNumber = parseInt(referrer.chakraBreakNumber);
+          const totalChakraQuantity = await UserChakras.countDocuments({
+            referrer: referrer._id,
+            isRedeemed: false,
+          });
+          let specialNum;
+          if (totalChakraQuantity <= 20) {
+            specialNum = getRandomIntInclusive(7, chakraBreakNumber);
+          } else {
+            specialNum = getRandomInt(7);
+          }
+          // Add chakra to refferer
+          await UserChakras.create({
+            chakraName: chakraName[specialNum - 1],
+            chakraNumber: specialNum,
+            joiner: user._id,
+            referrer: referrer._id,
+          });
+        }
+      }
+    }
+    // Generate token
+    const data = { _id: user._id };
+    if (user.role) data.role = user.role;
+    const refreshToken = createUserRefreshToken(data);
+    const accessToken = createUserAccessToken(data);
+    // Update user
+    await InstructorUpdateHistory.create(historyData);
+    user.refreshToken = refreshToken;
+    await user.save();
+    // Send Notification
+    if (user.isEmailVerified || user.isMobileNumberVerified) {
+      await UserNotification.create({
+        recipient: user._id,
+        type: "welcome",
+        redirectTo: "profile",
+        title: "Login from a new device detected!",
+        message: `Hello ${user.name}, Welcome back to Swasti Bharat.`,
+        createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
+      });
+    }
+    // Final Response
+    return successResponse(res, 201, `Login successful. Welcome back!`, {
+      accessToken,
+      refreshToken,
+      user,
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -1319,4 +1519,6 @@ export {
   instructorDetailsForLearner,
   register_login_learner,
   instructorForLandingPage,
+  loginByEmail,
+  verifyEmailOTP,
 };

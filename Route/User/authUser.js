@@ -9,6 +9,8 @@ import {
   logout,
   rolePage,
   register_login_learner,
+  verifyEmailOTP,
+  loginByEmail,
 } from "../../Controller/User/UserProfile/user.controller.js";
 
 import publicRoute from "./publicRoute.js";
@@ -19,6 +21,8 @@ import { verifyUserJWT } from "../../MiddleWare/verifyJWTToken.js";
 router.post("/register", register);
 router.post("/loginByMobile", loginByMobile);
 router.post("/verifyMobileOTP", verifyMobileOTP);
+router.post("/loginByEmail", loginByEmail);
+router.post("/verifyEmailOTP", verifyEmailOTP);
 router.post("/refresh", refreshAccessToken);
 
 router.post("/register_login_learner", register_login_learner);

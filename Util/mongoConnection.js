@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
+import { EmailCredential } from "../Model/User/emailCredentials.js";
 
 const connectDB = async (uri) => {
   try {
@@ -17,4 +18,8 @@ const connectDB = async (uri) => {
 // await mongoose.connection.db.dropDatabase();
 // console.log("Database dropped");
 
-export { connectDB };
+async function addBrevoEmail() {
+  await EmailCredential.create({ email: "connect@swastibharat.com" });
+}
+
+export { connectDB, addBrevoEmail };
