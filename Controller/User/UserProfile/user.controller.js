@@ -1286,7 +1286,7 @@ const instructorForLandingPage = async (req, res) => {
     // Get required data
     const instructor = await User.aggregate([
       { $match: query },
-      { $sample: { size: 40 } },
+      { $sample: { size: 16 } },
       {
         $lookup: {
           from: "specializations",
@@ -1326,9 +1326,9 @@ const instructorForLandingPage = async (req, res) => {
       };
     });
     // Split in Two
-    const sectionA = transformData.slice(0, 20);
+    const sectionA = transformData.slice(0, 8);
     const sectionB = transformData
-      .slice(Math.max(0, transformData.length - 20), transformData.length)
+      .slice(Math.max(0, transformData.length - 8), transformData.length)
       .map(({ bio, ...rest }) => rest);
 
     // Send final success response

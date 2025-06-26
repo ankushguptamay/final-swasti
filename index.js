@@ -5,13 +5,16 @@ import bodyParser from "body-parser";
 import { addBrevoEmail, connectDB } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
-
-// Routes
-import admin from "./Route/Admin/authAdmin.js";
-import authUser from "./Route/User/authUser.js";
-import instructor from "./Route/User/Instructor/index.js";
-import learner from "./Route/User/Learner/index.js";
 import multer from "multer";
+import routes from "./Route/mainRoute.js";
+import swaggerUi from "swagger-ui-express";
+import { readFileSync } from "fs";
+import { createPayment } from "./Util/phonePe.js";
+
+// Load Swagger
+const swaggerFile = JSON.parse(
+  readFileSync(new URL("./swagger-output.json", import.meta.url))
+);
 
 const app = express();
 const server = createServer(app);
@@ -19,6 +22,7 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
+  await createPayment();
   // await addBrevoEmail();
 })();
 
@@ -32,15 +36,10 @@ const corsOptions = {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
-
-// Routes
-app.use("/api/auth", authUser);
-// 1.Instructor
-app.use("/api/instructor", instructor);
-// 2.User
-app.use("/api/user", learner);
-// 3.User
-app.use("/api/admin", admin);
+// Swasgger Api Documentation routes
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
+// All Routes
+app.use(routes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to Swasti!");

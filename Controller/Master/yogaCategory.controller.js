@@ -150,7 +150,7 @@ const getYogaCategoryWithImage = async (req, res) => {
   try {
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
-      : 20;
+      : 10;
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const skip = (page - 1) * resultPerPage;
 
