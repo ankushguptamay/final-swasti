@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
-import { addBrevoEmail, connectDB } from "./Util/mongoConnection.js";
+import { addBrevoEmail, addUserSlug, connectDB } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
 import cors from "cors";
 import multer from "multer";
@@ -22,7 +22,8 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
-  await createPayment();
+  // await createPayment();
+  // await addUserSlug();
   // await addBrevoEmail();
 })();
 

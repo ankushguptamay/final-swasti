@@ -215,7 +215,7 @@ const register = async (req, res) => {
     const {
       email,
       mobileNumber,
-      registerBy,
+      registerBy = "mobile",
       referralCode,
       term_condition_accepted,
     } = req.body;
@@ -1063,7 +1063,9 @@ const searchInstructor = async (req, res) => {
     // Get required data
     const [instructor, totalInstructor] = await Promise.all([
       User.find(query)
-        .select("_id name profilePic bio averageRating gender experience_year")
+        .select(
+          "_id name profilePic bio averageRating slug gender experience_year"
+        )
         .sort({ averageRating: -1, name: 1 })
         .skip(skip)
         .limit(resultPerPage)
@@ -1099,7 +1101,7 @@ const searchInstructor = async (req, res) => {
 const instructorDetailsForLearner = async (req, res) => {
   try {
     const instructor = await User.findOne({
-      _id: req.params.id,
+      slug: req.params.slug,
       $expr: { $gte: [{ $size: "$education" }, 1] },
       "profilePic.url": { $exists: true, $ne: null, $ne: "" },
     })
@@ -1300,6 +1302,7 @@ const instructorForLandingPage = async (req, res) => {
           _id: 1,
           name: 1,
           profilePic: 1,
+          slug: 1,
           bio: 1,
           averageRating: 1,
           gender: 1,

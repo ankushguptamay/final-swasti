@@ -14,7 +14,7 @@ const validateUserRegistration = (data) => {
       .required(),
     referralCode: joi.string().optional(),
     term_condition_accepted: joi.boolean().required(),
-    registerBy: joi.string().valid("email", "mobile").required(),
+    // registerBy: joi.string().valid("email", "mobile").required(),
   });
   return schema.validate(data);
 };

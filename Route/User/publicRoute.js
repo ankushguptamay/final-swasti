@@ -24,7 +24,7 @@ import { createSubscribedUser } from "../../Controller/User/UserProfile/subscrib
 
 router.get("/instructor", searchInstructor);
 router.get("/landing-instructor", instructorForLandingPage);
-router.get("/instructor/:id", instructorDetailsForLearner);
+router.get("/instructor/:slug", instructorDetailsForLearner);
 
 router.post("/contactUs", addContactUs);
 
