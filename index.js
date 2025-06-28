@@ -9,7 +9,6 @@ import multer from "multer";
 import routes from "./Route/mainRoute.js";
 import swaggerUi from "swagger-ui-express";
 import { readFileSync } from "fs";
-import { createPayment } from "./Util/phonePe.js";
 
 // Load Swagger
 const swaggerFile = JSON.parse(
@@ -22,7 +21,6 @@ const server = createServer(app);
 (async () => {
   // Connect to database
   await connectDB(process.env.MONGO_URI);
-  // await createPayment();
   // await addUserSlug();
   // await addBrevoEmail();
 })();

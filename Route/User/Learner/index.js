@@ -8,7 +8,10 @@ import service from "./services.js";
 // Middleware
 import { verifyUserJWT } from "../../../MiddleWare/verifyJWTToken.js";
 import { failureResponse } from "../../../MiddleWare/responseMiddleware.js";
-import { createCourseOrder } from "../../../Controller/User/Service/Course/payment.controller.js";
+import {
+  createCourseOrderByRazorpay,
+  createCourseOrderByPhonepe,
+} from "../../../Controller/User/Service/Course/payment.controller.js";
 
 // Authantication
 router.use(verifyUserJWT);
@@ -22,7 +25,8 @@ router.use((req, res, next) => {
 });
 
 // Course
-router.post("/createCourseOrder", createCourseOrder);
+router.post("/createCourseOrder-ra", createCourseOrderByRazorpay);
+router.post("/createCourseOrder-ph", createCourseOrderByPhonepe);
 
 router.use("/profile", profile);
 router.use("/inst", instructor);

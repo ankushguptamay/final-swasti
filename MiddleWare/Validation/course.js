@@ -11,7 +11,10 @@ const validateCourseCoupon = (data) => {
 
 const courseOrderValidation = (data) => {
   const schema = joi.object().keys({
-    courseName: joi.string().required(),
+    courseName: joi
+      .string()
+      .valid("Yoga Volunteer Course", "Obesity Management")
+      .required(),
     couponName: joi.string().optional(),
     amount: joi.number().required(),
     startDate: joi.string().required(),

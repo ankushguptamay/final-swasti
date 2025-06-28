@@ -16,7 +16,7 @@ const clientSecret = PHONEPE_CLIENT_SECRET;
 const clientVersion = PHONEPE_CLIENT_VERSION;
 const env = Env.PRODUCTION; //change to Env.PRODUCTION when you go live
 
-const APP_BE_URL = "https://shriramtechno.com/"; // our application
+const APP_BE_URL = "http://localhost:5000"; // our application
 
 const client = StandardCheckoutClient.getInstance(
   clientId,
@@ -25,23 +25,22 @@ const client = StandardCheckoutClient.getInstance(
   env
 );
 
-async function createPayment() {
-  try {
-    const merchantOrderId = `ORDER_${Date.now()}`;
-    const amount = 100;
-    const redirectUrl = `${APP_BE_URL}/payment/status/${merchantOrderId}`;
+async function createPhonepePayment(amount, receipt) {
+  const redirectUrl = `${APP_BE_URL}/api/auth/pub/verifyCoursePayment-ph/${receipt}`;
 
-    const request = StandardCheckoutPayRequest.builder()
-      .merchantOrderId(merchantOrderId)
-      .amount(amount)
-      .redirectUrl(redirectUrl)
-      .build();
+  const request = StandardCheckoutPayRequest.builder()
+    .merchantOrderId(receipt)
+    .amount(amount)
+    .redirectUrl(redirectUrl)
+    .build();
 
-    const response = await client.pay(request);
-    console.log(response);
-  } catch (err) {
-    console.error(err);
-  }
+  const response = await client.pay(request);
+  return response;
 }
 
-export { createPayment };
+async function verifyPhonepePayment(merchantOrderId) {
+  const response = await client.getOrderStatus(merchantOrderId);
+  return response;
+}
+
+export { createPhonepePayment, verifyPhonepePayment };

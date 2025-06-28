@@ -9,12 +9,23 @@ const schema = new Schema(
     learner: { type: Types.ObjectId, ref: "User", required: true },
     courseName: { type: String },
     couponName: { type: String },
-    amount: { type: Number, required: true }, // Total amount
+    amount: { type: Number, required: true }, // Total amount in rupee
     stratDate: { type: Date },
     numberOfBooking: { type: Number, default: 1 }, // Booking for how many pepole like as learner can book for many people
-    razorpayOrderId: { type: String, unique: true },
-    razorpayPaymentId: { type: String },
-    razorpayRefundId: { type: String },
+    paymentMethod: {
+      type: String,
+      enum: ["razorpay", "phonepe"],
+      required: true,
+    },
+    razorpayDetails: {
+      razorpayOrderId: { type: String },
+      razorpayPaymentId: { type: String },
+    },
+    phonepeDetails: {
+      transactionId: String, // PhonePe transaction ID
+      orderId: String, // order ID from PhonePe
+      response: mongoose.Schema.Types.Mixed, // raw PhonePe response if needed
+    },
     status: {
       type: String,
       enum: ["pending", "completed", "cancelled", "refunded", "failed"],

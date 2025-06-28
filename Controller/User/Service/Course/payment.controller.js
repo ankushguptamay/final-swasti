@@ -14,12 +14,26 @@ import {
 } from "../../../../MiddleWare/Validation/course.js";
 import { CoursePayment } from "../../../../Model/User/Services/Course/coursePaymentModel.js";
 import { generateReceiptNumber } from "../../../../Helper/generateOTP.js";
+import {
+  createPhonepePayment,
+  verifyPhonepePayment,
+} from "../../../../Util/phonePe.js";
+import { response } from "express";
 
 const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
 });
+
+function generateAcronym(phrase) {
+  return phrase
+    .split(" ") // Split into words
+    .map((word) => word[0]) // Take first letter of each word
+    .join("") // Join them
+    .toLowerCase(); // Optional: convert to lowercase
+}
+
 const applyCourseCoupon = async (req, res) => {
   try {
     // Validate body
@@ -42,14 +56,16 @@ const applyCourseCoupon = async (req, res) => {
   }
 };
 
-const createCourseOrder = async (req, res) => {
+const createCourseOrderByRazorpay = async (req, res) => {
   try {
     // Validate body
     const { error } = courseOrderValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseName, currency, startDate, couponName, amount } = req.body;
     const userId = req.user._id;
-    const receipt = await generateReceiptNumber("ytc");
+    // Receipt
+    const prefix = `${generateAcronym(courseName)}-ra`;
+    const receipt = await generateReceiptNumber(prefix);
     // initiate payment
     const order = await razorpayInstance.orders.create({
       amount,
@@ -61,8 +77,9 @@ const createCourseOrder = async (req, res) => {
       couponName,
       courseName,
       startDate: new Date(startDate),
+      paymentMethod: "razorpay",
       amount: parseFloat(amount) / 100,
-      razorpayOrderId: order.id,
+      razorpayDetails: { razorpayOrderId: order.id },
       receipt,
     });
     return successResponse(res, 201, `Order craeted successfully!`, {
@@ -76,7 +93,7 @@ const createCourseOrder = async (req, res) => {
   }
 };
 
-const verifyCoursePayment = async (req, res) => {
+const verifyCoursePaymentByRazorpay = async (req, res) => {
   try {
     const orderId = req.body.razorpay_order_id;
     const paymentId = req.body.razorpay_payment_id;
@@ -90,7 +107,7 @@ const verifyCoursePayment = async (req, res) => {
 
     if (razorpay_signature === generated_signature) {
       const order = await CoursePayment.findOne({
-        razorpayOrderId: orderId,
+        "razorpayDetails.razorpayOrderId": orderId,
       }).lean();
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
@@ -102,7 +119,10 @@ const verifyCoursePayment = async (req, res) => {
           {
             $set: {
               status: "completed",
-              razorpayPaymentId: paymentId,
+              razorpayDetails: {
+                razorpayPaymentId: paymentId,
+                razorpayOrderId: orderId,
+              },
               verify: true,
             },
           }
@@ -118,4 +138,80 @@ const verifyCoursePayment = async (req, res) => {
   }
 };
 
-export { applyCourseCoupon, createCourseOrder, verifyCoursePayment };
+const createCourseOrderByPhonepe = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = courseOrderValidation(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const { courseName, currency, startDate, couponName, amount } = req.body;
+    const userId = req.user._id;
+    // Receipt
+    const prefix = `${generateAcronym(courseName)}-ph`;
+    const receipt = await generateReceiptNumber(prefix);
+    // initiate payment
+    const order = await createPhonepePayment(amount, receipt);
+    await CoursePayment.create({
+      learner: userId,
+      couponName,
+      courseName,
+      startDate: new Date(startDate),
+      paymentMethod: "phonepe",
+      amount: parseFloat(amount) / 100,
+      phonepeDetails: { orderId: order.orderId },
+      receipt,
+    });
+    return res.redirect(order.redirectUrl);
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
+const verifyCoursePaymentByPhonepe = async (req, res) => {
+  try {
+    const receipt = req.params.receipt;
+    // Verify
+    const response = await verifyPhonepePayment(receipt);
+    if (response.state.toLowerCase() === "completed") {
+      const order = await CoursePayment.findOne({
+        "phonepeDetails.orderId": response.orderId,
+      }).lean();
+      if (!order) {
+        return failureResponse(res, 400, "Order does not exist!");
+      }
+      if (!order.verify && order.status === "pending") {
+        // Update Purchase
+        await CoursePayment.updateOne(
+          { _id: order._id },
+          {
+            $set: {
+              status: "completed",
+              phonepeDetails: {
+                transactionId: response.paymentDetails.transactionId,
+                orderId: response.orderId,
+              },
+              verify: true,
+            },
+          }
+        );
+      }
+      return res.redirect(302, "https://course.swastibharat.com/thank-you/");
+    } else {
+      // Update Purchase
+      await CoursePayment.updateOne(
+        { _id: order._id },
+        { $set: { status: "failed" } }
+      );
+      return failureResponse(res, 400, "Payment failed. Please try again.");
+    }
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
+export {
+  applyCourseCoupon,
+  createCourseOrderByRazorpay,
+  verifyCoursePaymentByRazorpay,
+  createCourseOrderByPhonepe,
+  verifyCoursePaymentByPhonepe,
+};
