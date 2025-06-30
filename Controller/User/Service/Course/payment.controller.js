@@ -160,23 +160,18 @@ const createCourseOrderByPhonepe = async (req, res) => {
       phonepeDetails: { orderId: order.orderId },
       receipt,
     });
-    console.log(order.redirectUrl);
     return res.redirect(order.redirectUrl);
   } catch (err) {
-    console.log(err.message)
     return failureResponse(res);
   }
 };
 
 const verifyCoursePaymentByPhonepe = async (req, res) => {
   try {
-    console.log("hereAPI")
     const receipt = req.params.receipt;
     // Verify
     const response = await verifyPhonepePayment(receipt);
-     console.log(response)
     if (response.state.toLowerCase() === "completed") {
-       console.log("hereAPI1")
       const order = await CoursePayment.findOne({
         "phonepeDetails.orderId": response.orderId,
       }).lean();
@@ -191,8 +186,9 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
             $set: {
               status: "completed",
               phonepeDetails: {
-                transactionId: response.paymentDetails.transactionId,
+                transactionId: response.paymentDetails[0].transactionId,
                 orderId: response.orderId,
+                response: response.paymentDetails[0],
               },
               verify: true,
             },
@@ -209,7 +205,6 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-      console.log(err.message)
     return failureResponse(res);
   }
 };
