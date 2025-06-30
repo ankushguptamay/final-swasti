@@ -169,10 +169,13 @@ const createCourseOrderByPhonepe = async (req, res) => {
 
 const verifyCoursePaymentByPhonepe = async (req, res) => {
   try {
+    console.log("hereAPI")
     const receipt = req.params.receipt;
     // Verify
     const response = await verifyPhonepePayment(receipt);
+     console.log(response)
     if (response.state.toLowerCase() === "completed") {
+       console.log("hereAPI1")
       const order = await CoursePayment.findOne({
         "phonepeDetails.orderId": response.orderId,
       }).lean();
