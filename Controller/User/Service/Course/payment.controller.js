@@ -162,6 +162,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
     });
     return res.redirect(order.redirectUrl);
   } catch (err) {
+    console.log(err.message)
     return failureResponse(res);
   }
 };
@@ -204,6 +205,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
+      console.log(err.message)
     return failureResponse(res);
   }
 };
