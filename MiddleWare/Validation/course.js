@@ -23,4 +23,17 @@ const courseOrderValidation = (data) => {
   return schema.validate(data);
 };
 
-export { validateCourseCoupon, courseOrderValidation };
+const verifyCoursePaymentByRazorpayValidation = (data) => {
+  const schema = joi.object().keys({
+    razorpay_payment_id: joi.string().required(),
+    razorpay_order_id: joi.string().required(),
+    razorpay_signature: joi.number().required(),
+  });
+  return schema.validate(data);
+};
+
+export {
+  validateCourseCoupon,
+  courseOrderValidation,
+  verifyCoursePaymentByRazorpayValidation,
+};

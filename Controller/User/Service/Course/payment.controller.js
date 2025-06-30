@@ -11,6 +11,7 @@ import {
 import {
   courseOrderValidation,
   validateCourseCoupon,
+  verifyCoursePaymentByRazorpayValidation,
 } from "../../../../MiddleWare/Validation/course.js";
 import { CoursePayment } from "../../../../Model/User/Services/Course/coursePaymentModel.js";
 import { generateReceiptNumber } from "../../../../Helper/generateOTP.js";
@@ -95,7 +96,9 @@ const createCourseOrderByRazorpay = async (req, res) => {
 
 const verifyCoursePaymentByRazorpay = async (req, res) => {
   try {
-    console.log(req.body);
+    // Validate body
+    const { error } = verifyCoursePaymentByRazorpayValidation(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
     const orderId = req.body.razorpay_order_id;
     const paymentId = req.body.razorpay_payment_id;
     const razorpay_signature = req.body.razorpay_signature;
@@ -163,7 +166,9 @@ const createCourseOrderByPhonepe = async (req, res) => {
       receipt,
     });
     console.log(order.redirectUrl);
-    return res.status(200).json({ success: true, redirectUrl: order.redirectUrl });
+    return res
+      .status(200)
+      .json({ success: true, redirectUrl: order.redirectUrl });
     return res.redirect(order.redirectUrl);
   } catch (err) {
     console.log(err.message);
@@ -210,7 +215,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-      console.log(err.message);
+    console.log(err.message);
     return failureResponse(res);
   }
 };
