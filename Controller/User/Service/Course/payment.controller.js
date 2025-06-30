@@ -160,6 +160,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
       phonepeDetails: { orderId: order.orderId },
       receipt,
     });
+    console.log(order.redirectUrl);
     return res.redirect(order.redirectUrl);
   } catch (err) {
     console.log(err.message)
