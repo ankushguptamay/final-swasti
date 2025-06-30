@@ -95,6 +95,7 @@ const createCourseOrderByRazorpay = async (req, res) => {
 
 const verifyCoursePaymentByRazorpay = async (req, res) => {
   try {
+    console.log(req.body);
     const orderId = req.body.razorpay_order_id;
     const paymentId = req.body.razorpay_payment_id;
     const razorpay_signature = req.body.razorpay_signature;
@@ -109,6 +110,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       const order = await CoursePayment.findOne({
         "razorpayDetails.razorpayOrderId": orderId,
       }).lean();
+      console.log(order);
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
       }
@@ -161,6 +163,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
       receipt,
     });
     console.log(order.redirectUrl);
+    return res.status(200).json({ success: true, redirectUrl: order.redirectUrl });
     return res.redirect(order.redirectUrl);
   } catch (err) {
     console.log(err.message);
