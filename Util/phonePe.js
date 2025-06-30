@@ -16,7 +16,7 @@ const clientSecret = PHONEPE_CLIENT_SECRET;
 const clientVersion = PHONEPE_CLIENT_VERSION;
 const env = Env.PRODUCTION; //change to Env.PRODUCTION when you go live
 
-const APP_BE_URL = "http://localhost:5000"; // our application
+const APP_BE_URL = "https://yogawithisha.com"; // our application
 
 const client = StandardCheckoutClient.getInstance(
   clientId,
