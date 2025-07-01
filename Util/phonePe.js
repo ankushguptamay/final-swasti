@@ -27,7 +27,6 @@ const client = StandardCheckoutClient.getInstance(
 
 async function createPhonepePayment(amount, receipt) {
   const redirectUrl = `${APP_BE_URL}/api/auth/pub/verifyCoursePayment-ph/${receipt}`;
-  console.log(redirectUrl);
   const request = StandardCheckoutPayRequest.builder()
     .merchantOrderId(receipt)
     .amount(amount)

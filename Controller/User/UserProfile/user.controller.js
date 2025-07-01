@@ -1155,7 +1155,7 @@ const instructorDetailsForLearner = async (req, res) => {
     }
     const [similarProfile, yogaClasses] = await Promise.all([
       User.find(similarQuery)
-        .select("_id name profilePic bio averageRating")
+        .select("_id name profilePic bio slug averageRating")
         .sort({ averageRating: -1, name: 1 })
         .limit(20)
         .populate("specialization", "specialization")
