@@ -21,8 +21,12 @@ import {
 } from "../../../../Util/phonePe.js";
 import { response } from "express";
 
-const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID, COURSE_THANK_YOU_URL } =
-  process.env;
+const {
+  RAZORPAY_KEY_ID,
+  RAZORPAY_SECRET_ID,
+  COURSE_THANK_YOU_URL,
+  COURSE_FAIL_YOU_URL,
+} = process.env;
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -202,6 +206,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
           }
         );
       }
+      return res.redirect(COURSE_THANK_YOU_URL);
       return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
       // Update Purchase
@@ -209,6 +214,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         { _id: order._id },
         { $set: { status: "failed" } }
       );
+      return res.redirect(COURSE_FAIL_YOU_URL);
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
