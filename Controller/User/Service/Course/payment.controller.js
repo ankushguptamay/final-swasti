@@ -21,7 +21,8 @@ import {
 } from "../../../../Util/phonePe.js";
 import { response } from "express";
 
-const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
+const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID, COURSE_THANK_YOU_URL } =
+  process.env;
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -133,8 +134,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
           }
         );
       }
-      // return successResponse(res, 201, "Payment successful.");
-      return res.redirect(302, "https://course.swastibharat.com/thank-you/");
+      return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
@@ -166,10 +166,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
       phonepeDetails: { orderId: order.orderId },
       receipt,
     });
-    return res
-      .status(200)
-      .json({ success: true, redirectUrl: order.redirectUrl });
-    return res.redirect(order.redirectUrl);
+    return successResponse(res, 200, { redirectUrl: order.redirectUrl });
   } catch (err) {
     console.log(err.message);
     return failureResponse(res);
@@ -205,7 +202,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
           }
         );
       }
-      return res.redirect(302, "https://course.swastibharat.com/thank-you/");
+      return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
       // Update Purchase
       await CoursePayment.updateOne(
