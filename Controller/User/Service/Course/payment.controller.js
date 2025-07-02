@@ -190,6 +190,8 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         return failureResponse(res, 400, "Order does not exist!");
       }
       if (!order.verify && order.status === "pending") {
+        const paymentDetails = response.paymentDetails[0];
+        delete paymentDetails.splitInstruments;
         // Update Purchase
         await CoursePayment.updateOne(
           { _id: order._id },
@@ -199,7 +201,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
               phonepeDetails: {
                 transactionId: response.paymentDetails[0].transactionId,
                 orderId: response.orderId,
-                response: response.paymentDetails[0],
+                response: paymentDetails,
               },
               verify: true,
             },
@@ -207,7 +209,6 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         );
       }
       return res.redirect(COURSE_THANK_YOU_URL);
-      return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
       // Update Purchase
       await CoursePayment.updateOne(

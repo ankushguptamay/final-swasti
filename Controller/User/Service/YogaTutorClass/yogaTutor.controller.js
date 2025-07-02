@@ -713,9 +713,7 @@ const classTimesForUser = async (req, res) => {
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);
-    const totalPages = totalClasses[0]?.total
-      ? Math.ceil(totalClasses[0].total / resultPerPage)
-      : 0;
+    const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
     const transformData = await Promise.all(
       classes.map(async (times) => {
         const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
