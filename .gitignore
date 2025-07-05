@@ -2,3 +2,4 @@
 .env
 service_account.json
 category.js
+swagger-output.json

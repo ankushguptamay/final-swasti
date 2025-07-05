@@ -22,6 +22,10 @@ import {
 } from "../../Controller/User/Service/Course/payment.controller.js";
 import { recordForHero } from "../../Controller/User/dashboard.js";
 import { createSubscribedUser } from "../../Controller/User/UserProfile/subscribedUser.controller.js";
+import {
+  getBlogBySlug,
+  getBlogsForUser,
+} from "../../Controller/Admin/blog.controller.js";
 
 router.get("/instructor", searchInstructor);
 router.get("/landing-instructor", instructorForLandingPage);
@@ -48,5 +52,9 @@ router.post("/applyCourseCoupon", applyCourseCoupon);
 router.get("/heroRecord", recordForHero);
 
 router.post("/subscrib", createSubscribedUser);
+
+// Blog
+router.get("/blog", getBlogsForUser);
+router.get("/blog/:slug", getBlogBySlug);
 
 export default router;

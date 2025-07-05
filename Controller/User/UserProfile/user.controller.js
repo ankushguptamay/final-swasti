@@ -307,7 +307,6 @@ const register = async (req, res) => {
       data
     );
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -477,7 +476,6 @@ const verifyMobileOTP = async (req, res) => {
       user,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -683,7 +681,7 @@ const addUpdateProfilePic = async (req, res) => {
           instructor: req.user._id,
         });
       } else {
-        deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
+        await deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
       }
     }
     // Update
@@ -705,7 +703,7 @@ const deleteProfilePic = async (req, res) => {
           instructor: req.user._id,
         });
       } else {
-        deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
+        await deleteFileToBunny(bunnyFolderName, req.user.profilePic.fileName);
       }
     }
     // Change

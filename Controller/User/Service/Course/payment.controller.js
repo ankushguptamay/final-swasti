@@ -118,7 +118,6 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       const order = await CoursePayment.findOne({
         "razorpayDetails.razorpayOrderId": orderId,
       }).lean();
-      console.log(order);
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
       }
@@ -143,7 +142,6 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -172,7 +170,6 @@ const createCourseOrderByPhonepe = async (req, res) => {
     });
     return successResponse(res, 200, { redirectUrl: order.redirectUrl });
   } catch (err) {
-    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -219,7 +216,6 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
-    console.log(err.message);
     return failureResponse(res);
   }
 };

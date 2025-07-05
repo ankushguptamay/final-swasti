@@ -37,10 +37,46 @@ const validateBanner = (data) => {
   return schema.validate(data);
 };
 
+const validateBlogSubCategory = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().required(),
+    parentCategoryId: joi.string().required(),
+    description: joi.string().optional(),
+  });
+  return schema.validate(data);
+};
+
+const validateBlogCategory = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().required(),
+    description: joi.string().optional(),
+  });
+  return schema.validate(data);
+};
+
+const validateUpdateBlogSubCategory = (data) => {
+  const schema = joi.object().keys({
+    description: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
+const validateBlogTag = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().required(),
+    description: joi.string().optional(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateSpecialization,
   validateYogaCategory,
   validateYTRule,
   validateYTRequirement,
   validateBanner,
+  validateBlogSubCategory,
+  validateBlogCategory,
+  validateUpdateBlogSubCategory,
+  validateBlogTag,
 };

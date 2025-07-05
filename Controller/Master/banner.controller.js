@@ -105,7 +105,7 @@ const deleteBanner = async (req, res) => {
     const banner = await Banner.findById(req.params.id);
     if (!banner)
       return failureResponse(res, 400, "This banner is not present.", null);
-    deleteFileToBunny(bunnyFolderName, banner.bannerImage.fileName);
+    await deleteFileToBunny(bunnyFolderName, banner.bannerImage.fileName);
     // Delete
     await banner.deleteOne();
     // Send final success response

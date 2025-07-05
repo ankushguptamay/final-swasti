@@ -164,7 +164,6 @@ const getYogaCategoryWithImage = async (req, res) => {
       const someCat = await YogaCategory.find(queryForSearch) // Search any data present
         .select("_id yogaCategory image")
         .lean();
-      console.log(someCat.length);
       if (someCat.length > 2) {
         if (someCat.length >= 5) {
           yogaCategory = someCat.slice(0, 5);
@@ -227,7 +226,6 @@ const getYogaCategoryWithImage = async (req, res) => {
     data.data = yogaCategory;
     return successResponse(res, 200, `Successfully!`, data);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -240,7 +238,7 @@ const updateYogaCategoryImage = async (req, res) => {
     const id = req.params.id;
     const yogaCategories = await YogaCategory.findById(id).lean();
     if (!yogaCategories) {
-      deleteSingleFile(req.file.path); // Delete file from server
+      await deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(
         res,
         400,
@@ -259,7 +257,7 @@ const updateYogaCategoryImage = async (req, res) => {
     };
     // Delete file from bunny if exist
     if (yogaCategories.image && yogaCategories.image.fileName) {
-      deleteFileToBunny(bunnyFolderName, yogaCategories.image.fileName);
+      await deleteFileToBunny(bunnyFolderName, yogaCategories.image.fileName);
     }
     // Update record
     await YogaCategory.updateOne({ _id: id }, { $set: { image } });
@@ -287,7 +285,7 @@ const deleteYogaCategory = async (req, res) => {
     );
     // Delete image
     if (yogaCategory.image && yogaCategory.image.fileName) {
-      deleteFileToBunny(bunnyFolderName, yogaCategory.image.fileName);
+      await deleteFileToBunny(bunnyFolderName, yogaCategory.image.fileName);
     }
     // delete
     await YogaCategory.deleteOne({ _id: req.params.id });
