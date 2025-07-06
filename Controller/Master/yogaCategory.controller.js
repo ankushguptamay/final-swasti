@@ -56,7 +56,9 @@ const addYogaCategory = async (req, res) => {
     }
     const yogaCategory = req.body.yogaCategory;
     // Find in data
-    const category = await YogaCategory.findOne({ yogaCategory }).lean();
+    const category = await YogaCategory.findOne({
+      yogaCategory: { $regex: new RegExp(`^${yogaCategory.trim()}$`, "i") },
+    }).lean();
     if (category) {
       deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(res, 400, "Category already exist!");

@@ -25,7 +25,9 @@ const addBlogCategory = async (req, res) => {
     }
     const { description, name } = req.body;
     // Find in data
-    const category = await BlogCategory.findOne({ name }).lean();
+    const category = await BlogCategory.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+    }).lean();
     if (category) {
       if (req.file) deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(res, 400, "This blog category already exist!");
@@ -247,7 +249,9 @@ const updateBlogCategory = async (req, res) => {
     let slug = category.slug;
     // Check is new category present
     if (category.name !== name) {
-      const category = await BlogCategory.findOne({ name })
+      const category = await BlogCategory.findOne({
+        name: { $regex: new RegExp(`^${name}$`, "i") },
+      })
         .select("_id")
         .lean();
       if (category) {

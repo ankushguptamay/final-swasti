@@ -28,7 +28,7 @@ const addBlogSubCategory = async (req, res) => {
     const { description, parentCategoryId, name } = req.body;
     // Find in data
     const subCategory = await BlogSubCategory.findOne({
-      name,
+      name: { $regex: new RegExp(`^${name}$`, "i") },
       parentCategory: parentCategoryId,
     }).lean();
     if (subCategory) {

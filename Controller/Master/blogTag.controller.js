@@ -21,7 +21,7 @@ const addBlogTag = async (req, res) => {
     const { description, name } = req.body;
     // Find in data
     const tag = await BlogTag.findOne({
-      name: new RegExp(name.trim(), "i"),
+      name: { $regex: new RegExp(`^${name}$`, "i") },
     }).lean();
     if (tag) {
       return failureResponse(res, 400, "This blog tag already exist!");
@@ -119,7 +119,11 @@ const updateBlogTag = async (req, res) => {
     let slug = tag.slug;
     // Check is new tag present
     if (tag.name !== name) {
-      const isTag = await BlogTag.findOne({ name }).select("_id").lean();
+      const isTag = await BlogTag.findOne({
+        name: { $regex: new RegExp(`^${name}$`, "i") },
+      })
+        .select("_id")
+        .lean();
       if (isTag) {
         return failureResponse(
           res,

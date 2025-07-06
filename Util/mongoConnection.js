@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { EmailCredential } from "../Model/User/emailCredentials.js";
 import { User } from "../Model/User/Profile/userModel.js";
 import slugify from "slugify";
+import { YogaCategory } from "../Model/Master/yogaCategoryModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -24,35 +25,12 @@ async function addBrevoEmail() {
   await EmailCredential.create({ email: "connect@swastibharat.com" });
 }
 
-function numberToAlpha(n) {
-  const chars = "abcdefghijklmnopqrstuvwxyz";
-  let result = "";
-  do {
-    result = chars[n % 26] + result;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return result;
-}
+async function addCategorySlug() {
+  const categories = await YogaCategory.find({ slug: { $exists: false } });
 
-async function addUserSlug() {
-  const users = await User.find({ slug: { $exists: false } });
-
-  for (const user of users) {
-    const baseSlug = slugify(user.name, { lower: true, strict: true });
-
-    const regex = new RegExp(`^${baseSlug}-[a-z]+$`);
-    const existingSlugs = await User.find({ slug: regex }).select("slug");
-
-    const suffixes = existingSlugs.map((u) =>
-      u.slug.replace(`${baseSlug}-`, "")
-    );
-    let index = 0;
-    while (suffixes.includes(numberToAlpha(index))) {
-      index++;
-    }
-
-    const suffix = numberToAlpha(index);
-    user.slug = `${baseSlug}-${suffix}`;
+  for (const user of categories) {
+    const baseSlug = slugify(user.yogaCategory, { lower: true, strict: true });
+    user.slug = baseSlug;
     await user.save();
     console.log(`Generated slug for ${user.name}: ${user.slug}`);
   }
@@ -61,4 +39,4 @@ async function addUserSlug() {
   process.exit();
 }
 
-export { connectDB, addBrevoEmail, addUserSlug };
+export { connectDB, addBrevoEmail, addCategorySlug };
