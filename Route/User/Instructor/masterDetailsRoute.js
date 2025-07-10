@@ -18,7 +18,7 @@ router.get("/specialization/:id", specializationDetails);
 
 // yoga category
 router.get("/y-c", getYogaCategory);
-router.get("/y-c/:id", yogaCategoryDetails);
+router.get("/y-c/:slug", yogaCategoryDetails);
 
 // YTRules
 router.get("/yTRule", getYTRule);

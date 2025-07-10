@@ -12,6 +12,7 @@ import { getSpecialization } from "../../Controller/Master/specialization.contro
 import {
   getYogaCategory,
   getYogaCategoryWithImage,
+  yogaCategoryDetailsForUser,
 } from "../../Controller/Master/yogaCategory.controller.js";
 import { verifyPayment } from "../../Controller/User/Service/serviceOrder.controller.js";
 import { getBanner } from "../../Controller/Master/banner.controller.js";
@@ -39,6 +40,7 @@ router.get("/yt-class", classTimesForUser);
 router.get("/specialization", getSpecialization);
 
 router.get("/y-c", getYogaCategory);
+router.get("/y-c/:slug", yogaCategoryDetailsForUser);
 router.get("/y-c-i", getYogaCategoryWithImage);
 
 router.post("/verifyPayment", verifyPayment);

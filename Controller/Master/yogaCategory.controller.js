@@ -123,7 +123,7 @@ const getYogaCategory = async (req, res) => {
   }
 };
 
-const yogaCategoryDetails = async (req, res) => {
+const yogaCategoryDetailsForUser = async (req, res) => {
   try {
     const yogaCategory = await YogaCategory.findOne({ slug: req.params.slug })
       .select("yogaCategory description image")
@@ -221,6 +221,30 @@ const yogaCategoryDetails = async (req, res) => {
     });
   } catch (err) {
     console.log(err.message);
+    failureResponse(res);
+  }
+};
+
+const yogaCategoryDetails = async (req, res) => {
+  try {
+    const yogaCategory = await YogaCategory.findOne({ slug: req.params.slug })
+      .select("yogaCategory description image")
+      .lean();
+    if (!yogaCategory) {
+      return failureResponse(
+        res,
+        400,
+        `This YogaCategory is not present!`,
+        null
+      );
+    }
+    yogaCategory.image = yogaCategory.image
+      ? yogaCategory.image.url || null
+      : null;
+    return successResponse(res, 200, `Successfully!`, {
+      yogaCategory,
+    });
+  } catch (err) {
     failureResponse(res);
   }
 };
@@ -441,4 +465,5 @@ export {
   deleteYogaCategory,
   getYogaCategoryWithImage,
   updateYogaCategory,
+  yogaCategoryDetailsForUser,
 };
