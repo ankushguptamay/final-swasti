@@ -19,6 +19,7 @@ import {
   applyCourseCoupon,
   verifyCoursePaymentByRazorpay,
   verifyCoursePaymentByPhonepe,
+  createCourseOrderByPhonepeAndRegisterUser,
 } from "../../Controller/User/Service/Course/payment.controller.js";
 import { recordForHero } from "../../Controller/User/dashboard.js";
 import { createSubscribedUser } from "../../Controller/User/UserProfile/subscribedUser.controller.js";
@@ -45,6 +46,10 @@ router.post("/verifyPayment", verifyPayment);
 router.get("/banner", getBanner);
 
 // Course Route
+router.post(
+  "/createCourseOrder-newUser-ph",
+  createCourseOrderByPhonepeAndRegisterUser
+);
 router.post("/verifyCoursePayment-ra", verifyCoursePaymentByRazorpay);
 router.get("/verifyCoursePayment-ph/:receipt", verifyCoursePaymentByPhonepe);
 router.post("/applyCourseCoupon", applyCourseCoupon);

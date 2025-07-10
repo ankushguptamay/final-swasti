@@ -9,6 +9,7 @@ import {
   successResponse,
 } from "../../../../MiddleWare/responseMiddleware.js";
 import {
+  courseOrderForNewUserValidation,
   courseOrderValidation,
   validateCourseCoupon,
   verifyCoursePaymentByRazorpayValidation,
@@ -19,7 +20,10 @@ import {
   createPhonepePayment,
   verifyPhonepePayment,
 } from "../../../../Util/phonePe.js";
-import { response } from "express";
+import { User } from "../../../../Model/User/Profile/userModel.js";
+import { Wallet } from "../../../../Model/User/Profile/walletModel.js";
+import { capitalizeFirstLetter } from "../../../../Helper/formatChange.js";
+import { generateUserCode } from "../../UserProfile/user.controller.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -146,6 +150,88 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
   }
 };
 
+const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = courseOrderForNewUserValidation(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const {
+      courseName,
+      currency,
+      startDate,
+      couponName,
+      amount,
+      email,
+      mobileNumber,
+      referralCode,
+      term_condition_accepted,
+    } = req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
+    // User Registration Process
+    // Is user already present
+    let user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
+    if (user) {
+      if (!user.role) {
+        await User.updateOne({ _id: user._id }, { $set: { role: "learner" } });
+      } else if (user.role === "instructor") {
+        return failureResponse(
+          res,
+          400,
+          "You are already register as instructor.",
+          null
+        );
+      }
+    } else {
+      // Capital First Letter
+      const name = capitalizeFirstLetter(req.body.name);
+      // User Time Zone
+      const timezone = req.headers["time-zone"] || req.headers["x-timezone"];
+      // Create in database
+      const chakraBreakNumber = Math.floor(Math.random() * 7) + 1;
+      // generate User code
+      const userCode = await generateUserCode("SWL");
+      // Store data
+      user = await User.create({
+        userTimeZone: timezone,
+        name,
+        email,
+        mobileNumber,
+        chakraBreakNumber,
+        referralCode,
+        userCode,
+        role: "learner",
+        term_condition_accepted,
+      });
+      // Create Wallet
+      await Wallet.create({ userId: user._id });
+    }
+    // Receipt
+    const prefix = `${generateAcronym(courseName)}-ph`;
+    const receipt = await generateReceiptNumber(prefix);
+    // initiate payment
+    const order = await createPhonepePayment(amount, receipt);
+    await CoursePayment.create({
+      learner: user._id,
+      couponName,
+      courseName,
+      startDate: new Date(startDate),
+      paymentMethod: "phonepe",
+      amount: parseFloat(amount) / 100,
+      phonepeDetails: { orderId: order.orderId },
+      receipt,
+    });
+    return successResponse(res, 200, { redirectUrl: order.redirectUrl });
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
 const createCourseOrderByPhonepe = async (req, res) => {
   try {
     // Validate body
@@ -226,4 +312,5 @@ export {
   verifyCoursePaymentByRazorpay,
   createCourseOrderByPhonepe,
   verifyCoursePaymentByPhonepe,
+  createCourseOrderByPhonepeAndRegisterUser,
 };

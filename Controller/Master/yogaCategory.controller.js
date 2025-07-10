@@ -110,7 +110,7 @@ const getYogaCategory = async (req, res) => {
         .sort({ yogaCategory: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select("_id yogaCategory")
+        .select("_id yogaCategory slug")
         .lean(),
       YogaCategory.countDocuments(query),
     ]);
@@ -128,7 +128,7 @@ const getYogaCategory = async (req, res) => {
 
 const yogaCategoryDetails = async (req, res) => {
   try {
-    const yogaCategory = await YogaCategory.findById(req.params.id)
+    const yogaCategory = await YogaCategory.findOne({ slug: req.params.slug })
       .select("yogaCategory description image")
       .lean();
     if (!yogaCategory) {
@@ -164,7 +164,7 @@ const getYogaCategoryWithImage = async (req, res) => {
     if (req.query.search) {
       const queryForSearch = await finalQuery(req.query.search); // Query for first search
       const someCat = await YogaCategory.find(queryForSearch) // Search any data present
-        .select("_id yogaCategory image")
+        .select("_id yogaCategory image slug")
         .lean();
       if (someCat.length > 2) {
         if (someCat.length >= 5) {

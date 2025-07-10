@@ -1522,4 +1522,5 @@ export {
   instructorForLandingPage,
   loginByEmail,
   verifyEmailOTP,
+  generateUserCode,
 };

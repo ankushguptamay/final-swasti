@@ -32,8 +32,32 @@ const verifyCoursePaymentByRazorpayValidation = (data) => {
   return schema.validate(data);
 };
 
+const courseOrderForNewUserValidation = (data) => {
+  const schema = joi.object().keys({
+    courseName: joi
+      .string()
+      .valid("Yoga Volunteer Course", "Obesity Management")
+      .required(),
+    couponName: joi.string().optional(),
+    amount: joi.number().required(),
+    startDate: joi.string().required(),
+    currency: joi.string().required(),
+    name: joi.string().min(3).max(30).required(),
+    email: joi.string().email().required().label("Email"),
+    mobileNumber: joi
+      .string()
+      .length(10)
+      .pattern(/^[0-9]+$/)
+      .required(),
+    referralCode: joi.string().optional(),
+    term_condition_accepted: joi.boolean().required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateCourseCoupon,
   courseOrderValidation,
   verifyCoursePaymentByRazorpayValidation,
+  courseOrderForNewUserValidation,
 };

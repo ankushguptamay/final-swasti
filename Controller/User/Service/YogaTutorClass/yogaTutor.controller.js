@@ -709,7 +709,7 @@ const classTimesForUser = async (req, res) => {
           "datesOfClasses",
           "_id date startDateTimeUTC endDateTimeUTC classStatus"
         )
-        .populate("yogaCategory", "yogaCategory description")
+        .populate("yogaCategory", "yogaCategory slug description")
         .lean(),
       YogaTutorClass.countDocuments(query),
     ]);
