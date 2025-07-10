@@ -160,7 +160,7 @@ const yogaCategoryDetailsForUser = async (req, res) => {
         {
           $gte: [
             { $divide: ["$price", "$numberOfClass"] },
-            parseInt(PER_CLASS_PRICE_LIMIT),
+            parseInt(process.env.PER_CLASS_PRICE_LIMIT),
           ],
         },
         { $lte: [{ $divide: ["$price", "$numberOfClass"] }, parseInt(100000)] },
@@ -284,7 +284,7 @@ const getYogaCategoryWithImage = async (req, res) => {
         const filterSearch = await removeSomeWord(req.query.search);
         const userEmbedding = await getEmbedding(filterSearch);
         const allCategory = await YogaCategory.find()
-          .select("_id yogaCategory image embedding")
+          .select("_id yogaCategory image slug embedding")
           .lean();
         const scoredCategories = allCategory.map((cat) => ({
           ...cat,
@@ -299,7 +299,7 @@ const getYogaCategoryWithImage = async (req, res) => {
           .sort({ yogaCategory: 1 })
           .skip(skip)
           .limit(resultPerPage)
-          .select("_id yogaCategory image")
+          .select("_id yogaCategory image slug")
           .lean(),
         YogaCategory.countDocuments(query),
       ]);
