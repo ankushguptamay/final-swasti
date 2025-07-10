@@ -84,7 +84,6 @@ const instructorSiteMap = async (req, res) => {
     const xmlString = await streamToPromise(
       Readable.from(links).pipe(stream)
     ).then((data) => data.toString());
-    console.log(xmlString);
     return res.send(xmlString);
   } catch (err) {
     failureResponse(res);
@@ -123,7 +122,6 @@ const classesSiteMap = async (req, res) => {
     ).then((data) => data.toString());
     return res.send(xmlString);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

@@ -1,10 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import {
-  compressImageFile,
-  deleteSingleFile,
-} from "../../Helper/fileHelper.js";
+import { deleteSingleFile } from "../../Helper/fileHelper.js";
 import {
   failureResponse,
   successResponse,
@@ -142,8 +139,88 @@ const yogaCategoryDetails = async (req, res) => {
     yogaCategory.image = yogaCategory.image
       ? yogaCategory.image.url || null
       : null;
-    return successResponse(res, 200, `Successfully!`, { yogaCategory });
+    // Find Classes
+    // Find Instructor Whose education, profilePic present
+    const instructorArray = await User.distinct("_id", {
+      role: "instructor",
+      $expr: { $gte: [{ $size: "$education" }, 1] },
+      "profilePic.url": { $exists: true, $ne: null, $ne: "" },
+    });
+    // Query
+    const date = new Date().toISOString().split("T")[0];
+    const query = {
+      instructor: { $in: instructorArray },
+      isDelete: false,
+      approvalByAdmin: "accepted",
+      classStartTimeInUTC: { $gte: new Date(date) },
+    };
+    query.$expr = {
+      $and: [
+        {
+          $gte: [
+            { $divide: ["$price", "$numberOfClass"] },
+            parseInt(PER_CLASS_PRICE_LIMIT),
+          ],
+        },
+        { $lte: [{ $divide: ["$price", "$numberOfClass"] }, parseInt(100000)] },
+      ],
+    };
+    query.yogaCategory = { $in: [yogaCategory._id] };
+    console.log("here1");
+    const classes = await YogaTutorClass.find(query)
+      .select(
+        "_id modeOfClass classType startDate endDate price time classStartTimeInUTC numberOfClass description packageType timeDurationInMin instructorTimeZone totalBookedSeat numberOfSeats isBooked"
+      )
+      .sort({ startDate: -1, endDate: -1 })
+      .populate(
+        "instructor",
+        "_id name profilePic bio averageRating slug gender experience_year"
+      )
+      .populate(
+        "datesOfClasses",
+        "_id date startDateTimeUTC endDateTimeUTC classStatus"
+      )
+      .populate("yogaCategory", "yogaCategory slug description")
+      .lean();
+    const instructor = [];
+    console.log("here2");
+    const transformData = await Promise.all(
+      classes.map(async (times) => {
+        const datesOfClasses = [];
+        for (let i = 0; i < times.datesOfClasses.length; i++) {
+          const day = await getDatesDay(
+            times.datesOfClasses[i].startDateTimeUTC
+          );
+          datesOfClasses.push({ ...times.datesOfClasses[i], day });
+        }
+        const alreadyExists = instructor.some(
+          (item) => item._id === times.instructor._id
+        );
+        if (!alreadyExists) {
+          instructor.push({
+            ...times.instructor,
+            profilePic: times.instructor.profilePic.url,
+          });
+        }
+        return {
+          ...times,
+          datesOfClasses,
+          instructor: {
+            averageRating: times.instructor.averageRating,
+            _id: times.instructor._id,
+            name: times.instructor.name,
+            profilePic: times.instructor.profilePic.url,
+          },
+        };
+      })
+    );
+    return successResponse(res, 200, `Successfully!`, {
+      yogaCategory,
+      classes: transformData,
+      instructor,
+    });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
