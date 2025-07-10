@@ -16,6 +16,7 @@ import { getEmbedding } from "../../Util/AIFunction.js";
 import cosineSimilarity from "cosine-similarity";
 import { compareArrays } from "../../Helper/formatChange.js";
 import { User } from "../../Model/User/Profile/userModel.js";
+import { getDatesDay } from "../../Util/timeZone.js";
 
 async function removeSomeWord(input) {
   const wordsToRemove = ["yoga", "for", "from", "to"];
