@@ -128,7 +128,7 @@ const getYogaCategory = async (req, res) => {
 const yogaCategoryDetailsForUser = async (req, res) => {
   try {
     const yogaCategory = await YogaCategory.findOne({ slug: req.params.slug })
-      .select("yogaCategory description image")
+      .select("yogaCategory description image slug")
       .lean();
     if (!yogaCategory) {
       return failureResponse(
@@ -168,7 +168,6 @@ const yogaCategoryDetailsForUser = async (req, res) => {
       ],
     };
     query.yogaCategory = { $in: [yogaCategory._id] };
-    console.log("here1");
     const classes = await YogaTutorClass.find(query)
       .select(
         "_id modeOfClass classType startDate endDate price time classStartTimeInUTC numberOfClass description packageType timeDurationInMin instructorTimeZone totalBookedSeat numberOfSeats isBooked"
@@ -185,7 +184,6 @@ const yogaCategoryDetailsForUser = async (req, res) => {
       .populate("yogaCategory", "yogaCategory slug description")
       .lean();
     const instructor = [];
-    console.log("here2");
     const transformData = await Promise.all(
       classes.map(async (times) => {
         const datesOfClasses = [];
@@ -222,7 +220,6 @@ const yogaCategoryDetailsForUser = async (req, res) => {
       instructor,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
