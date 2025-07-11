@@ -53,6 +53,15 @@ const createPayment = async (req, res) => {
           "This yoga tutor class is not present.",
           null
         );
+      // Prevent Booking self class
+      if (ytc.instructor.toString() == req.user._id.toString()) {
+        return failureResponse(
+          res,
+          400,
+          "You can not book your own class.",
+          null
+        );
+      }
       // Validate time
       const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
         `${ytc.startDate.toISOString().split("T")[0]}T${ytc.time}:00.000`,
