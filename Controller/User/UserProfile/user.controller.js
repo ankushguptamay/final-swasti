@@ -43,7 +43,6 @@ const {
   OTP_VALIDITY_IN_MILLISECONDS,
   TEST_NUMBER_1,
   TEST_NUMBER_2,
-  TEST_NUMBER_3,
   SHOW_BUNNY_FILE_HOSTNAME,
   SPRINT_AADHAR_JWT_TOKEN,
   SPRINT_AADHAR_AUTHORISED_KEY,
@@ -340,8 +339,7 @@ const loginByMobile = async (req, res) => {
     // Testing
     if (
       mobileNumber === TEST_NUMBER_1 || // Ankush
-      mobileNumber === TEST_NUMBER_2 || // Amit
-      mobileNumber === TEST_NUMBER_3 // Laxmi
+      mobileNumber === TEST_NUMBER_2 // Laxmi
     ) {
       return successResponse(
         res,
@@ -400,11 +398,7 @@ const verifyMobileOTP = async (req, res) => {
       return failureResponse(res, 401, `Invalid OTP!`, null);
     }
     // Testing Credentials
-    if (
-      mobileNumber === TEST_NUMBER_1 ||
-      mobileNumber === TEST_NUMBER_3 ||
-      mobileNumber === TEST_NUMBER_2
-    ) {
+    if (mobileNumber === TEST_NUMBER_1 || mobileNumber === TEST_NUMBER_2) {
       // Do Nothing
     } else {
       // is email otp expired?
