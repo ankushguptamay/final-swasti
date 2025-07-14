@@ -63,6 +63,7 @@ import {
   sendOTPToEmail,
 } from "../../../Util/sendEmail.js";
 import { OTPEMAIL } from "../../../Config/emailFormate.js";
+import { UserDeleteRequestPlayStore } from "../../../Model/User/Profile/usedDeleteRequestFromPlayStoreModel.js";
 const bunnyFolderName = process.env.INSTRUCTOR_PROFILE_FOLDER || "inst-doc";
 
 // Helper
@@ -330,7 +331,7 @@ const loginByMobile = async (req, res) => {
     if (referralCode) {
       data.referralCode = referralCode;
     }
-    const isUser = await User.findOne({ mobileNumber });
+    const isUser = await User.findOne({ mobileNumber, isDelete: false });
     if (!isUser) {
       return failureResponse(res, 401, "NOTPRESENT", data);
     }
@@ -1353,7 +1354,7 @@ const loginByEmail = async (req, res) => {
     if (referralCode) {
       data.referralCode = referralCode;
     }
-    const isUser = await User.findOne({ email });
+    const isUser = await User.findOne({ email, isDelete: false });
     if (!isUser) {
       return failureResponse(res, 401, "NOTPRESENT", data);
     }
@@ -1493,6 +1494,59 @@ const verifyEmailOTP = async (req, res) => {
   }
 };
 
+const deleteMyRecordForPlayStore = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateUserRegistration(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+    const { email, mobileNumber, name } = req.body;
+
+    const user = await User.findOne({
+      $or: [{ email }, { mobileNumber }],
+      isDelete: false,
+    }).lean();
+    if (!user) {
+      // Create this if not exist
+      await UserDeleteRequestPlayStore.findOneAndUpdate(
+        { $or: [{ email }, { mobileNumber }] },
+        {
+          $setOnInsert: { email, mobileNumber }, // Set these values only on insert
+          updatedAt: new Date(),
+          name,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      return successResponse(
+        res,
+        400,
+        "These credentials are not present on our application!"
+      );
+    } else {
+      // Create this if not exist
+      await UserDeleteRequestPlayStore.findOneAndUpdate(
+        { $or: [{ email }, { mobileNumber }] },
+        {
+          $setOnInsert: { email, mobileNumber }, // Set these values only on insert
+          updatedAt: new Date(),
+          name,
+          user: user._id,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      await User.updateOne({ _id: user._id }, { $set: { isDelete: true } });
+      // Send final success response
+      return successResponse(res, 200, "Your record deleted successfully!");
+    }
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   register,
   loginByMobile,
@@ -1517,4 +1571,5 @@ export {
   loginByEmail,
   verifyEmailOTP,
   generateUserCode,
+  deleteMyRecordForPlayStore,
 };
