@@ -58,6 +58,42 @@ const addBlogSubCategory = async (req, res) => {
   }
 };
 
+const getBlogSubCategory = async (req, res) => {
+  try {
+    const search = req.query.search?.trim();
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+
+    //Search
+    const query = {};
+    if (search) {
+      const withIn = new RegExp(search.toLowerCase(), "i");
+      query.name = withIn;
+    }
+    const [blogSubCategory, totalBlogSubCategory] = await Promise.all([
+      BlogSubCategory.find(query)
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .select("_id name slug")
+        .lean(),
+      BlogSubCategory.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalBlogSubCategory / resultPerPage) || 0;
+    return successResponse(res, 200, `Successfully!`, {
+      data: blogSubCategory,
+      totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 const getBlogSubCategoryByCategoryID = async (req, res) => {
   try {
     const parentCategorySlug = req.params.parentCategorySlug;
@@ -247,4 +283,5 @@ export {
   deleteBlogSubCategory,
   updateBlogSubCategoryImage,
   updateBlogSubCategory,
+  getBlogSubCategory,
 };

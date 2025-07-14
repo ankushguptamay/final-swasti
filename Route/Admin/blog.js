@@ -16,6 +16,7 @@ import {
   getBlogSubCategoryWithImageByCategoryId,
   updateBlogSubCategory,
   updateBlogSubCategoryImage,
+  getBlogSubCategory,
 } from "../../Controller/Master/blogSubCategory.controller.js";
 import {
   addBlogCategory,
@@ -51,6 +52,7 @@ router.delete("/blogTag/:id", deleteBlogTag);
 
 // blog sub category
 router.post("/blogSubCat", uploadImage.single("image"), addBlogSubCategory);
+router.get("/blogSubCat", getBlogSubCategory);
 router.get("/blogSubCat/:parentCategorySlug", getBlogSubCategoryByCategoryID);
 router.get("/blogSubCat-details/:slug", blogSubCategoryDetails);
 router.get(
