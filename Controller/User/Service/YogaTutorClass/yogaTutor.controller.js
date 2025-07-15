@@ -704,7 +704,10 @@ const classTimesForUser = async (req, res) => {
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
         .limit(resultPerPage)
-        .populate("instructor", "name profilePic averageRating")
+        .populate(
+          "instructor",
+          "name profilePic averageRating slug experience_year"
+        )
         .populate(
           "datesOfClasses",
           "_id date startDateTimeUTC endDateTimeUTC classStatus"
@@ -732,6 +735,8 @@ const classTimesForUser = async (req, res) => {
           classStartTimeInUTC,
           datesOfClasses,
           instructor: {
+            slug: times.instructor.slug,
+            experience_year: times.instructor.experience_year,
             averageRating: times.instructor.averageRating,
             _id: times.instructor._id,
             name: times.instructor.name,
