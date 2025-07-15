@@ -128,14 +128,20 @@ const getBlogCategoryWithImage = async (req, res) => {
         .sort({ name: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select("_id name slug image")
+        .select("_id name slug image description")
         .lean(),
       BlogCategory.countDocuments(query),
     ]);
     const totalPages = Math.ceil(totalBlogCategory / resultPerPage) || 0;
     // TransForm
-    const blog = blogCategory.map(({ name, _id, slug, image }) => {
-      return { name, _id, slug, image: image ? image.url || null : null };
+    const blog = blogCategory.map(({ name, _id, slug, image, description }) => {
+      return {
+        name,
+        _id,
+        slug,
+        image: image ? image.url || null : null,
+        description,
+      };
     });
     return successResponse(res, 200, `Successfully!`, {
       data: blog,

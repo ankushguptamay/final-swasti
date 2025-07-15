@@ -78,7 +78,7 @@ const getBlogSubCategory = async (req, res) => {
         .sort({ name: 1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select("_id name slug")
+        .select("_id name slug description")
         .lean(),
       BlogSubCategory.countDocuments(query),
     ]);
