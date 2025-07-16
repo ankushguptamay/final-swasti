@@ -869,7 +869,7 @@ const verifyAadharOTP = async (req, res) => {
       const data = {
         aadharNumber: aadharDetails._doc.aadharDetails.aadharNumber,
         name: aadhar.data.data.full_name,
-        gender,
+        gender: aadhar.data.data.gender,
         dateOfBirth: aadhar.data.data.dob,
         address,
       };

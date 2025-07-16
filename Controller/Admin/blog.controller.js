@@ -301,7 +301,7 @@ const getBlogsForAdmin = async (req, res) => {
     }
     const [blog, totalBlogs] = await Promise.all([
       Blog.find(query)
-        .select("title featuredPic slug readTime status tag")
+        .select("title featuredPic slug readTime status tag publishDate")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(resultPerPage)
@@ -365,7 +365,7 @@ const getBlogsForUser = async (req, res) => {
     }
     const [blog, totalBlogs] = await Promise.all([
       Blog.find(query)
-        .select("title featuredPic slug readTime tag")
+        .select("title featuredPic slug readTime tag publishDate description")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(resultPerPage)

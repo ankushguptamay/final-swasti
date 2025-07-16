@@ -60,7 +60,7 @@ router.get(
   getBlogSubCategoryWithImageByCategoryId
 );
 router.put(
-  "/blogSubCat/:id",
+  "/blogSubCat-i/:id",
   uploadImage.single("image"),
   updateBlogSubCategoryImage
 );

@@ -48,6 +48,7 @@ const schema = new Schema(
       name: { type: String },
       dateOfBirth: { type: String },
       address: { type: String },
+      gender: { type: String },
     },
     userTimeZone: { type: String, default: "Asia/Kolkata" },
     term_condition_accepted: { type: Boolean, default: false },

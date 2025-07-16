@@ -74,7 +74,7 @@ async function filterQueryOfClassForUser(data) {
     mOC, // modeOfClass,
     cT, // classType,
     search,
-    date = new Date().toISOString().split("T")[0], // Default today
+    date = new Date(), // Default today
     timing,
     yc, // yogaCategory,
     pt, // packageType
