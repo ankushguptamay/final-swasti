@@ -150,6 +150,98 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
   }
 };
 
+const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = courseOrderForNewUserValidation(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const {
+      courseName,
+      currency,
+      startDate,
+      couponName,
+      amount,
+      email,
+      mobileNumber,
+      referralCode,
+      term_condition_accepted,
+    } = req.body;
+    if (!term_condition_accepted)
+      return failureResponse(
+        res,
+        401,
+        "Please accept term and condition.",
+        null
+      );
+    // User Registration Process
+    // Is user already present
+    let user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
+    if (user) {
+      if (!user.role) {
+        await User.updateOne({ _id: user._id }, { $set: { role: "learner" } });
+      } else if (user.role === "instructor") {
+        return failureResponse(
+          res,
+          400,
+          "You are already register as instructor.",
+          null
+        );
+      }
+    } else {
+      // Capital First Letter
+      const name = capitalizeFirstLetter(req.body.name);
+      // User Time Zone
+      const timezone = req.headers["time-zone"] || req.headers["x-timezone"];
+      // Create in database
+      const chakraBreakNumber = Math.floor(Math.random() * 7) + 1;
+      // generate User code
+      const userCode = await generateUserCode("SWL");
+      // Store data
+      user = await User.create({
+        userTimeZone: timezone,
+        name,
+        email,
+        mobileNumber,
+        chakraBreakNumber,
+        referralCode,
+        userCode,
+        role: "learner",
+        term_condition_accepted,
+      });
+      // Create Wallet
+      await Wallet.create({ userId: user._id });
+    }
+    // Receipt
+    const prefix = `${generateAcronym(courseName)}-ph`;
+    const receipt = await generateReceiptNumber(prefix);
+    // initiate payment
+    // initiate payment
+    const order = await razorpayInstance.orders.create({
+      amount,
+      currency,
+      receipt,
+    });
+    await CoursePayment.create({
+      learner: user._id,
+      couponName,
+      courseName,
+      startDate: new Date(startDate),
+      paymentMethod: "razorpay",
+      amount: parseFloat(amount) / 100,
+      razorpayDetails: { razorpayOrderId: order.id },
+      receipt,
+    });
+    return successResponse(res, 200, "successfully", {
+      ...order,
+      name: req.body.name,
+      email,
+      mobileNumber,
+    });
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
 const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
   try {
     // Validate body
@@ -313,4 +405,5 @@ export {
   createCourseOrderByPhonepe,
   verifyCoursePaymentByPhonepe,
   createCourseOrderByPhonepeAndRegisterUser,
+  createCourseOrderByRazorpayAndRegisterUser,
 };
