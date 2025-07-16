@@ -1,5 +1,14 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { EmailCredential } from "../Model/User/emailCredentials.js";
 import brevo from "@getbrevo/brevo";
+import { SendMailClient } from "zeptomail";
+
+const zeptoClient = new SendMailClient({
+  url: process.env.ZEPTO_EMAIL_URL,
+  token: process.env.ZEPTO_EMAIL_TOKEN,
+});
 
 async function finaliseEmailCredential() {
   // Update sendEmail 0 every day
@@ -30,7 +39,7 @@ async function finaliseEmailCredential() {
   return emailCredential;
 }
 
-const sendOTPToEmail = async (options) => {
+const sendEmailViaBrevo = async (options) => {
   return new Promise((resolve, reject) => {
     let defaultClient = brevo.ApiClient.instance;
     let apiKey = defaultClient.authentications["api-key"];
@@ -58,4 +67,44 @@ const sendOTPToEmail = async (options) => {
   });
 };
 
-export { sendOTPToEmail, finaliseEmailCredential };
+// const options = {
+//   senderMail: "",
+//   senderName: "",
+//   receiver: [{ receiverEmail: "", receiverName: "" }],
+//   subject: "",
+//   htmlbody: "",
+// };
+const sendEmailViaZeptoZoho = async (options) => {
+  const receivers = [];
+  for (let i = 0; i < options.receiver.length; i++) {
+    receivers.push({
+      email_address: {
+        address: options.receiver[i].receiverEmail,
+        name: options.receiver[i].receiverName,
+      },
+    });
+  }
+  return new Promise((resolve, reject) => {
+    zeptoClient
+      .sendMail({
+        from: {
+          address: options.senderMail,
+          name: options.senderName,
+        },
+        to: receivers,
+        subject: options.subject,
+        htmlbody: options.htmlbody,
+      })
+      .then((resp) => {
+        console.log(resp);
+        console.log("success");
+        resolve();
+      })
+      .catch((error) => {
+        console.log("error");
+        reject(error);
+      });
+  });
+};
+
+export { sendEmailViaBrevo, finaliseEmailCredential, sendEmailViaZeptoZoho };

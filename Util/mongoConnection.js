@@ -25,18 +25,18 @@ async function addBrevoEmail() {
   await EmailCredential.create({ email: "connect@swastibharat.com" });
 }
 
-async function addCategorySlug() {
-  const categories = await YogaCategory.find({ slug: { $exists: false } });
+// async function addCategorySlug() {
+//   const categories = await YogaCategory.find({ slug: { $exists: false } });
 
-  for (const user of categories) {
-    const baseSlug = slugify(user.yogaCategory, { lower: true, strict: true });
-    user.slug = baseSlug;
-    await user.save();
-    console.log(`Generated slug for ${user.name}: ${user.slug}`);
-  }
+//   for (const user of categories) {
+//     const baseSlug = slugify(user.yogaCategory, { lower: true, strict: true });
+//     user.slug = baseSlug;
+//     await user.save();
+//     console.log(`Generated slug for ${user.name}: ${user.slug}`);
+//   }
 
-  console.log("Slug generation completed.");
-  process.exit();
-}
+//   console.log("Slug generation completed.");
+//   process.exit();
+// }
 
-export { connectDB, addBrevoEmail, addCategorySlug };
+export { connectDB, addBrevoEmail };

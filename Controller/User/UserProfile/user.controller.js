@@ -60,7 +60,8 @@ import { Specialization } from "../../../Model/Master/specializationModel.js";
 import { UserNotification } from "../../../Model/User/notificationModel.js";
 import {
   finaliseEmailCredential,
-  sendOTPToEmail,
+  sendEmailViaBrevo,
+  sendEmailViaZeptoZoho,
 } from "../../../Util/sendEmail.js";
 import { OTPEMAIL } from "../../../Config/emailFormate.js";
 import { UserDeleteRequestPlayStore } from "../../../Model/User/Profile/usedDeleteRequestFromPlayStoreModel.js";
@@ -258,24 +259,37 @@ const register = async (req, res) => {
       data = { email };
       msg = "OTP send to email successfully";
       // Sending OTP to mobile number
-      const emailCredential = await finaliseEmailCredential();
-      if (emailCredential) {
-        const options = {
-          subject: "Email Verification",
-          brevoEmail: emailCredential.email,
-          brevoKey: emailCredential.EMAIL_API_KEY,
-          headers: { "OTP for email verification": "123A" },
-          htmlContent: await OTPEMAIL({
-            otp: String(otp),
-            name: name,
-            time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
-            senderMail: emailCredential.email,
-          }),
-          userEmail: email,
-          userName: name,
-        };
-        await sendOTPToEmail(options);
-      }
+      // const emailCredential = await finaliseEmailCredential();
+      // if (emailCredential) {
+      //   const options = {
+      //     subject: "Email Verification",
+      //     brevoEmail: emailCredential.email,
+      //     brevoKey: emailCredential.EMAIL_API_KEY,
+      //     headers: { "OTP for email verification": "123A" },
+      //     htmlContent: await OTPEMAIL({
+      //       otp: String(otp),
+      //       name: name,
+      //       time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+      //       senderMail: emailCredential.email,
+      //     }),
+      //     userEmail: email,
+      //     userName: name,
+      //   };
+      //   await sendEmailViaBrevo(options);
+      // }
+      const options = {
+        senderMail: "office@swastibharat.com",
+        senderName: "Swasti Bharat",
+        receiver: [{ receiverEmail: email, receiverName: name }],
+        subject: "Verify your Swasti Bharat account",
+        htmlbody: await OTPEMAIL({
+          otp: String(otp),
+          name: name,
+          time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+          senderMail: "office@swastibharat.com",
+        }),
+      };
+      await sendEmailViaZeptoZoho(options);
     } else {
       // Sending OTP to mobile number
       await sendOTPToNumber(mobileNumber, otp);
@@ -464,6 +478,7 @@ const verifyMobileOTP = async (req, res) => {
         createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
       });
     }
+    delete user.refreshToken;
     // Final Response
     return successResponse(res, 201, `Login successful. Welcome back!`, {
       accessToken,
@@ -1363,24 +1378,37 @@ const loginByEmail = async (req, res) => {
     // Generate OTP for Email
     const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
     // Sending OTP to mobile number
-    const emailCredential = await finaliseEmailCredential();
-    if (emailCredential) {
-      const options = {
-        subject: "Email Verification",
-        brevoEmail: emailCredential.email,
-        brevoKey: emailCredential.EMAIL_API_KEY,
-        headers: { "OTP for email verification": "123A" },
-        htmlContent: await OTPEMAIL({
-          otp: String(otp),
-          name: isUser.name,
-          time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
-          senderMail: emailCredential.email,
-        }),
-        userEmail: email,
-        userName: isUser.name,
-      };
-      await sendOTPToEmail(options);
-    }
+    // const emailCredential = await finaliseEmailCredential();
+    // if (emailCredential) {
+    //   const options = {
+    //     subject: "Email Verification",
+    //     brevoEmail: emailCredential.email,
+    //     brevoKey: emailCredential.EMAIL_API_KEY,
+    //     headers: { "OTP for email verification": "123A" },
+    // htmlContent: await OTPEMAIL({
+    //   otp: String(otp),
+    //   name: isUser.name,
+    //   time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+    //   senderMail: emailCredential.email,
+    // }),
+    //     userEmail: email,
+    //     userName: isUser.name,
+    //   };
+    //   await sendEmailViaBrevo(options);
+    // }
+    const options = {
+      senderMail: "office@swastibharat.com",
+      senderName: "Swasti Bharat",
+      receiver: [{ receiverEmail: email, receiverName: isUser.name }],
+      subject: "Verify your Swasti Bharat account",
+      htmlbody: await OTPEMAIL({
+        otp: String(otp),
+        name: isUser.name,
+        time: OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000),
+        senderMail: "office@swastibharat.com",
+      }),
+    };
+    await sendEmailViaZeptoZoho(options);
     //  Store OTP
     await OTP.create({
       validTill: new Date().getTime() + parseInt(OTP_VALIDITY_IN_MILLISECONDS),
@@ -1483,6 +1511,7 @@ const verifyEmailOTP = async (req, res) => {
         createdAt: new Date(new Date().getTime() + 1 * 60 * 1000),
       });
     }
+    delete user.refreshToken;
     // Final Response
     return successResponse(res, 201, `Login successful. Welcome back!`, {
       accessToken,
