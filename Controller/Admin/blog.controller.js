@@ -347,6 +347,67 @@ const getBlogBySlug = async (req, res) => {
   }
 };
 
+const getBlogBySlugForUser = async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug })
+      .lean()
+      .populate("category", "name slug image description");
+    if (!blog) {
+      return failureResponse(res, 400, `This blog is not present!`);
+    }
+    blog.featuredPic = blog.featuredPic ? blog.featuredPic.url || null : null;
+    blog.category = blog.category.map((cat) => {
+      return { ...cat, image: cat.image ? cat.image.url || null : null };
+    });
+    // Similar blog
+    const similarBlogs = await Blog.aggregate([
+      {
+        $match: {
+          _id: { $ne: blog._id },
+          $or: [
+            { subCategory: { $in: blog.subCategory } },
+            { tag: { $in: blog.tag } },
+            { category: { $in: blog.category } },
+          ],
+        },
+      },
+      { $sample: { size: 5 } },
+      {
+        $lookup: {
+          from: "blogcategories",
+          localField: "category",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+    ]);
+
+    const transform = similarBlogs.map((blo) => {
+      const category = Array.isArray(blo.category)
+        ? blo.category.map((cat) => {
+            return { ...cat, image: cat?.image?.url || null };
+          })
+        : [];
+      const additionalPic = Array.isArray(blo.additionalPic)
+        ? blo.additionalPic.map((pic) => pic.url)
+        : [];
+      return {
+        ...blo,
+        featuredPic: blo?.featuredPic?.url || null,
+        category,
+        additionalPic,
+      };
+    });
+    return successResponse(res, 200, "Blog fetched successfully!", {
+      ...blog,
+      similarBlogs: transform,
+    });
+  } catch (err) {
+    console.log(err.message);
+    failureResponse(res);
+  }
+};
+
 const getBlogsForUser = async (req, res) => {
   try {
     const today = new Date();
@@ -405,4 +466,5 @@ export {
   deleteBlogFeaturedPic,
   addUpdateBlogFeaturedPic,
   createBlog,
+  getBlogBySlugForUser,
 };

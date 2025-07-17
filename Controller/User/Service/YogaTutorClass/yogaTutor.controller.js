@@ -699,7 +699,7 @@ const classTimesForUser = async (req, res) => {
     const [classes, totalClasses] = await Promise.all([
       YogaTutorClass.find(query)
         .select(
-          "_id modeOfClass classType startDate endDate price time numberOfClass description packageType timeDurationInMin approvalByAdmin instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
+          "_id modeOfClass classType startDate endDate price time classStartTimeInUTC numberOfClass description packageType timeDurationInMin approvalByAdmin instructorTimeZone totalBookedSeat numberOfSeats isBooked createdAt"
         )
         .sort({ startDate: -1, endDate: -1 })
         .skip(skip)
@@ -719,10 +719,14 @@ const classTimesForUser = async (req, res) => {
     const totalPages = Math.ceil(totalClasses / resultPerPage) || 0;
     const transformData = await Promise.all(
       classes.map(async (times) => {
-        const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
-          `${times.startDate.toISOString().split("T")[0]}T${times.time}:00.000`,
-          times.instructorTimeZone
-        );
+        const classStartTimeInUTC =
+          times.classStartTimeInUTC ||
+          (await convertGivenTimeZoneToUTC(
+            `${times.startDate.toISOString().split("T")[0]}T${
+              times.time
+            }:00.000`,
+            times.instructorTimeZone
+          ));
         const datesOfClasses = [];
         for (let i = 0; i < times.datesOfClasses.length; i++) {
           const day = await getDatesDay(

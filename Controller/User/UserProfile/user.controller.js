@@ -184,10 +184,12 @@ async function bindByPackageType(data) {
       grouped.push(group);
     }
     // Convert class start time to UTC
-    const classStartTimeInUTC = await convertGivenTimeZoneToUTC(
-      `${rest.startDate.toISOString().split("T")[0]}T${rest.time}:00.000`,
-      rest.instructorTimeZone
-    );
+    const classStartTimeInUTC =
+      rest.classStartTimeInUTC ||
+      (await convertGivenTimeZoneToUTC(
+        `${rest.startDate.toISOString().split("T")[0]}T${rest.time}:00.000`,
+        rest.instructorTimeZone
+      ));
     // Convert each class date
     const datesOfClasses = await Promise.all(
       rest.datesOfClasses.map(async (classe) => {
@@ -1169,15 +1171,13 @@ const instructorDetailsForLearner = async (req, res) => {
         .populate("specialization", "specialization")
         .lean(),
       YogaTutorClass.find({
-        startDate: {
-          $gte: new Date(new Date().toISOString().split("T")[0]),
-        },
+        classStartTimeInUTC: { $gte: new Date() },
         instructor: req.params.id,
         isDelete: false,
         approvalByAdmin: "accepted",
       })
         .select(
-          "_id modeOfClass classType startDate endDate packageType numberOfClass time price timeDurationInMin totalBookedSeat numberOfSeats isBooked instructorTimeZone"
+          "_id modeOfClass classType startDate endDate packageType numberOfClass classStartTimeInUTC time price timeDurationInMin totalBookedSeat numberOfSeats isBooked instructorTimeZone"
         )
         .populate("yogaCategory", "-_id yogaCategory description")
         .populate(

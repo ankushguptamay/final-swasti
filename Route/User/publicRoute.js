@@ -26,7 +26,7 @@ import {
 import { recordForHero } from "../../Controller/User/dashboard.js";
 import { createSubscribedUser } from "../../Controller/User/UserProfile/subscribedUser.controller.js";
 import {
-  getBlogBySlug,
+  getBlogBySlugForUser,
   getBlogsForUser,
 } from "../../Controller/Admin/blog.controller.js";
 
@@ -67,6 +67,6 @@ router.post("/subscrib", createSubscribedUser);
 
 // Blog
 router.get("/blog", getBlogsForUser);
-router.get("/blog/:slug", getBlogBySlug);
+router.get("/blog/:slug", getBlogBySlugForUser);
 
 export default router;
