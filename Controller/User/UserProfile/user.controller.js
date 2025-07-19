@@ -1172,7 +1172,7 @@ const instructorDetailsForLearner = async (req, res) => {
         .lean(),
       YogaTutorClass.find({
         classStartTimeInUTC: { $gte: new Date() },
-        instructor: req.params.id,
+        instructor: instructor._id,
         isDelete: false,
         approvalByAdmin: "accepted",
       })
@@ -1186,7 +1186,6 @@ const instructorDetailsForLearner = async (req, res) => {
         )
         .lean(),
     ]);
-    console.log(yogaClasses);
     // Transform Similar profile
     const transformData = similarProfile.map((user) => {
       return {
