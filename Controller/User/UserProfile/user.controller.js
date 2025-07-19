@@ -1286,61 +1286,95 @@ const register_login_learner = async (req, res) => {
 const instructorForLandingPage = async (req, res) => {
   try {
     // Data query
-    let query = {
+    const queryB = {
       $and: [
         { role: "instructor" },
         { $expr: { $gte: [{ $size: "$education" }, 1] } }, // Atleast one educaion should present
+        { $expr: { $gte: [{ $size: "$specialization" }, 1] } }, // Atleast one specialization should present
         { "profilePic.url": { $exists: true, $ne: null, $ne: "" } }, // profile pic should be present
       ],
     };
+    const queryA = {
+      $and: [...queryB.$and, { bio: { $exists: true, $ne: null, $ne: "" } }],
+    };
     // Get required data
-    const instructor = await User.aggregate([
-      { $match: query },
-      { $sample: { size: 16 } },
-      {
-        $lookup: {
-          from: "specializations",
-          localField: "specialization",
-          foreignField: "_id",
-          as: "specialization",
+    const [instructorA, instructorB] = await Promise.all([
+      User.aggregate([
+        { $match: queryA },
+        { $sample: { size: 8 } },
+        {
+          $lookup: {
+            from: "specializations",
+            localField: "specialization",
+            foreignField: "_id",
+            as: "specialization",
+          },
         },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          profilePic: 1,
-          slug: 1,
-          bio: 1,
-          averageRating: 1,
-          gender: 1,
-          experience_year: 1,
-          specialization: {
-            $map: {
-              input: "$specialization",
-              as: "spec",
-              in: "$$spec.specialization",
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            profilePic: 1,
+            slug: 1,
+            bio: 1,
+            averageRating: 1,
+            gender: 1,
+            experience_year: 1,
+            specialization: {
+              $map: {
+                input: "$specialization",
+                as: "spec",
+                in: "$$spec.specialization",
+              },
             },
           },
         },
-      },
+      ]),
+      User.aggregate([
+        { $match: queryB },
+        { $sample: { size: 8 } },
+        {
+          $lookup: {
+            from: "specializations",
+            localField: "specialization",
+            foreignField: "_id",
+            as: "specialization",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            profilePic: 1,
+            slug: 1,
+            bio: 1,
+            averageRating: 1,
+            gender: 1,
+            experience_year: 1,
+            specialization: {
+              $map: {
+                input: "$specialization",
+                as: "spec",
+                in: "$$spec.specialization",
+              },
+            },
+          },
+        },
+      ]),
     ]);
     // Transform Data
-    const transformData = instructor.map((user) => {
+    const sectionA = instructorA.map((user) => {
       return {
         ...user,
         profilePic: user.profilePic ? user.profilePic.url || null : null,
-        // specialization:
-        //   user.specialization.length > 0
-        //     ? user.specialization.map((spe) => spe.specialization)
-        //     : [],
       };
     });
-    // Split in Two
-    const sectionA = transformData.slice(0, 8);
-    const sectionB = transformData
-      .slice(Math.max(0, transformData.length - 8), transformData.length)
-      .map(({ bio, ...rest }) => rest);
+    const sectionB = instructorB.map((user) => {
+      return {
+        ...user,
+        profilePic: user.profilePic ? user.profilePic.url || null : null,
+      };
+    });
 
     // Send final success response
     return successResponse(res, 200, `Successfully!`, { sectionA, sectionB });
