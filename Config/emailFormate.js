@@ -301,4 +301,161 @@ async function OTPEMAIL(data) {
 </html>`;
 }
 
-export { OTPEMAIL };
+async function yvcPaymentSuccessEmail(data) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enrollment Confirmation</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .header {
+      background: linear-gradient(90deg, #5F244C, #7F3166);
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    .header img {
+      max-width: 250px;
+      margin-bottom: 10px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .content h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #a3478e;
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+    .content p {
+      line-height: 1.6;
+      margin: 10px 0;
+    }
+    .content strong {
+      font-weight: 600;
+    }
+   .button {
+  display: block;
+  width: fit-content;
+  background: #7c3479;
+  color: white !important; /* enforce white text */
+  text-decoration: none !important; /* remove underline */
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 20px auto;
+  font-weight: 600;
+}
+    .footer {
+      background: #f2e2f4;
+      text-align: center;
+      padding: 20px;
+      font-size: 16px;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+    .footer a {
+      color: #7c3479;
+      text-decoration: none;
+      font-weight: 600;
+    }
+   .social-icons {
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  gap: 15px; 
+  margin: 20px 0; 
+}
+
+.social-icons a img {
+  display: block;
+  border: 0;
+  outline: none;
+  text-decoration: none;
+}
+    .bottom {
+      background: #7B2F63;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+    }
+    @media(max-width: 600px) {
+      .content h2 {
+        font-size: 18px;
+      }
+      .button {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- Replace with your logo URL -->
+      <img src="https://swasi-bharat.b-cdn.net/logo-media/Swasth%20Bharat%20with%201.png" alt="Swasti Bharat Logo"/>
+    </div>
+    <div class="content">
+      <h2>Enrollment Confirmed : Yoga Volunteer Course</h2>
+      <p>Hey <strong>${data.userName}</strong></p>
+      <p>Thank you for enrolling in the Yoga Volunteer Course offered by Jagriti Yoga & Naturopathy Sansthan (YCB Certified).</p>
+      <p><strong>Payment Received:</strong> ₹${data.amount}</p>
+      <p><strong>Course Enrolled:</strong> Yoga Volunteer Course</p>
+      <p><strong>Class Time:</strong> ${data.timeSlote}</p>
+      <p><strong>Certificate:</strong> Ministry of AYUSH Recognized (YCB)</p>
+      <p><em>Join our community</em>: <a href="#">[Link]</a></p>
+      <p><a href="#">Stay connected for updates. Welcome to your yoga journey!</a></p>
+      <p><em>Warm regards,</em><br/>
+      <strong>Team Swasti Bharat</strong></p>
+      <a class="button" href="https://swastibharat.com/">Visit Site</a>
+    </div>
+    <div class="footer">
+      <p><strong>Get in touch</strong></p>
+      <p>+91-97206 83759</p>
+      <p><a href="mailto:connect@swastibharat.com">connect@swastibharat.com</a></p>
+  <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td align="center" style="padding: 20px 0;">
+      <a href="https://www.facebook.com/share/14HpZP3ZB6N/?mibextid=qi2Omg" style="margin: 0 10px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="24" height="24" style="display: inline-block; border: 0;">
+      </a>
+      <a href="https://www.linkedin.com/company/swasti-bharat/" style="margin: 0 10px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733561.png" alt="LinkedIn" width="24" height="24" style="display: inline-block; border: 0;">
+      </a>
+      <a href="https://www.instagram.com/swasti_bharat?igsh=MWZnb3gyaXludWdvOA==" style="margin: 0 10px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="24" height="24" style="display: inline-block; border: 0;">
+      </a>
+    </td>
+  </tr>
+</table>
+
+    </div>
+    <div class="bottom">
+      © 2025 Swasti Bharat. All Rights Reserved.
+    </div>
+  </div>
+</body>
+</html>
+`;
+}
+
+export { OTPEMAIL, yvcPaymentSuccessEmail };

@@ -24,6 +24,8 @@ import { User } from "../../../../Model/User/Profile/userModel.js";
 import { Wallet } from "../../../../Model/User/Profile/walletModel.js";
 import { capitalizeFirstLetter } from "../../../../Helper/formatChange.js";
 import { generateUserCode } from "../../UserProfile/user.controller.js";
+import { yvcPaymentSuccessEmail } from "../../../../Config/emailFormate.js";
+import { sendEmailViaZeptoZoho } from "../../../../Util/sendEmail.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -121,7 +123,9 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
     if (razorpay_signature === generated_signature) {
       const order = await CoursePayment.findOne({
         "razorpayDetails.razorpayOrderId": orderId,
-      }).lean();
+      })
+        .populate("learner", "name email")
+        .lean();
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
       }
@@ -140,6 +144,33 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
             },
           }
         );
+      }
+      // send Email
+      const data = {
+        userName: order.learner.name,
+        amount: order.amount,
+        timeSlote: order.stratDate,
+      };
+      let emailHtml;
+      if (order.couponName.toLowerCase() == "yoga volunteer course") {
+        emailHtml = await yvcPaymentSuccessEmail(data);
+      } else {
+        emailHtml = null;
+      }
+      if (emailHtml) {
+        const options = {
+          senderMail: "office@swastibharat.com",
+          senderName: "Swasti Bharat",
+          receiver: [
+            {
+              receiverEmail: order.learner.email,
+              receiverName: order.learner.name,
+            },
+          ],
+          subject: "Enrollment Confirmed:",
+          htmlbody: emailHtml,
+        };
+        await sendEmailViaZeptoZoho(options);
       }
       return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
@@ -360,7 +391,9 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
     if (response.state.toLowerCase() === "completed") {
       const order = await CoursePayment.findOne({
         "phonepeDetails.orderId": response.orderId,
-      }).lean();
+      })
+        .populate("learner", "name email")
+        .lean();
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
       }
@@ -383,6 +416,33 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
           }
         );
       }
+      // send Email
+      const data = {
+        userName: order.learner.name,
+        amount: order.amount,
+        timeSlote: order.stratDate,
+      };
+      let emailHtml;
+      if (order.couponName.toLowerCase() == "yoga volunteer course") {
+        emailHtml = await yvcPaymentSuccessEmail(data);
+      } else {
+        emailHtml = null;
+      }
+      if (emailHtml) {
+        const options = {
+          senderMail: "office@swastibharat.com",
+          senderName: "Swasti Bharat",
+          receiver: [
+            {
+              receiverEmail: order.learner.email,
+              receiverName: order.learner.name,
+            },
+          ],
+          subject: "Enrollment Confirmed:",
+          htmlbody: emailHtml,
+        };
+        await sendEmailViaZeptoZoho(options);
+      }
       return res.redirect(COURSE_THANK_YOU_URL);
     } else {
       // Update Purchase
@@ -391,7 +451,6 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         { $set: { status: "failed" } }
       );
       return res.redirect(COURSE_FAIL_YOU_URL);
-      return failureResponse(res, 400, "Payment failed. Please try again.");
     }
   } catch (err) {
     return failureResponse(res);

@@ -1186,6 +1186,7 @@ const instructorDetailsForLearner = async (req, res) => {
         )
         .lean(),
     ]);
+    console.log(yogaClasses);
     // Transform Similar profile
     const transformData = similarProfile.map((user) => {
       return {
