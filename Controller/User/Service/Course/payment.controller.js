@@ -149,7 +149,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: order.stratDate,
+        timeSlote: order.startDate,
       };
       let emailHtml;
       if (order.couponName.toLowerCase() == "yoga volunteer course") {
@@ -420,7 +420,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: order.stratDate,
+        timeSlote: order.startDate,
       };
       let emailHtml;
       if (order.couponName.toLowerCase() == "yoga volunteer course") {
@@ -478,7 +478,7 @@ const getCoursePayment = async (req, res) => {
         .skip(skip)
         .limit(resultPerPage)
         .select(
-          "_id courseName couponName createdAt paymentMethod stratDate amount status"
+          "_id courseName couponName createdAt paymentMethod startDate amount status"
         )
         .populate(
           "learner",
