@@ -457,6 +457,48 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
   }
 };
 
+const getCoursePayment = async (req, res) => {
+  try {
+    const search = req.query.search?.trim();
+    const resultPerPage = req.query.resultPerPage
+      ? parseInt(req.query.resultPerPage)
+      : 20;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const skip = (page - 1) * resultPerPage;
+
+    //Search
+    const query = { amount: { $gt: 5 } };
+    if (search) {
+      const withIn = new RegExp(search.toLowerCase(), "i");
+      query.courseName = withIn;
+    }
+    const [coursePayment, totalCoursePayment] = await Promise.all([
+      CoursePayment.find(query)
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(resultPerPage)
+        .select(
+          "_id courseName couponName createdAt paymentMethod stratDate amount status"
+        )
+        .populate(
+          "learner",
+          "_id name email mobileNumber isMobileNumberVerified createAt lastLogin"
+        )
+        .lean(),
+      CoursePayment.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCoursePayment / resultPerPage) || 0;
+    return successResponse(res, 200, `Successfully!`, {
+      data: coursePayment,
+      totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   applyCourseCoupon,
   createCourseOrderByRazorpay,
@@ -465,4 +507,5 @@ export {
   verifyCoursePaymentByPhonepe,
   createCourseOrderByPhonepeAndRegisterUser,
   createCourseOrderByRazorpayAndRegisterUser,
+  getCoursePayment,
 };

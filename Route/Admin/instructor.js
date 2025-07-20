@@ -10,6 +10,7 @@ import {
   certificateById,
   certificatesForAdminApproval,
 } from "../../Controller/User/UserProfile/certificate.controller.js";
+import { getCoursePayment } from "../../Controller/User/Service/Course/payment.controller.js";
 
 // Yoga tutor class
 router.put("/y-t-class/:id", approvalClassTimes);
@@ -19,5 +20,7 @@ router.get("/y-t-class", classTimesForAdmin);
 router.get("/certificate", certificatesForAdminApproval);
 router.put("/certificate/:id", certifiacteApproval);
 router.get("/certificate/:id", certificateById);
+// CoursePayment
+router.get("/coursePayment", getCoursePayment);
 
 export default router;
