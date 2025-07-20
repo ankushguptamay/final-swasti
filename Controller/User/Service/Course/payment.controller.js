@@ -482,7 +482,7 @@ const getCoursePayment = async (req, res) => {
         )
         .populate(
           "learner",
-          "_id name email mobileNumber isMobileNumberVerified createAt lastLogin"
+          "_id name email mobileNumber isMobileNumberVerified createdAt lastLogin"
         )
         .lean(),
       CoursePayment.countDocuments(query),
