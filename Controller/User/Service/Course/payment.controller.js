@@ -459,6 +459,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
 
 const getCoursePayment = async (req, res) => {
   try {
+    const { status } = req.query.status;
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
@@ -471,6 +472,9 @@ const getCoursePayment = async (req, res) => {
     if (search) {
       const withIn = new RegExp(search.toLowerCase(), "i");
       query.courseName = withIn;
+    }
+    if (status) {
+      query.status = status;
     }
     const [coursePayment, totalCoursePayment] = await Promise.all([
       CoursePayment.find(query)
