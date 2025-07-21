@@ -149,7 +149,9 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: order.startDate,
+        timeSlote: order.startDate
+          ? order.startDate.toString().split(" GMT")[0] + " IST"
+          : null,
       };
       let emailHtml;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
@@ -186,6 +188,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
     // Validate body
     const { error } = courseOrderForNewUserValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
+    console.log(req.body);
     const {
       courseName,
       currency,
