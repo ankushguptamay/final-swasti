@@ -481,7 +481,7 @@ const getCoursePayment = async (req, res) => {
     }
     const [coursePayment, totalCoursePayment] = await Promise.all([
       CoursePayment.find(query)
-        .sort({ name: 1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(resultPerPage)
         .select(
@@ -502,7 +502,7 @@ const getCoursePayment = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     failureResponse(res);
   }
 };
