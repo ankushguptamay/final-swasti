@@ -152,7 +152,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
         timeSlote: order.startDate,
       };
       let emailHtml;
-      if (order.couponName.toLowerCase() == "yoga volunteer course") {
+      if (order.courseName.toLowerCase() == "yoga volunteer course") {
         emailHtml = await yvcPaymentSuccessEmail(data);
       } else {
         emailHtml = null;
@@ -423,7 +423,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         timeSlote: order.startDate,
       };
       let emailHtml;
-      if (order.couponName.toLowerCase() == "yoga volunteer course") {
+      if (order.courseName.toLowerCase() == "yoga volunteer course") {
         emailHtml = await yvcPaymentSuccessEmail(data);
       } else {
         emailHtml = null;

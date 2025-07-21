@@ -422,7 +422,6 @@ async function yvcPaymentSuccessEmail(data) {
       <p><strong>Course Enrolled:</strong> Yoga Volunteer Course</p>
       <p><strong>Class Time:</strong> ${data.timeSlote}</p>
       <p><strong>Certificate:</strong> Ministry of AYUSH Recognized (YCB)</p>
-      <p><em>Join our community</em>: <a href="#">[Link]</a></p>
       <p><a href="#">Stay connected for updates. Welcome to your yoga journey!</a></p>
       <p><em>Warm regards,</em><br/>
       <strong>Team Swasti Bharat</strong></p>
