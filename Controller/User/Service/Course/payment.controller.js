@@ -188,7 +188,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
     // Validate body
     const { error } = courseOrderForNewUserValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    console.log(req.body);
+    // console.log(req.body);
     const {
       courseName,
       currency,
@@ -462,7 +462,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
 
 const getCoursePayment = async (req, res) => {
   try {
-    const { status } = req.query.status;
+    const { status } = req.query;
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
@@ -502,6 +502,7 @@ const getCoursePayment = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
+    console.log(err.message)
     failureResponse(res);
   }
 };
