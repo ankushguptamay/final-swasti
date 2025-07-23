@@ -20,23 +20,7 @@ router.use("/api/instructor", instructor);
 router.use("/api/user", learner);
 // 3.User
 router.use("/api/admin", admin);
-// 4.SiteMap
-router.get("/sitemap.xml", (req, res) => {
-  res.header("Content-Type", "application/xml");
-  res.send(`
-  <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://swastibharat.com/sitemap-static.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://swastibharat.com/sitemap-instructors.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://swastibharat.com/sitemap-classes.xml</loc>
-  </sitemap>
-</sitemapindex>
-  `);
-});
+
 router.get("/sitemap-instructors.xml", instructorSiteMap);
 router.get("/sitemap-static.xml", staticSiteMap);
 router.get("/sitemap-classes.xml", classesSiteMap);

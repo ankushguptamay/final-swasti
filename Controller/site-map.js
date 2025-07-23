@@ -1,8 +1,10 @@
-import { SitemapStream, streamToPromise } from "sitemap";
-import { Readable } from "stream";
+import dotenv from "dotenv";
+dotenv.config();
+
 import { User } from "../Model/User/Profile/userModel.js";
-import { failureResponse } from "../MiddleWare/responseMiddleware.js";
+import { failureResponse, successResponse } from "../MiddleWare/responseMiddleware.js";
 import { YogaCategory } from "../Model/Master/yogaCategoryModel.js";
+const { FRONT_HOST } = process.env;
 
 const staticLinks = [
   {
@@ -71,20 +73,16 @@ const instructorSiteMap = async (req, res) => {
     })
       .select("slug updatedAt")
       .lean();
-    const links = instructors.map((i) => ({
-      url: `/instructor/${i.slug}`, // full URL path
+
+    const data = instructors.map((i) => ({
+      url: `${FRONT_HOST}/instructor/${i.slug}`, // full URL path
       changefreq: "weekly",
       priority: 0.8,
       lastmod: i.updatedAt?.toISOString(),
     }));
 
-    const stream = new SitemapStream({ hostname: "https://swastibharat.com" });
-    res.header("Content-Type", "application/xml");
-
-    const xmlString = await streamToPromise(
-      Readable.from(links).pipe(stream)
-    ).then((data) => data.toString());
-    return res.send(xmlString);
+    // Send final success response
+    return successResponse(res, 200, "Successfully", data);
   } catch (err) {
     failureResponse(res);
   }
@@ -92,13 +90,14 @@ const instructorSiteMap = async (req, res) => {
 
 const staticSiteMap = async (req, res) => {
   try {
-    const stream = new SitemapStream({ hostname: "https://swastibharat.com" });
-    res.header("Content-Type", "application/xml");
-
-    const xml = await streamToPromise(
-      Readable.from(staticLinks).pipe(stream)
-    ).then((data) => data.toString());
-    return res.send(xml);
+    const data = staticLinks.map((i) => ({
+      url: `${FRONT_HOST}${i.url}`, // full URL path
+      changefreq: i.changefreq,
+      priority: i.priority,
+      lastmod: i.lastmod,
+    }));
+    // Send final success response
+    return successResponse(res, 200, "Successfully", data);
   } catch (err) {
     failureResponse(res);
   }
@@ -107,20 +106,16 @@ const staticSiteMap = async (req, res) => {
 const classesSiteMap = async (req, res) => {
   try {
     const category = await YogaCategory.find().select("slug updatedAt").lean();
-    const links = category.map((c) => ({
-      url: `/categories/${c.slug}`, // full URL path
+
+    const data = category.map((c) => ({
+      url: `${FRONT_HOST}/categories/${c.slug}`, // full URL path
       changefreq: "weekly",
       priority: 0.8,
       lastmod: c.updatedAt?.toISOString(),
     }));
 
-    const stream = new SitemapStream({ hostname: "https://swastibharat.com" });
-    res.header("Content-Type", "application/xml");
-
-    const xmlString = await streamToPromise(
-      Readable.from(links).pipe(stream)
-    ).then((data) => data.toString());
-    return res.send(xmlString);
+    // Send final success response
+    return successResponse(res, 200, "Successfully", data);
   } catch (err) {
     failureResponse(res);
   }

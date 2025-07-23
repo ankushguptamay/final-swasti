@@ -507,6 +507,21 @@ const getCoursePayment = async (req, res) => {
   }
 };
 
+const getMyCourses = async (req, res) => {
+  try {
+    const coursePayment = await CoursePayment.find({
+      status: "completed",
+      learner: req.user._id,
+    })
+      .select("_id courseName startDate amount")
+      .lean();
+    return successResponse(res, 200, `Successfully!`, coursePayment);
+  } catch (err) {
+    console.log(err.message);
+    failureResponse(res);
+  }
+};
+
 export {
   applyCourseCoupon,
   createCourseOrderByRazorpay,
@@ -516,4 +531,5 @@ export {
   createCourseOrderByPhonepeAndRegisterUser,
   createCourseOrderByRazorpayAndRegisterUser,
   getCoursePayment,
+  getMyCourses,
 };
