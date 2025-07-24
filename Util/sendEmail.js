@@ -97,7 +97,7 @@ const sendEmailViaZeptoZoho = async (options) => {
       })
       .then((resp) => {
         // console.log(resp);
-        console.log("success");
+        // console.log("success");
         resolve();
       })
       .catch((error) => {

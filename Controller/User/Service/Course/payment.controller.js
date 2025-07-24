@@ -480,18 +480,123 @@ const getCoursePayment = async (req, res) => {
       query.status = status;
     }
     const [coursePayment, totalCoursePayment] = await Promise.all([
-      CoursePayment.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(resultPerPage)
-        .select(
-          "_id courseName couponName createdAt paymentMethod startDate amount status"
-        )
-        .populate(
-          "learner",
-          "_id name email mobileNumber isMobileNumberVerified createdAt lastLogin"
-        )
-        .lean(),
+      CoursePayment.aggregate([
+        // 🔍 Step 1: Filter as needed
+        {
+          $match: { ...query },
+        },
+        // Group by learner
+        {
+          $group: {
+            _id: "$learner",
+            all: { $push: "$$ROOT" },
+            hasCompleted: {
+              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+            },
+          },
+        },
+        // Select only completed OR latest pending
+        {
+          $project: {
+            result: {
+              $cond: [
+                { $gt: ["$hasCompleted", 0] },
+                {
+                  $filter: {
+                    input: "$all",
+                    as: "item",
+                    cond: { $eq: ["$$item.status", "completed"] },
+                  },
+                },
+                [
+                  {
+                    $first: {
+                      $slice: [
+                        {
+                          $filter: {
+                            input: {
+                              $sortArray: {
+                                input: "$all",
+                                sortBy: { createdAt: -1 },
+                              },
+                            },
+                            as: "item",
+                            cond: { $eq: ["$$item.status", "pending"] },
+                          },
+                        },
+                        1,
+                      ],
+                    },
+                  },
+                ],
+              ],
+            },
+          },
+        },
+        // Flatten the result array
+        { $unwind: "$result" },
+        // Select fields
+        {
+          $project: {
+            _id: "$result._id",
+            courseName: "$result.courseName",
+            couponName: "$result.couponName",
+            createdAt: "$result.createdAt",
+            paymentMethod: "$result.paymentMethod",
+            startDate: "$result.startDate",
+            amount: "$result.amount",
+            status: "$result.status",
+            learner: "$result.learner",
+          },
+        },
+        // Populate learner manually
+        {
+          $lookup: {
+            from: "users", // Replace with your actual learner collection name
+            localField: "learner",
+            foreignField: "_id",
+            as: "learner",
+          },
+        },
+        { $unwind: "$learner" },
+        // Optionally project learner fields
+        {
+          $project: {
+            courseName: 1,
+            couponName: 1,
+            createdAt: 1,
+            paymentMethod: 1,
+            startDate: 1,
+            amount: 1,
+            status: 1,
+            learner: {
+              _id: 1,
+              name: "$learner.name",
+              email: "$learner.email",
+              mobileNumber: "$learner.mobileNumber",
+              isMobileNumberVerified: "$learner.isMobileNumberVerified",
+              createdAt: "$learner.createdAt",
+              lastLogin: "$learner.lastLogin",
+            },
+          },
+        },
+        // Pagination
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: resultPerPage },
+      ]),
+      //   CoursePayment.find(query)
+      //     .sort({ createdAt: -1 })
+      //     .skip(skip)
+      //     .limit(resultPerPage)
+      // .select(
+      //   "_id courseName couponName createdAt paymentMethod startDate amount status"
+      // )
+      // .populate(
+      //   "learner",
+      //   "_id name email mobileNumber isMobileNumberVerified createdAt lastLogin"
+      // )
+      //     .lean(),
       CoursePayment.countDocuments(query),
     ]);
 

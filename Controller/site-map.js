@@ -1,8 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import { SitemapStream, streamToPromise } from "sitemap";
+import { Readable } from "stream";
 import { User } from "../Model/User/Profile/userModel.js";
-import { failureResponse, successResponse } from "../MiddleWare/responseMiddleware.js";
+import {
+  failureResponse,
+  successResponse,
+} from "../MiddleWare/responseMiddleware.js";
 import { YogaCategory } from "../Model/Master/yogaCategoryModel.js";
 const { FRONT_HOST } = process.env;
 
@@ -74,15 +79,20 @@ const instructorSiteMap = async (req, res) => {
       .select("slug updatedAt")
       .lean();
 
-    const data = instructors.map((i) => ({
-      url: `${FRONT_HOST}/instructor/${i.slug}`, // full URL path
+    const links = instructors.map((i) => ({
+      url: `/instructor/${i.slug}`, // full URL path
       changefreq: "weekly",
       priority: 0.8,
       lastmod: i.updatedAt?.toISOString(),
     }));
 
-    // Send final success response
-    return successResponse(res, 200, "Successfully", data);
+    const stream = new SitemapStream({ hostname: "https://swastibharat.com" });
+    res.header("Content-Type", "application/xml");
+
+    const xmlString = await streamToPromise(
+      Readable.from(links).pipe(stream)
+    ).then((data) => data.toString());
+    return res.send(xmlString);
   } catch (err) {
     failureResponse(res);
   }
