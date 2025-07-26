@@ -477,6 +477,13 @@ const getCoursePayment = async (req, res) => {
       query.courseName = withIn;
     }
     if (status) {
+      if (status === "pending") {
+        const learnersWithCompleted = await CoursePayment.distinct("learner", {
+          status: "completed",
+          amount: { $gt: 5 },
+        });
+        query.learner = { $nin: learnersWithCompleted };
+      }
       query.status = status;
     }
     const [coursePayment, course, total, totalCoursePayment] =
