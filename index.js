@@ -22,7 +22,7 @@ const server = createServer(app);
   // Connect to database
   await connectDB(process.env.MONGO_URI);
   // await addBrevoEmail();
-  await updateStartDate();
+  // await updateStartDate();
 })();
 
 // Cors options
