@@ -462,7 +462,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
 
 const getCoursePayment = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, exportall, startDate } = req.query;
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
       ? parseInt(req.query.resultPerPage)
@@ -470,7 +470,7 @@ const getCoursePayment = async (req, res) => {
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const skip = (page - 1) * resultPerPage;
 
-    //Search
+    // Search and filter
     const query = { amount: { $gt: 5 } };
     if (search) {
       const withIn = new RegExp(search.toLowerCase(), "i");
@@ -486,112 +486,117 @@ const getCoursePayment = async (req, res) => {
       }
       query.status = status;
     }
-    const [coursePayment, totalCoursePayment] = await Promise.all([
-      CoursePayment.aggregate([
-        // 🔍 Step 1: Filter as needed
-        {
-          $match: { ...query },
-        },
-        // Group by learner
-        {
-          $group: {
-            _id: "$learner",
-            all: { $push: "$$ROOT" },
-            hasCompleted: {
-              $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
-            },
+    if (startDate) {
+      query.startDate = new Date(startDate);
+    }
+    // AggregateQuery
+    const aggregateQueryArray = [
+      // 🔍 Step 1: Filter as needed
+      { $match: { ...query } },
+      // Group by learner
+      {
+        $group: {
+          _id: "$learner",
+          all: { $push: "$$ROOT" },
+          hasCompleted: {
+            $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
           },
         },
-        // Select only completed OR latest pending
-        {
-          $project: {
-            result: {
-              $cond: [
-                { $gt: ["$hasCompleted", 0] },
+      },
+      // Select only completed OR latest pending
+      {
+        $project: {
+          result: {
+            $cond: [
+              { $gt: ["$hasCompleted", 0] },
+              {
+                $filter: {
+                  input: "$all",
+                  as: "item",
+                  cond: { $eq: ["$$item.status", "completed"] },
+                },
+              },
+              [
                 {
-                  $filter: {
-                    input: "$all",
-                    as: "item",
-                    cond: { $eq: ["$$item.status", "completed"] },
+                  $first: {
+                    $slice: [
+                      {
+                        $filter: {
+                          input: {
+                            $sortArray: {
+                              input: "$all",
+                              sortBy: { createdAt: -1 },
+                            },
+                          },
+                          as: "item",
+                          cond: { $eq: ["$$item.status", "pending"] },
+                        },
+                      },
+                      1,
+                    ],
                   },
                 },
-                [
-                  {
-                    $first: {
-                      $slice: [
-                        {
-                          $filter: {
-                            input: {
-                              $sortArray: {
-                                input: "$all",
-                                sortBy: { createdAt: -1 },
-                              },
-                            },
-                            as: "item",
-                            cond: { $eq: ["$$item.status", "pending"] },
-                          },
-                        },
-                        1,
-                      ],
-                    },
-                  },
-                ],
               ],
-            },
+            ],
           },
         },
-        // Flatten the result array
-        { $unwind: "$result" },
-        // Select fields
-        {
-          $project: {
-            _id: "$result._id",
-            courseName: "$result.courseName",
-            couponName: "$result.couponName",
-            createdAt: "$result.createdAt",
-            paymentMethod: "$result.paymentMethod",
-            startDate: "$result.startDate",
-            amount: "$result.amount",
-            status: "$result.status",
-            learner: "$result.learner",
+      },
+      // Flatten the result array
+      { $unwind: "$result" },
+      // Select fields
+      {
+        $project: {
+          _id: "$result._id",
+          courseName: "$result.courseName",
+          couponName: "$result.couponName",
+          createdAt: "$result.createdAt",
+          paymentMethod: "$result.paymentMethod",
+          startDate: "$result.startDate",
+          amount: "$result.amount",
+          status: "$result.status",
+          learner: "$result.learner",
+        },
+      },
+      // Populate learner manually
+      {
+        $lookup: {
+          from: "users", // Replace with your actual learner collection name
+          localField: "learner",
+          foreignField: "_id",
+          as: "learner",
+        },
+      },
+      { $unwind: "$learner" },
+      // Optionally project learner fields
+      {
+        $project: {
+          courseName: 1,
+          couponName: 1,
+          createdAt: 1,
+          paymentMethod: 1,
+          startDate: 1,
+          amount: 1,
+          status: 1,
+          learner: {
+            _id: 1,
+            name: "$learner.name",
+            email: "$learner.email",
+            mobileNumber: "$learner.mobileNumber",
+            isMobileNumberVerified: "$learner.isMobileNumberVerified",
+            createdAt: "$learner.createdAt",
+            lastLogin: "$learner.lastLogin",
           },
         },
-        // Populate learner manually
-        {
-          $lookup: {
-            from: "users", // Replace with your actual learner collection name
-            localField: "learner",
-            foreignField: "_id",
-            as: "learner",
-          },
-        },
-        { $unwind: "$learner" },
-        // Optionally project learner fields
-        {
-          $project: {
-            courseName: 1,
-            couponName: 1,
-            createdAt: 1,
-            paymentMethod: 1,
-            startDate: 1,
-            amount: 1,
-            status: 1,
-            learner: {
-              _id: 1,
-              name: "$learner.name",
-              email: "$learner.email",
-              mobileNumber: "$learner.mobileNumber",
-              isMobileNumberVerified: "$learner.isMobileNumberVerified",
-              createdAt: "$learner.createdAt",
-              lastLogin: "$learner.lastLogin",
-            },
-          },
-        },
-        // Pagination
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: resultPerPage },
-      ]),
+      },
+      // Pagination
+      { $sort: { createdAt: -1 } },
+    ];
+    if (!exportall || exportall === "false") {
+      aggregateQueryArray.push({ $skip: skip });
+      aggregateQueryArray.push({ $limit: resultPerPage });
+    }
+    const [coursePayment, totalCoursePayment] = await Promise.all([
+      CoursePayment.aggregate(aggregateQueryArray),
       CoursePayment.aggregate([
         { $match: query },
         {
@@ -648,6 +653,7 @@ const getCoursePayment = async (req, res) => {
     const totalPages = Math.ceil(totalCount / resultPerPage) || 0;
     return successResponse(res, 200, `Successfully!`, {
       data: coursePayment,
+      totalRow: totalCount,
       totalPages,
       currentPage: page,
     });
@@ -665,9 +671,12 @@ const getMyCourses = async (req, res) => {
     })
       .select("_id courseName startDate amount")
       .lean();
+    coursePayment.startDateInIST = new Date(
+      new Date(coursePayment.startDate).getTime() + 330 * 60 * 1000
+    );
     return successResponse(res, 200, `Successfully!`, coursePayment);
   } catch (err) {
-    console.log(err.message);
+    // console.log(err.message);
     failureResponse(res);
   }
 };
