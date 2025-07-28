@@ -6,6 +6,7 @@ import { EmailCredential } from "../Model/User/emailCredentials.js";
 import { User } from "../Model/User/Profile/userModel.js";
 import slugify from "slugify";
 import { YogaCategory } from "../Model/Master/yogaCategoryModel.js";
+import { CoursePayment } from "../Model/User/Services/Course/coursePaymentModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -25,18 +26,49 @@ async function addBrevoEmail() {
   await EmailCredential.create({ email: "connect@swastibharat.com" });
 }
 
-// async function addCategorySlug() {
-//   const categories = await YogaCategory.find({ slug: { $exists: false } });
+async function updateStartDate() {
+  try {
+    const payment = await CoursePayment.find({ amount: { $gt: 5 } });
 
-//   for (const user of categories) {
-//     const baseSlug = slugify(user.yogaCategory, { lower: true, strict: true });
-//     user.slug = baseSlug;
-//     await user.save();
-//     console.log(`Generated slug for ${user.name}: ${user.slug}`);
-//   }
+    for (const pay of payment) {
+      if (!pay.startDate) {
+        await CoursePayment.updateOne(
+          { _id: pay._id },
+          { $set: { startDate: new Date("2025-07-23T00:30:00.000Z") } }
+        );
+      } else if (
+        new Date(pay.startDate).getTime() ===
+        new Date("2025-07-23T06:00:00.000Z").getTime()
+      ) {
+        await CoursePayment.updateOne(
+          { _id: pay._id },
+          { $set: { startDate: new Date("2025-07-23T00:30:00.000Z") } }
+        );
+      } else if (
+        new Date(pay.startDate).getTime() ===
+        new Date("2025-08-01T11:00:00.000Z").getTime()
+      ) {
+        await CoursePayment.updateOne(
+          { _id: pay._id },
+          { $set: { startDate: new Date("2025-08-01T05:30:00.000Z") } }
+        );
+      } else if (
+        new Date(pay.startDate).getTime() ===
+        new Date("2025-08-01T06:00:00.000Z").getTime()
+      ) {
+        await CoursePayment.updateOne(
+          { _id: pay._id },
+          { $set: { startDate: new Date("2025-08-01T00:30:00.000Z") } }
+        );
+      }
+    }
 
-//   console.log("Slug generation completed.");
-//   process.exit();
-// }
+    console.log("Done.");
+  } catch (err) {
+    console.error("Error updating start dates:", err);
+  } finally {
+    process.exit();
+  }
+}
 
-export { connectDB, addBrevoEmail };
+export { connectDB, addBrevoEmail, updateStartDate };
