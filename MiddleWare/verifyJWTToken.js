@@ -6,6 +6,7 @@ import { User } from "../Model/User/Profile/userModel.js";
 import { Admin } from "../Model/Admin/adminModel.js";
 import { failureResponse } from "./responseMiddleware.js";
 import { Institute } from "../Model/Institute/instituteModel.js";
+import { InstituteInstructor } from "../Model/Institute/instituteInstructorModel.js";
 const { JWT_SECRET_KEY_USER, JWT_SECRET_KEY_ADMIN } = process.env;
 
 const verifyUserJWT = async (req, res, next) => {
@@ -84,4 +85,33 @@ const verifyInstituteJWT = async (req, res, next) => {
   }
 };
 
-export { verifyAdminJWT, verifyUserJWT, verifyInstituteJWT };
+const verifyInstituteInstructorJWT = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
+    const token = authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401);
+
+    const decode = jwt.verify(token, JWT_SECRET_KEY_USER);
+
+    const institute = await InstituteInstructor.findOne(
+      { _id: decode._id },
+      "_id name email mobileNumber refreshToken"
+    ).lean();
+    if (!institute || !institute.refreshToken) {
+      return failureResponse(res, 401, "Unauthorized", null);
+    }
+    req.institute_instructor = institute;
+    return next();
+  } catch (err) {
+    return failureResponse(res, 500, err.message);
+  }
+};
+
+export {
+  verifyAdminJWT,
+  verifyUserJWT,
+  verifyInstituteJWT,
+  verifyInstituteInstructorJWT,
+};

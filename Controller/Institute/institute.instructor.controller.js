@@ -13,53 +13,70 @@ import {
 
 const SALT = 10;
 import bcrypt from "bcryptjs";
-import { Institute } from "../../Model/Institute/instituteModel.js";
 import {
   validateInstituteLogin,
-  validateInstituteRegistration,
+  validateInstituteInstructorRegistration,
 } from "../../MiddleWare/Validation/institute.js";
 import jwt from "jsonwebtoken";
+import { InstituteInstructor } from "../../Model/Institute/instituteInstructorModel.js";
+import { User } from "../../Model/User/Profile/userModel.js";
 
-const instituteDetails = async (req, res) => {
+const instructorDetails = async (req, res) => {
   try {
-    const institute = await Institute.findById(req.institute._id)
-      .select("_id name email mobileNumber")
+    const instructor = await InstituteInstructor.findById(
+      req.institute_instructor._id
+    )
+      .select("_id name email mobileNumber slug")
       .lean();
     // Send final success response
-    return successResponse(res, 200, "Successfully!", institute);
+    return successResponse(res, 200, "Successfully!", instructor);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
 
-const registerInstituteByAdmin = async (req, res) => {
+const registerIInstructorByAdmin = async (req, res) => {
   try {
     // Body Validation
-    const { error } = validateInstituteRegistration(req.body);
+    const { error } = validateInstituteInstructorRegistration(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     // Find Institute
-    const { email, mobileNumber, password } = req.body;
+    const { email, mobileNumber, password, institute } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
-    const isInstittute = await Institute.findOne({ email: email });
-    if (isInstittute) {
-      return failureResponse(res, 400, "Institute already present!", null);
+    const instituteInstructor = await InstituteInstructor.findOne({
+      email: email,
+    }).lean();
+    if (instituteInstructor) {
+      return failureResponse(res, 400, "Instructor already present!", null);
+    }
+    // If this register in user
+    let instructor = undefined;
+    const user = await User.findOne({ $or: [{ email }, { mobileNumber }] })
+      .select("name")
+      .lean();
+    if (user) {
+      instructor = user._id;
     }
     // Hash password
     const salt = await bcrypt.genSalt(SALT);
     const hashedPassword = await bcrypt.hash(password, salt);
     // Save details
-    await Institute.create({
+    await InstituteInstructor.create({
       email,
       mobileNumber,
       name,
       password: hashedPassword,
       approvalByAdmin: "accepted",
+      institute,
+      instructor,
     });
     // Send final success response
-    return successResponse(res, 201, "Institute created!");
+    return successResponse(res, 201, "Instructor created!");
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -71,36 +88,37 @@ const login = async (req, res) => {
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { email, password } = req.body;
     // Find Institute
-    const isInstittute = await Institute.findOne({ email })
+    const instructor = await InstituteInstructor.findOne({ email })
       .select("+password -createdAt -isDelete -deleted_at -refreshToken")
       .lean();
-    if (!isInstittute) {
+    if (!instructor) {
       return failureResponse(res, 400, "Invalid email or password!", null);
     }
     // Validate password
-    const validPassword = await bcrypt.compare(password, isInstittute.password);
+    const validPassword = await bcrypt.compare(password, instructor.password);
     if (!validPassword) {
       return failureResponse(res, 400, "Invalid email or password!", null);
     }
     // Create token
-    const accessToken = createUserAccessToken({ _id: isInstittute._id, email });
+    const accessToken = createUserAccessToken({ _id: instructor._id, email });
     const refreshToken = createUserRefreshToken({
-      _id: isInstittute._id,
+      _id: instructor._id,
       email,
     });
     // Added refresh token in database
-    await Institute.updateOne(
-      { _id: isInstittute._id },
+    await InstituteInstructor.updateOne(
+      { _id: instructor._id },
       { $set: { refreshToken } }
     );
-    delete isInstittute.password;
+    delete instructor.password;
     // Send final success response
-    return successResponse(res, 201, `Welcome Back, ${isInstittute.name}.`, {
-      institute: isInstittute,
+    return successResponse(res, 201, `Welcome Back, ${instructor.name}.`, {
+      instructor,
       accessToken,
       refreshToken,
     });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -115,14 +133,14 @@ const refreshAccessToken = async (req, res) => {
       process.env.JWT_SECRET_REFRESH_KEY_USER
     );
     // Find valid user
-    const institute = await Institute.findById(decoded._id).lean();
-    if (!institute || institute?.refreshToken !== refreshToken) {
+    const instructor = await InstituteInstructor.findById(decoded._id).lean();
+    if (!instructor || instructor?.refreshToken !== refreshToken) {
       return failureResponse(res, 403, "Unauthorized", null);
     }
     // Generate access token
     const token = createUserAccessToken({
-      _id: institute._id,
-      email: institute.email,
+      _id: instructor._id,
+      email: instructor.email,
     });
     // Final response
     return successResponse(res, 200, "Successfully", {
@@ -130,34 +148,39 @@ const refreshAccessToken = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     failureResponse(res);
   }
 };
 
 const logout = async (req, res) => {
   try {
-    await Institute.updateOne(
-      { _id: req.institute._id },
+    await InstituteInstructor.updateOne(
+      { _id: req.institute_instructor._id },
       { $set: { refreshToken: null } }
     );
     return successResponse(res, 200, "Loged out successfully");
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
 
-const instituteDetailsForAdmin = async (req, res) => {
+const instituteInstructorDetailsForAdmin = async (req, res) => {
   try {
-    const institute = await Institute.findById(req.params.id).lean();
+    const instructor = await InstituteInstructor.findById(req.params.id)
+      .populate("institute", "name")
+      .populate("instructor", "name")
+      .lean();
     // Send final success response
-    return successResponse(res, 200, "Successfully!", institute);
+    return successResponse(res, 200, "Successfully!", instructor);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
 
-const getInstitute = async (req, res) => {
+const getInstructor = async (req, res) => {
   try {
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
@@ -172,33 +195,35 @@ const getInstitute = async (req, res) => {
       const withIn = new RegExp(search.toLowerCase(), "i");
       query.name = withIn;
     }
-    const [institute, totalInstitute] = await Promise.all([
-      Institute.find(query)
+    const [instructor, totalInstructor] = await Promise.all([
+      InstituteInstructor.find(query)
         .sort({ name: 1 })
         .skip(skip)
         .limit(resultPerPage)
         .select("_id name slug email mobileNumber createdAt")
+        .populate("institute", "name")
         .lean(),
-      Institute.countDocuments(query),
+      InstituteInstructor.countDocuments(query),
     ]);
 
-    const totalPages = Math.ceil(totalInstitute / resultPerPage) || 0;
+    const totalPages = Math.ceil(totalInstructor / resultPerPage) || 0;
     return successResponse(res, 200, `Successfully!`, {
-      data: institute,
+      data: instructor,
       totalPages,
       currentPage: page,
     });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
 
 export {
-  instituteDetails,
-  registerInstituteByAdmin,
+  registerIInstructorByAdmin,
+  instructorDetails,
   login,
   logout,
   refreshAccessToken,
-  instituteDetailsForAdmin,
-  getInstitute,
+  instituteInstructorDetailsForAdmin,
+  getInstructor,
 };

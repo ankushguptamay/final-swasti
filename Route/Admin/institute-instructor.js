@@ -2,13 +2,23 @@ import express from "express";
 import {
   getInstitute,
   instituteDetailsForAdmin,
-  registerByAdmin,
+  registerInstituteByAdmin,
 } from "../../Controller/Institute/institute.controller.js";
+import {
+  getInstructor,
+  registerIInstructorByAdmin,
+  instituteInstructorDetailsForAdmin,
+} from "../../Controller/Institute/institute.instructor.controller.js";
 const router = express.Router();
 
 // Institute
-router.post("/", registerByAdmin);
+router.post("/", registerInstituteByAdmin);
 router.get("/", getInstitute);
-router.get("/:id", instituteDetailsForAdmin);
+router.get("/details/:id", instituteDetailsForAdmin);
+
+// Instructor
+router.post("/instructor", registerIInstructorByAdmin);
+router.get("/instructor", getInstructor);
+router.get("/instructor/:id", instituteInstructorDetailsForAdmin);
 
 export default router;
