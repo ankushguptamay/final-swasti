@@ -6,6 +6,7 @@ const { Schema, model, models, Types } = mongoose;
 
 const schema = new Schema(
   {
+    yogaCourse: { type: Types.ObjectId, ref: "YogaCourse", required: false },
     learner: { type: Types.ObjectId, ref: "User", required: true },
     courseName: { type: String },
     couponName: { type: String },

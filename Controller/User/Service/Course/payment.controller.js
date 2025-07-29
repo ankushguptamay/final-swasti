@@ -26,6 +26,7 @@ import { capitalizeFirstLetter } from "../../../../Helper/formatChange.js";
 import { generateUserCode } from "../../UserProfile/user.controller.js";
 import { yvcPaymentSuccessEmail } from "../../../../Config/emailFormate.js";
 import { sendEmailViaZeptoZoho } from "../../../../Util/sendEmail.js";
+import { YogaCourse } from "../../../../Model/Institute/yogaCoursesMode.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -68,6 +69,41 @@ const applyCourseCoupon = async (req, res) => {
   }
 };
 
+// Find Course
+async function findCourse(data) {
+  const { courseName, startDate, amount } = data;
+  const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+  const yogaCourse = await YogaCourse.findOne({
+    name,
+    startDate: new Date(startDate),
+    totalEnroll: { $lt: 30 },
+  })
+    .select("_id")
+    .lean();
+  let courseId;
+  if (!yogaCourse) {
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 45);
+    const courseDescription = await YogaCourse.findOne({ name })
+      .select("_id description")
+      .lean();
+    const newCourse = await YogaCourse.create({
+      name,
+      description: courseDescription
+        ? courseDescription.description
+        : undefined,
+      startDate: new Date(startDate),
+      endDate: new Date(startDate),
+      amount: parseFloat(amount) / 100,
+    });
+    console.log(courseDescription);
+    courseId = newCourse._id;
+  } else {
+    courseId = yogaCourse._id;
+  }
+  return courseId;
+}
+
 const createCourseOrderByRazorpay = async (req, res) => {
   try {
     // Validate body
@@ -75,6 +111,9 @@ const createCourseOrderByRazorpay = async (req, res) => {
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseName, currency, startDate, couponName, amount } = req.body;
     const userId = req.user._id;
+    // Capitalize name
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+    const courseId = await findCourse(req.body);
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ra`;
     const receipt = await generateReceiptNumber(prefix);
@@ -85,9 +124,10 @@ const createCourseOrderByRazorpay = async (req, res) => {
       receipt,
     });
     await CoursePayment.create({
+      yogaCourse: courseId,
       learner: userId,
       couponName,
-      courseName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "razorpay",
       amount: parseFloat(amount) / 100,
@@ -101,6 +141,7 @@ const createCourseOrderByRazorpay = async (req, res) => {
       mobileNumber: req.user.mobileNumber,
     });
   } catch (err) {
+    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -144,6 +185,13 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
             },
           }
         );
+        // Update enroll number
+        if (order.yogaCourse) {
+          await YogaCourse.updateOne(
+            { _id: order.yogaCourse },
+            { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
+          );
+        }
       }
       // send Email
       const data = {
@@ -245,6 +293,8 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       // Create Wallet
       await Wallet.create({ userId: user._id });
     }
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+    const courseId = await findCourse({ courseName, startDate, amount });
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
     const receipt = await generateReceiptNumber(prefix);
@@ -256,9 +306,10 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       receipt,
     });
     await CoursePayment.create({
+      yogaCourse: courseId,
       learner: user._id,
       couponName,
-      courseName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "razorpay",
       amount: parseFloat(amount) / 100,
@@ -272,6 +323,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       mobileNumber,
     });
   } catch (err) {
+    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -337,15 +389,18 @@ const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
       // Create Wallet
       await Wallet.create({ userId: user._id });
     }
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+    const courseId = await findCourse({ courseName, startDate, amount });
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
     const receipt = await generateReceiptNumber(prefix);
     // initiate payment
     const order = await createPhonepePayment(amount, receipt);
     await CoursePayment.create({
+      yogaCourse: courseId,
       learner: user._id,
       couponName,
-      courseName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "phonepe",
       amount: parseFloat(amount) / 100,
@@ -365,15 +420,19 @@ const createCourseOrderByPhonepe = async (req, res) => {
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseName, currency, startDate, couponName, amount } = req.body;
     const userId = req.user._id;
+    // Capitalize name
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+    const courseId = await findCourse(req.body);
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
     const receipt = await generateReceiptNumber(prefix);
     // initiate payment
     const order = await createPhonepePayment(amount, receipt);
     await CoursePayment.create({
+      yogaCourse: courseId,
       learner: userId,
       couponName,
-      courseName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "phonepe",
       amount: parseFloat(amount) / 100,
@@ -418,6 +477,13 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
             },
           }
         );
+        // Update enroll number
+        if (order.yogaCourse) {
+          await YogaCourse.updateOne(
+            { _id: order.yogaCourse },
+            { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
+          );
+        }
       }
       // send Email
       const data = {
@@ -680,6 +746,27 @@ const getMyCourses = async (req, res) => {
   }
 };
 
+const reAssignCoursesToUser = async (req, res) => {
+  try {
+    const courseId = req.body.courseId;
+    if (!courseId) return failureResponse(res, 400, "Please select a course!");
+    const coursePayment = await CoursePayment.findById(req.params.paymentId)
+      .select("_id yogaCourse")
+      .lean();
+    if (!coursePayment) {
+      return failureResponse(res, 400, "This course payment is not present!");
+    }
+    await CoursePayment.updateOne(
+      { _id: req.params.paymentId },
+      { $set: { yogaCourse: courseId } }
+    );
+    return successResponse(res, 200, `Successfully reassigned!`);
+  } catch (err) {
+    // console.log(err.message);
+    failureResponse(res);
+  }
+};
+
 export {
   applyCourseCoupon,
   createCourseOrderByRazorpay,
@@ -690,4 +777,5 @@ export {
   createCourseOrderByRazorpayAndRegisterUser,
   getCoursePayment,
   getMyCourses,
+  reAssignCoursesToUser,
 };

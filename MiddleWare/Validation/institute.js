@@ -58,8 +58,32 @@ const validateInstituteInstructorRegistration = (data) => {
   return schema.validate(data);
 };
 
+const validateYogaCourse = (data) => {
+  const schema = joi.object().keys({
+    name: joi
+      .string()
+      .valid("Yoga Volunteer Course", "Obesity Management")
+      .required(),
+    description: joi.string().optional(),
+    assigned_to: joi.string().optional(),
+    startDate: joi.string().required(),
+    amount: joi.number().required(),
+  });
+  return schema.validate(data);
+};
+
+const validateReAssignYogaCourse = (data) => {
+  const schema = joi.object().keys({
+    courseId: joi.string().required(),
+    assigned_to: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
 export {
   validateInstituteRegistration,
   validateInstituteLogin,
   validateInstituteInstructorRegistration,
+  validateYogaCourse,
+  validateReAssignYogaCourse,
 };
