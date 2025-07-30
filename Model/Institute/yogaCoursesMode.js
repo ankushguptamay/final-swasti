@@ -32,9 +32,6 @@ const schema = new Schema(
   { timestamps: true }
 );
 
-// Ensure uniqueness of slug globally
-schema.index({ slug: 1 }, { unique: true });
-
 // Pre-save hook for batchNumber and slug
 schema.pre("save", async function (next) {
   const doc = this;

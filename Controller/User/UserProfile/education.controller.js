@@ -35,7 +35,7 @@ const addEducation = async (req, res) => {
     // Update education array in user profile
     const user = await User.findById(req.user._id).select("education").lean();
     user.education = [...user.education, education._id];
-    await user.updateOne({ _id: req.user._id }, { $set: { education } });
+    await User.updateOne({ _id: req.user._id }, { $set: { education } });
     // Send final success response
     return successResponse(
       res,
