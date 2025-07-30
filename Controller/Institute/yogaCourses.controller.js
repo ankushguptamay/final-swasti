@@ -62,7 +62,7 @@ const courseDetails = async (req, res) => {
         .populate("assigned_to", "name email mobileNumber")
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
-        .select("-createdAt -updatedAt")
+        .select("name video date")
         .lean(),
       CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
         .select("amount status")
@@ -72,6 +72,11 @@ const courseDetails = async (req, res) => {
     course.startDateInIST = new Date(
       new Date(course.startDate).getTime() + 330 * 60 * 1000
     );
+    for (let j = 0; j < lesson.length; j++) {
+      lesson[i].dateInIST = new Date(
+        new Date(lesson[i].date).getTime() + 330 * 60 * 1000
+      );
+    }
     // Send final success response
     return successResponse(res, 200, "Successfully!", {
       ...course,
