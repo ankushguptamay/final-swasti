@@ -2,7 +2,7 @@ import joi from "joi";
 
 const validateInstituteRegistration = (data) => {
   const schema = joi.object().keys({
-    name: joi.string().min(3).max(30).required(),
+    name: joi.string().min(3).required(),
     email: joi.string().email().required().label("Email"),
     mobileNumber: joi
       .string()
