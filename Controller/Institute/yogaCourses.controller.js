@@ -9,6 +9,7 @@ import {
 } from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yogaCoursesMode.js";
+import { CoursePayment } from "../../Model/User/Services/Course/coursePaymentModel.js";
 
 const createYogaCourse = async (req, res) => {
   try {
@@ -56,17 +57,27 @@ const createYogaCourse = async (req, res) => {
 
 const courseDetails = async (req, res) => {
   try {
-    const [course, lesson] = await Promise.all([
+    const [course, lesson, user] = await Promise.all([
       YogaCourse.findById(req.params.id)
         .populate("assigned_to", "name email mobileNumber")
         .lean(),
-      YCLesson.find({ yogaCourse: req.params.id }),
+      YCLesson.find({ yogaCourse: req.params.id })
+        .select("-createdAt -updatedAt")
+        .lean(),
+      CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
+        .select("amount status")
+        .populate("learner", "name email mobileNumber")
+        .lean(),
     ]);
     course.startDateInIST = new Date(
       new Date(course.startDate).getTime() + 330 * 60 * 1000
     );
     // Send final success response
-    return successResponse(res, 200, "Successfully!", { ...course, lesson });
+    return successResponse(res, 200, "Successfully!", {
+      ...course,
+      lesson,
+      user,
+    });
   } catch (err) {
     failureResponse(res);
   }
