@@ -218,6 +218,15 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
           htmlbody: emailHtml,
         };
         await sendEmailViaZeptoZoho(options);
+        await sendEmailViaZeptoZoho({
+          ...options,
+          receiver: [
+            {
+              receiverEmail: "ankushgupta9675@gmail.com",
+              receiverName: "Ankush Gupta",
+            },
+          ],
+        });
       }
       return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
     } else {
@@ -485,7 +494,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: order.startDate,
+        timeSlote: new Date(order.startDate).toString(),
       };
       let emailHtml;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
