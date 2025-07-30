@@ -184,7 +184,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
           }
         );
         // Update enroll number
-        if (order.yogaCourse) {
+        if (order.yogaCourse && order.amount > 5) {
           await YogaCourse.updateOne(
             { _id: order.yogaCourse },
             { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
@@ -475,7 +475,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
           }
         );
         // Update enroll number
-        if (order.yogaCourse) {
+        if (order.yogaCourse && order.amount > 5) {
           await YogaCourse.updateOne(
             { _id: order.yogaCourse },
             { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
