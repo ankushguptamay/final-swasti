@@ -73,8 +73,8 @@ const courseDetails = async (req, res) => {
       new Date(course.startDate).getTime() + 330 * 60 * 1000
     );
     for (let j = 0; j < lesson.length; j++) {
-      lesson[i].dateInIST = new Date(
-        new Date(lesson[i].date).getTime() + 330 * 60 * 1000
+      lesson[j].dateInIST = new Date(
+        new Date(lesson[j].date).getTime() + 330 * 60 * 1000
       );
     }
     // Send final success response

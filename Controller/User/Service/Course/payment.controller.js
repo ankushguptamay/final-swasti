@@ -742,8 +742,8 @@ const getMyCourses = async (req, res) => {
         .select("name video date")
         .lean();
       for (let j = 0; j < lesson.length; j++) {
-        lesson[i].dateInIST = new Date(
-          new Date(lesson[i].date).getTime() + 330 * 60 * 1000
+        lesson[j].dateInIST = new Date(
+          new Date(lesson[j].date).getTime() + 330 * 60 * 1000
         );
       }
       coursePayment[i].startDateInIST = new Date(
