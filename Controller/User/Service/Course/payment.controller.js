@@ -27,6 +27,7 @@ import { generateUserCode } from "../../UserProfile/user.controller.js";
 import { yvcPaymentSuccessEmail } from "../../../../Config/emailFormate.js";
 import { sendEmailViaZeptoZoho } from "../../../../Util/sendEmail.js";
 import { YogaCourse } from "../../../../Model/Institute/yogaCoursesMode.js";
+import { YCLesson } from "../../../../Model/Institute/yCLessonModel.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -731,11 +732,20 @@ const getMyCourses = async (req, res) => {
       status: "completed",
       learner: req.user._id,
     })
+      .populate("yogaCourse", "name description startDate endDate amount slug")
       .select("_id courseName startDate amount")
       .lean();
-    coursePayment.startDateInIST = new Date(
-      new Date(coursePayment.startDate).getTime() + 330 * 60 * 1000
-    );
+    for (let i = 0; i < coursePayment.length; i++) {
+      const lesson = await YCLesson.find({
+        yogaCourse: coursePayment[i].yogaCourse,
+      })
+        .select("name video date")
+        .lean();
+      coursePayment[i].startDateInIST = new Date(
+        new Date(coursePayment[i].startDate).getTime() + 330 * 60 * 1000
+      );
+      coursePayment[i].lesson = lesson;
+    }
     return successResponse(res, 200, `Successfully!`, coursePayment);
   } catch (err) {
     failureResponse(res);
