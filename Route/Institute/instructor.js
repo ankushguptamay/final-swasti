@@ -10,6 +10,11 @@ import {
 
 // Middleware
 import { verifyInstituteInstructorJWT } from "../../MiddleWare/verifyJWTToken.js";
+import { myCourseForIInstructor } from "../../Controller/Institute/yogaCourses.controller.js";
+import {
+  createYogaCourseLesson,
+  updateYogaCourseLesson,
+} from "../../Controller/Institute/yCLesson.controller.js";
 
 // Auth
 router.post("/login", login);
@@ -20,5 +25,9 @@ router.use(verifyInstituteInstructorJWT);
 
 router.get("/", instructorDetails);
 router.put("/logout", logout);
+
+router.get("/yoga-course", myCourseForIInstructor);
+router.post("/yoga-course-lesson", createYogaCourseLesson);
+router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
 export default router;

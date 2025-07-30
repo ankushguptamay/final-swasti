@@ -10,12 +10,16 @@ import {
   instituteInstructorDetailsForAdmin,
 } from "../../Controller/Institute/institute.instructor.controller.js";
 import {
-  courseDetailsForAdmin,
+  courseDetails,
   createYogaCourse,
   getCourse,
   reAssignCourseToInstructor,
 } from "../../Controller/Institute/yogaCourses.controller.js";
 import { reAssignCoursesToUser } from "../../Controller/User/Service/Course/payment.controller.js";
+import {
+  createYogaCourseLesson,
+  updateYogaCourseLesson,
+} from "../../Controller/Institute/yCLesson.controller.js";
 
 const router = express.Router();
 
@@ -32,8 +36,10 @@ router.get("/instructor/:id", instituteInstructorDetailsForAdmin);
 // Yoga Courses
 router.post("/yoga-course", createYogaCourse);
 router.get("/yoga-course", getCourse);
-router.get("/yoga-course/:id", courseDetailsForAdmin);
+router.get("/yoga-course/:id", courseDetails);
 router.put("/yoga-course-reassign-inst", reAssignCourseToInstructor);
 router.put("/yoga-course-reassign-user", reAssignCoursesToUser);
+router.post("/yoga-course-lesson", createYogaCourseLesson);
+router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
 export default router;

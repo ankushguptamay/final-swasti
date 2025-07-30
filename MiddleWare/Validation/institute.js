@@ -80,10 +80,21 @@ const validateReAssignYogaCourse = (data) => {
   return schema.validate(data);
 };
 
+const validateYogaCourseLesson = (data) => {
+  const schema = joi.object().keys({
+    name: joi.string().required(),
+    yogaCourseId: joi.string().required(),
+    video: joi.string().optional(),
+    date: joi.string().required(), // UTC/GMT
+  });
+  return schema.validate(data);
+};
+
 export {
   validateInstituteRegistration,
   validateInstituteLogin,
   validateInstituteInstructorRegistration,
   validateYogaCourse,
   validateReAssignYogaCourse,
+  validateYogaCourseLesson,
 };

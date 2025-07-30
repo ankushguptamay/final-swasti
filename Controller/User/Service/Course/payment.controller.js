@@ -93,10 +93,9 @@ async function findCourse(data) {
         ? courseDescription.description
         : undefined,
       startDate: new Date(startDate),
-      endDate: new Date(startDate),
+      endDate,
       amount: parseFloat(amount) / 100,
     });
-    console.log(courseDescription);
     courseId = newCourse._id;
   } else {
     courseId = yogaCourse._id;
@@ -141,7 +140,6 @@ const createCourseOrderByRazorpay = async (req, res) => {
       mobileNumber: req.user.mobileNumber,
     });
   } catch (err) {
-    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -323,7 +321,6 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       mobileNumber,
     });
   } catch (err) {
-    console.log(err.message);
     return failureResponse(res);
   }
 };
@@ -741,7 +738,6 @@ const getMyCourses = async (req, res) => {
     );
     return successResponse(res, 200, `Successfully!`, coursePayment);
   } catch (err) {
-    // console.log(err.message);
     failureResponse(res);
   }
 };
@@ -762,7 +758,6 @@ const reAssignCoursesToUser = async (req, res) => {
     );
     return successResponse(res, 200, `Successfully reassigned!`);
   } catch (err) {
-    // console.log(err.message);
     failureResponse(res);
   }
 };

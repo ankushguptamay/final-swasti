@@ -51,6 +51,7 @@ const register = async (req, res) => {
     });
     // Create access token
     const accessToken = createAdminAccessToken({ _id: admin._id, email });
+    delete admin.password;
     // Send final success response
     return successResponse(res, 201, "Admin created!", { admin, accessToken });
   } catch (err) {
@@ -76,6 +77,7 @@ const login = async (req, res) => {
     }
     // Create token
     const accessToken = createAdminAccessToken({ _id: isAdmin._id, email });
+    delete isAdmin.password;
     // Send final success response
     return successResponse(res, 201, `Welcome Back, ${isAdmin.name}`, {
       isAdmin,

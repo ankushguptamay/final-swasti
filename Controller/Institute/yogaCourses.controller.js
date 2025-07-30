@@ -3,7 +3,11 @@ import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
-import { validateYogaCourse,validateReAssignYogaCourse } from "../../MiddleWare/Validation/institute.js";
+import {
+  validateYogaCourse,
+  validateReAssignYogaCourse,
+} from "../../MiddleWare/Validation/institute.js";
+import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yogaCoursesMode.js";
 
 const createYogaCourse = async (req, res) => {
@@ -21,7 +25,7 @@ const createYogaCourse = async (req, res) => {
     const isAnyCourse = await YogaCourse.findOne({
       name,
       startDate: new Date(startDate),
-      totalEnroll: { $lt: 30 },
+      totalEnroll: { $lte: 30 },
     })
       .select("_id")
       .lean();
@@ -39,7 +43,7 @@ const createYogaCourse = async (req, res) => {
       name,
       description,
       startDate: new Date(startDate),
-      endDate: new Date(startDate),
+      endDate,
       amount,
       assigned_to,
     });
@@ -50,13 +54,19 @@ const createYogaCourse = async (req, res) => {
   }
 };
 
-const courseDetailsForAdmin = async (req, res) => {
+const courseDetails = async (req, res) => {
   try {
-    const course = await YogaCourse.findById(req.params.id)
-      .populate("assigned_to", "name email mobileNumber")
-      .lean();
+    const [course, lesson] = await Promise.all([
+      YogaCourse.findById(req.params.id)
+        .populate("assigned_to", "name email mobileNumber")
+        .lean(),
+      YCLesson.find({ yogaCourse: req.params.id }),
+    ]);
+    course.startDateInIST = new Date(
+      new Date(course.startDate).getTime() + 330 * 60 * 1000
+    );
     // Send final success response
-    return successResponse(res, 200, "Successfully!", course);
+    return successResponse(res, 200, "Successfully!", { ...course, lesson });
   } catch (err) {
     failureResponse(res);
   }
@@ -125,4 +135,30 @@ const reAssignCourseToInstructor = async (req, res) => {
   }
 };
 
-export { createYogaCourse, courseDetailsForAdmin, getCourse, reAssignCourseToInstructor };
+const myCourseForIInstructor = async (req, res) => {
+  try {
+    const course = await YogaCourse.find({
+      assigned_to: req.institute_instructor._id,
+    })
+      .select("name startDate endDate description")
+      .populate("assigned_to", "name email mobileNumber totalEnroll slug")
+      .lean();
+    for (let i = 0; i < course.length; i++) {
+      course[i].startDateInIST = new Date(
+        new Date(course[i].startDate).getTime() + 330 * 60 * 1000
+      );
+    }
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", course);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+export {
+  createYogaCourse,
+  courseDetails,
+  getCourse,
+  reAssignCourseToInstructor,
+  myCourseForIInstructor,
+};

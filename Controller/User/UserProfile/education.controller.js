@@ -33,9 +33,9 @@ const addEducation = async (req, res) => {
       user: req.user._id,
     });
     // Update education array in user profile
-    const user = await User.findById(req.user._id).select("education");
+    const user = await User.findById(req.user._id).select("education").lean();
     user.education = [...user.education, education._id];
-    await user.save();
+    await user.updateOne({ _id: req.user._id }, { $set: { education } });
     // Send final success response
     return successResponse(
       res,
@@ -157,7 +157,6 @@ const deleteEducation = async (req, res) => {
     // Update isDelete
     educations.isDelete = true;
     educations.deleted_at = new Date();
-    educations.save();
     // Update education array in user profile
     const user = await User.findById(req.user._id).select("education");
     const education = [];
@@ -167,6 +166,7 @@ const deleteEducation = async (req, res) => {
       }
     }
     user.education = education;
+    await educations.save();
     await user.save();
     // Send final success response
     return successResponse(
