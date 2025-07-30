@@ -13,6 +13,7 @@ import {
   courseDetails,
   createYogaCourse,
   getCourse,
+  getCourseForDropDown,
   reAssignCourseToInstructor,
 } from "../../Controller/Institute/yogaCourses.controller.js";
 import { reAssignCoursesToUser } from "../../Controller/User/Service/Course/payment.controller.js";
@@ -36,6 +37,7 @@ router.get("/instructor/:id", instituteInstructorDetailsForAdmin);
 // Yoga Courses
 router.post("/yoga-course", createYogaCourse);
 router.get("/yoga-course", getCourse);
+router.get("/yoga-course-dd", getCourseForDropDown);
 router.get("/yoga-course/:id", courseDetails);
 router.put("/yoga-course-reassign-inst", reAssignCourseToInstructor);
 router.put("/yoga-course-reassign-user", reAssignCoursesToUser);

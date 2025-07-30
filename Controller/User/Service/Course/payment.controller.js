@@ -771,6 +771,14 @@ const reAssignCoursesToUser = async (req, res) => {
       { _id: req.params.paymentId },
       { $set: { yogaCourse: courseId } }
     );
+    await YogaCourse.updateOne(
+      { _id: coursePayment.yogaCourse },
+      { $inc: { totalEnroll: -1 } } // Decrease by 1
+    );
+    await YogaCourse.updateOne(
+      { _id: courseId },
+      { $inc: { totalEnroll: 1 } } // Increment by 1
+    );
     return successResponse(res, 200, `Successfully reassigned!`);
   } catch (err) {
     failureResponse(res);

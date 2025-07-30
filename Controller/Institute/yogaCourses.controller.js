@@ -171,10 +171,28 @@ const myCourseForIInstructor = async (req, res) => {
   }
 };
 
+const getCourseForDropDown = async (req, res) => {
+  try {
+    const yogaCourse = await YogaCourse.find({ endDate: { $gte: new Date() } })
+      .sort({ createdAt: -1 })
+      .select("_id name startDate batchNumber")
+      .lean();
+    for (let i = 0; i < yogaCourse.length; i++) {
+      yogaCourse[i].startDateInIST = new Date(
+        new Date(yogaCourse[i].startDate).getTime() + 330 * 60 * 1000
+      );
+    }
+    return successResponse(res, 200, `Successfully!`, yogaCourse);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   createYogaCourse,
   courseDetails,
   getCourse,
   reAssignCourseToInstructor,
   myCourseForIInstructor,
+  getCourseForDropDown,
 };
