@@ -43,7 +43,7 @@ const addEducation = async (req, res) => {
       `Education details have been added successfully.`
     );
   } catch (err) {
-    console.log(err.message);
+    console.log(err);
     failureResponse(res);
   }
 };
@@ -142,7 +142,7 @@ const updateEducation = async (req, res) => {
       `Education details have been updated successfully.`
     );
   } catch (err) {
-    console.log(err.message);
+    console.log(err);
     failureResponse(res);
   }
 };
@@ -177,7 +177,7 @@ const deleteEducation = async (req, res) => {
       `Education details have been deleted successfully.`
     );
   } catch (err) {
-    console.log(err.message);
+    console.log(err);
     failureResponse(res);
   }
 };
