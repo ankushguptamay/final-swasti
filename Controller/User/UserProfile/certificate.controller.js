@@ -130,15 +130,10 @@ const deleteCertificate = async (req, res) => {
     certificates.save();
     if (certificates.approvalByAdmin === "accepted") {
       // Update certificate array in user profile
-      const user = await User.findById(req.user._id).select("certificate");
-      const certificate = [];
-      for (const cer of user._doc.certificate) {
-        if (cer.toString() !== certificates._doc._id.toString()) {
-          certificate.push(cer);
-        }
-      }
-      user.certificate = certificate;
-      await user.save();
+      await User.updateOne(
+        { _id: req.user._id },
+        { $pull: { certificate: req.params.id } }
+      );
     }
     // Send final success response
     return successResponse(res, 201, `Certificate deleted successfully.`);
@@ -220,9 +215,10 @@ const certifiacteApproval = async (req, res) => {
     // Save History
     if (approvalByAdmin === "accepted") {
       // Update certificate array in user profile
-      const user = await User.findById(certificate.user).select("certificate");
-      user.certificate = [...user.certificate, certificate._id];
-      await user.save();
+      await User.updateOne(
+        { _id: req.user._id },
+        { $push: { certificate: certificate._id } }
+      );
     }
     // Save
     await certificate.updateOne({ $set: { approvalByAdmin } });

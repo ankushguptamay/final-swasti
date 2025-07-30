@@ -347,12 +347,16 @@ const loginByMobile = async (req, res) => {
     if (referralCode) {
       data.referralCode = referralCode;
     }
-    const isUser = await User.findOne({ mobileNumber, isDelete: false });
+    const isUser = await User.findOne({ mobileNumber, isDelete: false })
+      .select("_id")
+      .lean();
     if (!isUser) {
       return failureResponse(res, 401, "NOTPRESENT", data);
     }
-    isUser.term_condition_accepted = term_condition_accepted;
-    await isUser.save();
+    await User.updateOne(
+      { _id: isUser._id },
+      { $set: { term_condition_accepted } }
+    );
     // Testing
     if (
       mobileNumber === TEST_NUMBER_1 || // Ankush
@@ -410,7 +414,7 @@ const verifyMobileOTP = async (req, res) => {
     const user = await User.findOne(
       { $and: [{ mobileNumber }, { _id: isOtp.receiverId }] },
       "_id name email mobileNumber role lastLogin isEmailVerified isMobileNumberVerified referralCode"
-    );
+    ).lean();
     if (!user) {
       return failureResponse(res, 401, `Invalid OTP!`, null);
     }
@@ -425,10 +429,10 @@ const verifyMobileOTP = async (req, res) => {
         return failureResponse(res, 403, `OTP expired!`, null);
       }
     }
-    user.lastLogin = new Date();
+    const userUpdation = { lastLogin: new Date() };
     const historyData = { instructor: user._id, lastLogin: user.lastLogin };
     if (!user.isMobileNumberVerified) {
-      user.isMobileNumberVerified = true;
+      userUpdation.isMobileNumberVerified = true;
       historyData.isMobileNumberVerified = user.isMobileNumberVerified;
     }
     // Chakra
@@ -467,8 +471,10 @@ const verifyMobileOTP = async (req, res) => {
     const accessToken = createUserAccessToken(data);
     // Update user
     await InstructorUpdateHistory.create(historyData);
-    user.refreshToken = refreshToken;
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { ...userUpdation, refreshToken } }
+    );
     // Send Notification
     if (user.isEmailVerified || user.isMobileNumberVerified) {
       await UserNotification.create({
@@ -1403,12 +1409,16 @@ const loginByEmail = async (req, res) => {
     if (referralCode) {
       data.referralCode = referralCode;
     }
-    const isUser = await User.findOne({ email, isDelete: false });
+    const isUser = await User.findOne({ email, isDelete: false })
+      .select("_id name")
+      .lean();
     if (!isUser) {
       return failureResponse(res, 401, "NOTPRESENT", data);
     }
-    isUser.term_condition_accepted = term_condition_accepted;
-    await isUser.save();
+    await User.updateOne(
+      { _id: isUser._id },
+      { $set: { term_condition_accepted } }
+    );
     // Generate OTP for Email
     const otp = await generateFixedLengthRandomNumber(OTP_DIGITS_LENGTH);
     // Sending OTP to mobile number
@@ -1480,7 +1490,7 @@ const verifyEmailOTP = async (req, res) => {
     const user = await User.findOne(
       { $and: [{ email }, { _id: isOtp.receiverId }] },
       "_id name email mobileNumber role lastLogin isEmailVerified isMobileNumberVerified referralCode"
-    );
+    ).lean();
     if (!user) {
       return failureResponse(res, 401, `Invalid OTP!`, null);
     }
@@ -1490,10 +1500,10 @@ const verifyEmailOTP = async (req, res) => {
     if (isOtpExpired) {
       return failureResponse(res, 403, `OTP expired!`, null);
     }
-    user.lastLogin = new Date();
+    const userUpdation = { lastLogin: new Date() };
     const historyData = { instructor: user._id, lastLogin: user.lastLogin };
     if (!user.isEmailVerified) {
-      user.isEmailVerified = true;
+      userUpdation.isEmailVerified = true;
       historyData.isEmailVerified = user.isEmailVerified;
     }
     // Chakra
@@ -1532,8 +1542,10 @@ const verifyEmailOTP = async (req, res) => {
     const accessToken = createUserAccessToken(data);
     // Update user
     await InstructorUpdateHistory.create(historyData);
-    user.refreshToken = refreshToken;
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { ...userUpdation, refreshToken } }
+    );
     // Send Notification
     if (user.isEmailVerified || user.isMobileNumberVerified) {
       await UserNotification.create({

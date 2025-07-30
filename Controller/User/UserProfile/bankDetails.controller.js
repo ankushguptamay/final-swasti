@@ -34,9 +34,10 @@ const addBankDetails = async (req, res) => {
       user: req.user._id,
     });
     // Update bankdetails array in user profile
-    const user = await User.findById(req.user._id).select("bankDetail").lean();
-    const bankDetail = [...user.bankDetail, details._id];
-    await User.updateOne({ _id: req.user._id }, { $set: { bankDetail } });
+    await User.updateOne(
+      { _id: req.user._id },
+      { $push: { bankDetail: details._id } }
+    );
     // Send final success response
     return successResponse(
       res,
@@ -97,15 +98,10 @@ const deleteBankDetails = async (req, res) => {
     details.deleted_at = new Date();
     details.save();
     // Update bankdetails array in user profile
-    const user = await User.findById(req.user._id).select("bankDetail");
-    const bankDetail = [];
-    for (const bank of user._doc.bankDetail) {
-      if (bank.toString() !== details._doc._id.toString()) {
-        bankDetail.push(bank);
-      }
-    }
-    user.bankDetail = bankDetail;
-    await user.save();
+    await User.updateOne(
+      { _id: req.user._id },
+      { $pull: { bankDetail: req.params.id } }
+    );
     // Send final success response
     return successResponse(
       res,

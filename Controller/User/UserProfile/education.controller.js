@@ -33,9 +33,10 @@ const addEducation = async (req, res) => {
       user: req.user._id,
     });
     // Update education array in user profile
-    const user = await User.findById(req.user._id).select("education").lean();
-    user.education = [...user.education, education._id];
-    await User.updateOne({ _id: req.user._id }, { $set: { education } });
+    await User.updateOne(
+      { _id: req.user._id },
+      { $push: { education: education._id } }
+    );
     // Send final success response
     return successResponse(
       res,
@@ -122,19 +123,13 @@ const updateEducation = async (req, res) => {
       user: req.user._id,
     });
     // Update education array in user profile
-    const user = await User.findById(req.user._id).select("education");
-    // add in array
-    user.education = [...user.education, education._id];
-    // Remove from array
-    const newEducationArray = [];
-    for (const edu of user.education) {
-      if (edu.toString() !== isPresent._doc._id.toString()) {
-        newEducationArray.push(edu);
+    await User.updateOne(
+      { _id: req.user._id },
+      {
+        $push: { education: education._id },
+        $pull: { education: req.params.id },
       }
-    }
-    // Save
-    user.education = newEducationArray;
-    await user.save();
+    );
     // Send final success response
     return successResponse(
       res,
@@ -159,17 +154,12 @@ const deleteEducation = async (req, res) => {
     // Update isDelete
     educations.isDelete = true;
     educations.deleted_at = new Date();
-    // Update education array in user profile
-    const user = await User.findById(req.user._id).select("education");
-    const education = [];
-    for (const edu of user._doc.education) {
-      if (edu.toString() !== educations._doc._id.toString()) {
-        education.push(edu);
-      }
-    }
-    user.education = education;
     await educations.save();
-    await user.save();
+    // Update education array in user profile
+    await User.updateOne(
+      { _id: req.user._id },
+      { $pull: { education: req.params.id } }
+    );
     // Send final success response
     return successResponse(
       res,
