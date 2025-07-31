@@ -417,11 +417,11 @@ async function yvcPaymentSuccessEmail(data) {
     <div class="content">
       <h2>Enrollment Confirmed : Yoga Volunteer Course</h2>
       <p>Hey <strong>${data.userName}</strong></p>
-      <p>Thank you for enrolling in the Yoga Volunteer Course offered by Jagriti Yoga & Naturopathy Sansthan (YCB Certified).</p>
+      <p>Thank you for enrolling in the Yoga Volunteer Course offered by Jagriti Yoga & Naturopathy Sansthan.</p>
       <p><strong>Payment Received:</strong> ₹${data.amount}</p>
       <p><strong>Course Enrolled:</strong> Yoga Volunteer Course</p>
       <p><strong>Class Time:</strong> ${data.timeSlote}</p>
-      <p><strong>Certificate:</strong> Ministry of AYUSH Recognized (YCB)</p>
+      <p><strong>Certificate:</strong> Issued by Jagriti Yoga & Naturopathy Sansthan, an accredited Yoga Training Center recognized by the Yoga Certification Board, Ministry of AYUSH, Government of India.</p>
       <p><a href="#">Stay connected for updates. Welcome to your yoga journey!</a></p>
       <p><em>Warm regards,</em><br/>
       <strong>Team Swasti Bharat</strong></p>
@@ -429,7 +429,7 @@ async function yvcPaymentSuccessEmail(data) {
     </div>
     <div class="footer">
       <p><strong>Get in touch</strong></p>
-      <p>+91-97206 83759</p>
+      <p>+91-7088440955</p>
       <p><a href="mailto:connect@swastibharat.com">connect@swastibharat.com</a></p>
   <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0">
   <tr>
