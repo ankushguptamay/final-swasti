@@ -811,6 +811,15 @@ const reAssignCoursesToUser = async (req, res) => {
   }
 };
 
+const payment_response = async (req, res) => {
+  try {
+    console.log(req.body.payload);
+    return successResponse(res, 200, `Successfully!`);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   applyCourseCoupon,
   createCourseOrderByRazorpay,
@@ -822,4 +831,5 @@ export {
   getCoursePayment,
   getMyCourses,
   reAssignCoursesToUser,
+  payment_response,
 };
