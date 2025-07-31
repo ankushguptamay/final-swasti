@@ -40,6 +40,21 @@ const razorpayInstance = new Razorpay({
   key_secret: RAZORPAY_SECRET_ID,
 });
 
+async function conertInIST(date) {
+  const dateUTC = new Date(date);
+  const formattedIST = dateUTC.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short", // e.g. Fri
+    day: "2-digit", // e.g. 01
+    month: "short", // e.g. Aug
+    year: "numeric", // e.g. 2025
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true, // AM/PM format
+  });
+  return formattedIST; // Optional: convert to lowercase
+}
+
 function generateAcronym(phrase) {
   return phrase
     .split(" ") // Split into words
@@ -196,7 +211,9 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: new Date(order.startDate).toString(),
+        timeSlote: `${await conertInIST(
+          order.startDate
+        )} (Indian Standard Time)`,
       };
       let emailHtml;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
@@ -494,7 +511,9 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
       const data = {
         userName: order.learner.name,
         amount: order.amount,
-        timeSlote: new Date(order.startDate).toString(),
+        timeSlote: `${await conertInIST(
+          order.startDate
+        )} (Indian Standard Time)`,
       };
       let emailHtml;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
