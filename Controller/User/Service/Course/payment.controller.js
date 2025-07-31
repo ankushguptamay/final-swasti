@@ -813,7 +813,7 @@ const reAssignCoursesToUser = async (req, res) => {
 
 const payment_response = async (req, res) => {
   try {
-    console.log(req.body.payload);
+    console.log(req.body.payload.payment.entity);
     return successResponse(res, 200, `Successfully!`);
   } catch (err) {
     failureResponse(res);
