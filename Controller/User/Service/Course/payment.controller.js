@@ -28,6 +28,7 @@ import { yvcPaymentSuccessEmail } from "../../../../Config/emailFormate.js";
 import { sendEmailViaZeptoZoho } from "../../../../Util/sendEmail.js";
 import { YogaCourse } from "../../../../Model/Institute/yogaCoursesMode.js";
 import { YCLesson } from "../../../../Model/Institute/yCLessonModel.js";
+import { InstituteInstructor } from "../../../../Model/Institute/instituteInstructorModel.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -758,20 +759,31 @@ const getMyCourses = async (req, res) => {
       status: "completed",
       learner: req.user._id,
     })
-      .populate("yogaCourse", "name description startDate endDate amount slug")
+      .populate(
+        "yogaCourse",
+        "name description startDate endDate amount slug assigned_to"
+      )
       .select("_id courseName startDate amount")
       .lean();
     for (let i = 0; i < coursePayment.length; i++) {
-      const lesson = await YCLesson.find({
-        yogaCourse: coursePayment[i].yogaCourse,
-      })
-        .select("name video date")
-        .lean();
+      const [lesson, instructor] = await Promise.all([
+        YCLesson.find({
+          yogaCourse: coursePayment[i].yogaCourse,
+        })
+          .select("name video date")
+          .lean(),
+        InstituteInstructor.findById(coursePayment[i].assigned_to)
+          .select("name")
+          .lean(),
+      ]);
       for (let j = 0; j < lesson.length; j++) {
         lesson[j].dateInIST = new Date(
           new Date(lesson[j].date).getTime() + 330 * 60 * 1000
         );
       }
+      delete coursePayment[i].assigned_to;
+      coursePayment[i].instructorName = instructor.name || null;
+      coursePayment[i].description = coursePayment[i].description || null;
       coursePayment[i].startDateInIST = new Date(
         new Date(coursePayment[i].startDate).getTime() + 330 * 60 * 1000
       );
@@ -811,11 +823,48 @@ const reAssignCoursesToUser = async (req, res) => {
   }
 };
 
-const payment_response = async (req, res) => {
+const razourpay_course_webhook = async (req, res) => {
   try {
     console.log(req.body.payload.payment.entity);
+    const response = req.body.payload.payment.entity;
+    const order = await CoursePayment.findOne({
+      "razorpayDetails.razorpayOrderId": response.order_id,
+    }).lean();
+    if (!order) {
+    } else if (order.status === "pending") {
+      let status,
+        verify = false;
+      if (response.status === "captured") {
+        status = "completed";
+        verify = true;
+        // Update enroll number
+        if (order.yogaCourse && order.amount > 5) {
+          await YogaCourse.updateOne(
+            { _id: order.yogaCourse },
+            { $inc: { totalEnroll: 1 } }
+          );
+        }
+      } else {
+        status = "failed";
+      }
+      // Update Purchase
+      await CoursePayment.updateOne(
+        { _id: order._id },
+        {
+          $set: {
+            status,
+            razorpayDetails: {
+              razorpayPaymentId: response._id,
+              razorpayOrderId: response.order_id,
+            },
+            verify,
+          },
+        }
+      );
+    }
     return successResponse(res, 200, `Successfully!`);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -831,5 +880,5 @@ export {
   getCoursePayment,
   getMyCourses,
   reAssignCoursesToUser,
-  payment_response,
+  razourpay_course_webhook,
 };
