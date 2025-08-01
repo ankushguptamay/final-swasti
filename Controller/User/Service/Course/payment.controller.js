@@ -791,7 +791,6 @@ const getMyCourses = async (req, res) => {
     }
     return successResponse(res, 200, `Successfully!`, coursePayment);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -832,9 +831,11 @@ const razorpay_course_webhook = async (req, res) => {
       "razorpayDetails.razorpayOrderId": response.order_id,
     }).lean();
     if (!order) {
-    } else if (order.status === "pending") {
-      let status,
-        verify = false;
+      return successResponse(res, 200, `Successfully!`);
+    }
+    let status = order.status,
+      verify = order.verify;
+    if (status === "pending") {
       if (response.status === "captured") {
         status = "completed";
         verify = true;
@@ -848,24 +849,31 @@ const razorpay_course_webhook = async (req, res) => {
       } else {
         status = "failed";
       }
-      // Update Purchase
-      await CoursePayment.updateOne(
-        { _id: order._id },
-        {
-          $set: {
-            status,
-            razorpayDetails: {
-              razorpayPaymentId: response._id,
-              razorpayOrderId: response.order_id,
-            },
-            verify,
-          },
-        }
-      );
     }
+    // Update Purchase
+    await CoursePayment.updateOne(
+      { _id: order._id },
+      {
+        $set: {
+          status,
+          razorpayDetails: {
+            razorpayPaymentId: response.id,
+            razorpayOrderId: response.order_id,
+            response: {
+              currency: response.currency,
+              invoice_id: response.invoice_id,
+              international: response.international,
+              method: response.method,
+              captured: response.captured,
+              error_description: response.error_description,
+            },
+          },
+          verify,
+        },
+      }
+    );
     return successResponse(res, 200, `Successfully!`);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

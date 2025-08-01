@@ -21,6 +21,7 @@ const schema = new Schema(
     razorpayDetails: {
       razorpayOrderId: { type: String },
       razorpayPaymentId: { type: String },
+      response: mongoose.Schema.Types.Mixed, // raw PhonePe response if needed
     },
     phonepeDetails: {
       transactionId: String, // PhonePe transaction ID
