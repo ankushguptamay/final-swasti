@@ -22,7 +22,7 @@ import {
   verifyCoursePaymentByPhonepe,
   createCourseOrderByPhonepeAndRegisterUser,
   createCourseOrderByRazorpayAndRegisterUser,
-  payment_response,
+  razorpay_course_webhook,
 } from "../../Controller/User/Service/Course/payment.controller.js";
 import { recordForHero } from "../../Controller/User/dashboard.js";
 import { createSubscribedUser } from "../../Controller/User/UserProfile/subscribedUser.controller.js";
@@ -61,7 +61,7 @@ router.post(
 router.post("/verifyCoursePayment-ra", verifyCoursePaymentByRazorpay);
 router.get("/verifyCoursePayment-ph/:receipt", verifyCoursePaymentByPhonepe);
 router.post("/applyCourseCoupon", applyCourseCoupon);
-router.post("/course-webhook", payment_response);
+router.post("/course-webhook", razorpay_course_webhook);
 
 router.get("/heroRecord", recordForHero);
 

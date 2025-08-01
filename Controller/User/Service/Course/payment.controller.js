@@ -791,6 +791,7 @@ const getMyCourses = async (req, res) => {
     }
     return successResponse(res, 200, `Successfully!`, coursePayment);
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -823,7 +824,7 @@ const reAssignCoursesToUser = async (req, res) => {
   }
 };
 
-const razourpay_course_webhook = async (req, res) => {
+const razorpay_course_webhook = async (req, res) => {
   try {
     console.log(req.body.payload.payment.entity);
     const response = req.body.payload.payment.entity;
@@ -880,5 +881,5 @@ export {
   getCoursePayment,
   getMyCourses,
   reAssignCoursesToUser,
-  razourpay_course_webhook,
+  razorpay_course_webhook,
 };
