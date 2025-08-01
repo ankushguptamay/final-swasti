@@ -782,7 +782,7 @@ const getMyCourses = async (req, res) => {
         );
       }
       delete coursePayment[i].assigned_to;
-      coursePayment[i].instructorName = instructor.name || null;
+      coursePayment[i].instructorName = instructor?.name || null;
       coursePayment[i].description = coursePayment[i].description || null;
       coursePayment[i].startDateInIST = new Date(
         new Date(coursePayment[i].startDate).getTime() + 330 * 60 * 1000
