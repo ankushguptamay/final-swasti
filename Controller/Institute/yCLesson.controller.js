@@ -69,8 +69,9 @@ const updateYogaCourseLesson = async (req, res) => {
       }
     );
     // Send final success response
-    return successResponse(res, 201, "Successfully!", course);
+    return successResponse(res, 201, "Successfully!");
   } catch (err) {
+
     failureResponse(res);
   }
 };
