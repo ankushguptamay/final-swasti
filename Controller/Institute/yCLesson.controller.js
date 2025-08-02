@@ -11,7 +11,14 @@ const createYogaCourseLesson = async (req, res) => {
     // Body Validation
     const { error } = validateYogaCourseLesson(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { date, video, yogaCourseId } = req.body;
+    const {
+      date,
+      video,
+      yogaCourseId,
+      hls_url,
+      videoTimeInMinute,
+      thumbNailUrl,
+    } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -20,6 +27,9 @@ const createYogaCourseLesson = async (req, res) => {
       video,
       date: new Date(date),
       yogaCourse: yogaCourseId,
+      hls_url,
+      videoTimeInMinute,
+      thumbNailUrl,
     });
     // Send final success response
     return successResponse(res, 201, "Created successfully!");
@@ -33,7 +43,14 @@ const updateYogaCourseLesson = async (req, res) => {
     // Body Validation
     const { error } = validateYogaCourseLesson(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { date, video, yogaCourseId } = req.body;
+    const {
+      date,
+      video,
+      yogaCourseId,
+      hls_url,
+      videoTimeInMinute,
+      thumbNailUrl,
+    } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -50,6 +67,9 @@ const updateYogaCourseLesson = async (req, res) => {
           video,
           date: new Date(date),
           yogaCourse: yogaCourseId,
+          hls_url,
+          videoTimeInMinute,
+          thumbNailUrl,
         },
       }
     );
