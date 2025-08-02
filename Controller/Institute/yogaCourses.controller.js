@@ -62,7 +62,7 @@ const courseDetails = async (req, res) => {
         .populate("assigned_to", "name email mobileNumber")
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
-        .select("name video date")
+        .select("name video date hls_url videoTimeInMinute thumbNailUrl")
         .lean(),
       CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
         .select("amount status")

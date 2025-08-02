@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { EmailCredential } from "../Model/User/emailCredentials.js";
 import { CoursePayment } from "../Model/User/Services/Course/coursePaymentModel.js";
 import { YogaCourse } from "../Model/Institute/yogaCoursesMode.js";
+import axios from "axios";
 
 const connectDB = async (uri) => {
   try {
@@ -71,4 +72,4 @@ async function associateCousreWithPayment() {
   }
 }
 
-export { connectDB, addBrevoEmail, associateCousreWithPayment };
+export { connectDB, addBrevoEmail };

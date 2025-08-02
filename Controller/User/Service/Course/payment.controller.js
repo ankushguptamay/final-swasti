@@ -568,7 +568,7 @@ const getCoursePayment = async (req, res) => {
       query.courseName = withIn;
     }
     if (status) {
-      if (status === "pending") {
+      if (status === "pending" || status === "failed") {
         const learnersWithCompleted = await CoursePayment.distinct("learner", {
           status: "completed",
           amount: { $gt: 5 },
@@ -597,9 +597,62 @@ const getCoursePayment = async (req, res) => {
       // Select only completed OR latest pending
       {
         $project: {
+          all: 1,
+          hasCompleted: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$all",
+                    as: "item",
+                    cond: { $eq: ["$$item.status", "completed"] },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          hasPending: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$all",
+                    as: "item",
+                    cond: { $eq: ["$$item.status", "pending"] },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          hasFailed: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$all",
+                    as: "item",
+                    cond: { $eq: ["$$item.status", "failed"] },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          sorted: {
+            $sortArray: {
+              input: "$all",
+              sortBy: { createdAt: -1 },
+            },
+          },
+        },
+      },
+      {
+        $project: {
           result: {
             $cond: [
-              { $gt: ["$hasCompleted", 0] },
+              "$hasCompleted",
               {
                 $filter: {
                   input: "$all",
@@ -607,18 +660,26 @@ const getCoursePayment = async (req, res) => {
                   cond: { $eq: ["$$item.status", "completed"] },
                 },
               },
-              [
-                {
-                  $first: {
+              {
+                $cond: [
+                  "$hasFailed",
+                  {
                     $slice: [
                       {
                         $filter: {
-                          input: {
-                            $sortArray: {
-                              input: "$all",
-                              sortBy: { createdAt: -1 },
-                            },
-                          },
+                          input: "$sorted",
+                          as: "item",
+                          cond: { $eq: ["$$item.status", "failed"] },
+                        },
+                      },
+                      1,
+                    ],
+                  },
+                  {
+                    $slice: [
+                      {
+                        $filter: {
+                          input: "$sorted",
                           as: "item",
                           cond: { $eq: ["$$item.status", "pending"] },
                         },
@@ -626,8 +687,8 @@ const getCoursePayment = async (req, res) => {
                       1,
                     ],
                   },
-                },
-              ],
+                ],
+              },
             ],
           },
         },
@@ -770,7 +831,7 @@ const getMyCourses = async (req, res) => {
         YCLesson.find({
           yogaCourse: coursePayment[i].yogaCourse,
         })
-          .select("name video date")
+          .select("name video date hls_url videoTimeInMinute thumbNailUrl")
           .lean(),
         InstituteInstructor.findById(coursePayment[i].assigned_to)
           .select("name")
@@ -825,7 +886,7 @@ const reAssignCoursesToUser = async (req, res) => {
 
 const razorpay_course_webhook = async (req, res) => {
   try {
-    console.log(req.body.payload.payment.entity);
+    // console.log(req.body.payload.payment.entity);
     const response = req.body.payload.payment.entity;
     const order = await CoursePayment.findOne({
       "razorpayDetails.razorpayOrderId": response.order_id,
