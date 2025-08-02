@@ -3,7 +3,10 @@ import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
-import { validateYogaCourseLesson } from "../../MiddleWare/Validation/institute.js";
+import {
+  validateYogaCourseLesson,
+  validateYogaCourseLessonUpdation,
+} from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 
 const createYogaCourseLesson = async (req, res) => {
@@ -41,16 +44,9 @@ const createYogaCourseLesson = async (req, res) => {
 const updateYogaCourseLesson = async (req, res) => {
   try {
     // Body Validation
-    const { error } = validateYogaCourseLesson(req.body);
+    const { error } = validateYogaCourseLessonUpdation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const {
-      date,
-      video,
-      yogaCourseId,
-      hls_url,
-      videoTimeInMinute,
-      thumbNailUrl,
-    } = req.body;
+    const { date, video, hls_url, videoTimeInMinute, thumbNailUrl } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -66,7 +62,6 @@ const updateYogaCourseLesson = async (req, res) => {
           name,
           video,
           date: new Date(date),
-          yogaCourse: yogaCourseId,
           hls_url,
           videoTimeInMinute,
           thumbNailUrl,
