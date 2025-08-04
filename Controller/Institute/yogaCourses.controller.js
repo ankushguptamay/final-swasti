@@ -171,6 +171,50 @@ const myCourseForIInstructor = async (req, res) => {
   }
 };
 
+const courseBatchDetailsForInstructor = async (req, res) => {
+  try {
+    const [course, lesson, user] = await Promise.all([
+      YogaCourse.findOne({ slug: req.params.slug })
+        .select(
+          "_id name slug startDate description totalEnroll batchNumber amount"
+        )
+        .lean(),
+      YCLesson.find({ yogaCourse: req.params.id })
+        .select("name video date hls_url videoTimeInMinute thumbNailUrl")
+        .lean(),
+      CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
+        .select("_id")
+        .populate("learner", "name profilePic")
+        .lean(),
+    ]);
+    course.startDateInIST = new Date(
+      new Date(course.startDate).getTime() + 330 * 60 * 1000
+    );
+    for (let j = 0; j < lesson.length; j++) {
+      lesson[j].dateInIST = new Date(
+        new Date(lesson[j].date).getTime() + 330 * 60 * 1000
+      );
+    }
+    const learner = [];
+    for (let i = 0; i < user.length; i++) {
+      learner.push({
+        ...user[i].learner,
+        profilePic: user[i].learner.profilePic
+          ? user[i].learner.profilePic.url || null
+          : null,
+      });
+    }
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", {
+      ...course,
+      lesson,
+      learner,
+    });
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 const getCourseForDropDown = async (req, res) => {
   try {
     const yogaCourse = await YogaCourse.find({ endDate: { $gte: new Date() } })
@@ -195,4 +239,5 @@ export {
   reAssignCourseToInstructor,
   myCourseForIInstructor,
   getCourseForDropDown,
+  courseBatchDetailsForInstructor,
 };

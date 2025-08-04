@@ -897,7 +897,7 @@ const razorpay_course_webhook = async (req, res) => {
     let status = order.status,
       verify = order.verify;
     if (status === "pending") {
-      if (response.status === "captured") {
+      if (response.captured) {
         status = "completed";
         verify = true;
         // Update enroll number
@@ -945,6 +945,7 @@ export {
   reAssignCoursesToUser,
   razorpay_course_webhook,
 };
+
 // const razorpayResponse = {
 //   id: "pay_R00a0ga9VW8YaD",
 //   entity: "payment",

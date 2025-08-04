@@ -10,7 +10,10 @@ import {
 
 // Middleware
 import { verifyInstituteInstructorJWT } from "../../MiddleWare/verifyJWTToken.js";
-import { myCourseForIInstructor } from "../../Controller/Institute/yogaCourses.controller.js";
+import {
+  myCourseForIInstructor,
+  courseBatchDetailsForInstructor,
+} from "../../Controller/Institute/yogaCourses.controller.js";
 import {
   createYogaCourseLesson,
   updateYogaCourseLesson,
@@ -27,6 +30,7 @@ router.get("/", instructorDetails);
 router.put("/logout", logout);
 
 router.get("/yoga-course", myCourseForIInstructor);
+router.get("/yoga-course/details/:slug", courseBatchDetailsForInstructor);
 router.post("/yoga-course-lesson", createYogaCourseLesson);
 router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
