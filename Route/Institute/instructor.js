@@ -16,6 +16,7 @@ import {
 } from "../../Controller/Institute/yogaCourses.controller.js";
 import {
   createYogaCourseLesson,
+  updateLessonDocument,
   updateYogaCourseLesson,
 } from "../../Controller/Institute/yCLesson.controller.js";
 
@@ -32,6 +33,7 @@ router.put("/logout", logout);
 router.get("/yoga-course", myCourseForIInstructor);
 router.get("/yoga-course/details/:slug", courseBatchDetailsForInstructor);
 router.post("/yoga-course-lesson", createYogaCourseLesson);
+router.put("/yoga-course-lesson-doc/:yCLessonId", updateLessonDocument);
 router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
 export default router;

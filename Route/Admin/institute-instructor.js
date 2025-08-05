@@ -20,6 +20,8 @@ import { reAssignCoursesToUser } from "../../Controller/User/Service/Course/paym
 import {
   createYogaCourseLesson,
   updateYogaCourseLesson,
+  updateLessonDocument,
+  deleteLessonDocument,
 } from "../../Controller/Institute/yCLesson.controller.js";
 
 const router = express.Router();
@@ -42,6 +44,8 @@ router.get("/yoga-course/:id", courseDetails);
 router.put("/yoga-course-reassign-inst", reAssignCourseToInstructor);
 router.put("/yoga-course-reassign-user/:paymentId", reAssignCoursesToUser);
 router.post("/yoga-course-lesson", createYogaCourseLesson);
+router.put("/yoga-course-lesson-doc/:yCLessonId", updateLessonDocument);
+router.delete("/yoga-course-lesson-doc/:yCLessonId", deleteLessonDocument);
 router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
 export default router;

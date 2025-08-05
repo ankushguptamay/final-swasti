@@ -11,6 +11,10 @@ const schema = new Schema(
     videoTimeInMinute: { type: Number, default: 60 },
     thumbNailUrl: { type: String, required: false },
     yogaCourse: { type: Types.ObjectId, ref: "YogaCourse", required: true },
+    document: {
+      fileName: { type: String },
+      url: { type: String },
+    },
   },
   { timestamps: true }
 );
