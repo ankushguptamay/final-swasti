@@ -158,9 +158,30 @@ const deleteLessonDocument = async (req, res) => {
   }
 };
 
+const lessonDetails = async (req, res) => {
+  try {
+    const lesson = await YCLesson.findById(req.params.yCLessonId)
+      .select("name video date hls_url videoTimeInMinute thumbNailUrl document")
+      .lean();
+    if (!lesson) {
+      return failureResponse(res, 400, "This lesson is not present!");
+    }
+
+    lesson.dateInIST = new Date(
+      new Date(lesson.date).getTime() + 330 * 60 * 1000
+    );
+
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", lesson);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   createYogaCourseLesson,
   updateYogaCourseLesson,
   updateLessonDocument,
   deleteLessonDocument,
+  lessonDetails,
 };
