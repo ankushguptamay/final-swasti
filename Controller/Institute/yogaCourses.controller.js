@@ -62,7 +62,9 @@ const courseDetails = async (req, res) => {
         .populate("assigned_to", "name email mobileNumber")
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
-        .select("name video date hls_url videoTimeInMinute thumbNailUrl")
+        .select(
+          "name video date hls_url videoTimeInMinute thumbNailUrl document"
+        )
         .lean(),
       CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
         .select("amount status")
@@ -180,7 +182,9 @@ const courseBatchDetailsForInstructor = async (req, res) => {
         )
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
-        .select("name video date hls_url videoTimeInMinute thumbNailUrl")
+        .select(
+          "name video date hls_url videoTimeInMinute thumbNailUrl document"
+        )
         .lean(),
       CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
         .select("_id")
