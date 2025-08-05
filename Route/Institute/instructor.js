@@ -20,6 +20,7 @@ import {
   updateLessonDocument,
   updateYogaCourseLesson,
 } from "../../Controller/Institute/yCLesson.controller.js";
+import { uploadPDF } from "../../MiddleWare/uploadFile.js";
 
 // Auth
 router.post("/login", login);
@@ -33,9 +34,17 @@ router.put("/logout", logout);
 
 router.get("/yoga-course", myCourseForIInstructor);
 router.get("/yoga-course/details/:slug", courseBatchDetailsForInstructor);
-router.post("/yoga-course-lesson", createYogaCourseLesson);
+router.post(
+  "/yoga-course-lesson",
+  uploadPDF.single("pdf"),
+  createYogaCourseLesson
+);
 router.get("/yoga-course-lesson/:yCLessonId", lessonDetails);
-router.put("/yoga-course-lesson-doc/:yCLessonId", updateLessonDocument);
+router.put(
+  "/yoga-course-lesson-doc/:yCLessonId",
+  uploadPDF.single("pdf"),
+  updateLessonDocument
+);
 router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
 
 export default router;

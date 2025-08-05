@@ -53,4 +53,4 @@ schema.pre("save", async function (next) {
 });
 
 // Create the model using the schema
-export const YogaCourse = models.YogaCourse || model("YogaCourse", schema);
+export const YogaCourse = models.YogaCourse || model("YogaCourse", schema); // This is actually course batchs

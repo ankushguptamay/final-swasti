@@ -26,7 +26,7 @@ import { capitalizeFirstLetter } from "../../../../Helper/formatChange.js";
 import { generateUserCode } from "../../UserProfile/user.controller.js";
 import { yvcPaymentSuccessEmail } from "../../../../Config/emailFormate.js";
 import { sendEmailViaZeptoZoho } from "../../../../Util/sendEmail.js";
-import { YogaCourse } from "../../../../Model/Institute/yogaCoursesMode.js";
+import { YogaCourse } from "../../../../Model/Institute/yCBatchMode.js";
 import { YCLesson } from "../../../../Model/Institute/yCLessonModel.js";
 import { InstituteInstructor } from "../../../../Model/Institute/instituteInstructorModel.js";
 

@@ -8,7 +8,7 @@ import {
   validateReAssignYogaCourse,
 } from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
-import { YogaCourse } from "../../Model/Institute/yogaCoursesMode.js";
+import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 import { CoursePayment } from "../../Model/User/Services/Course/coursePaymentModel.js";
 
 const createYogaCourse = async (req, res) => {
