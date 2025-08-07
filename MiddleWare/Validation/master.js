@@ -68,6 +68,16 @@ const validateBlogTag = (data) => {
   });
   return schema.validate(data);
 };
+const validateYogaCourse = (data) => {
+  const schema = joi
+    .object()
+    .keys({
+      title: joi.string().required(),
+      description: joi.string().required(),
+      time_hours: joi.number().required(),
+    });
+  return schema.validate(data);
+};
 
 export {
   validateSpecialization,
@@ -79,4 +89,5 @@ export {
   validateBlogCategory,
   validateUpdateBlogSubCategory,
   validateBlogTag,
+  validateYogaCourse,
 };

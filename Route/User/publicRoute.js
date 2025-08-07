@@ -30,26 +30,31 @@ import {
   getBlogBySlugForUser,
   getBlogsForUser,
 } from "../../Controller/Admin/blog.controller.js";
+import {
+  yogaCourse,
+  yogaCourseDetails,
+} from "../../Controller/Master/yogaCourse.controller.js";
 
+// Landing page
 router.get("/instructor", searchInstructor);
 router.get("/landing-instructor", instructorForLandingPage);
 router.get("/instructor/:slug", instructorDetailsForLearner);
-
 router.post("/contactUs", addContactUs);
-
 router.get("/yt-class", classTimesForUser);
-
 router.get("/specialization", getSpecialization);
-
 router.get("/y-c", getYogaCategory);
 router.get("/y-c/:slug", yogaCategoryDetailsForUser);
 router.get("/y-c-i", getYogaCategoryWithImage);
+router.get("/banner", getBanner);
+router.get("/heroRecord", recordForHero);
+router.post("/subscrib", createSubscribedUser);
 
 router.post("/verifyPayment", verifyPayment);
 
-router.get("/banner", getBanner);
-
-// Course Route
+// Yoga Course
+router.get("/yogacourse", yogaCourse);
+router.get("/yogacourse/:slug", yogaCourseDetails);
+// Yoga Course payment Route
 router.post(
   "/createCourseOrder-newUser-ph",
   createCourseOrderByPhonepeAndRegisterUser
@@ -62,10 +67,6 @@ router.post("/verifyCoursePayment-ra", verifyCoursePaymentByRazorpay);
 router.get("/verifyCoursePayment-ph/:receipt", verifyCoursePaymentByPhonepe);
 router.post("/applyCourseCoupon", applyCourseCoupon);
 router.post("/course-webhook", razorpay_course_webhook);
-
-router.get("/heroRecord", recordForHero);
-
-router.post("/subscrib", createSubscribedUser);
 
 // Blog
 router.get("/blog", getBlogsForUser);

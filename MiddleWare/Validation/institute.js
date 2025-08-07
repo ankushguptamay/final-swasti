@@ -58,7 +58,7 @@ const validateInstituteInstructorRegistration = (data) => {
   return schema.validate(data);
 };
 
-const validateYogaCourse = (data) => {
+const validateYCBatch = (data) => {
   const schema = joi.object().keys({
     name: joi
       .string()
@@ -72,7 +72,7 @@ const validateYogaCourse = (data) => {
   return schema.validate(data);
 };
 
-const validateReAssignYogaCourse = (data) => {
+const validateReAssignYCBatch = (data) => {
   const schema = joi.object().keys({
     courseId: joi.string().required(),
     assigned_to: joi.string().required(),
@@ -109,8 +109,8 @@ export {
   validateInstituteRegistration,
   validateInstituteLogin,
   validateInstituteInstructorRegistration,
-  validateYogaCourse,
-  validateReAssignYogaCourse,
+  validateYCBatch,
+  validateReAssignYCBatch,
   validateYogaCourseLesson,
   validateYogaCourseLessonUpdation,
 };

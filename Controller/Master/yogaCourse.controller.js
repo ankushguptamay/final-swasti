@@ -1,0 +1,282 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import { deleteSingleFile } from "../../Helper/fileHelper.js";
+import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
+import {
+  failureResponse,
+  successResponse,
+} from "../../MiddleWare/responseMiddleware.js";
+import { validateYogaCourse } from "../../MiddleWare/Validation/master.js";
+import { MasterYogaCourse } from "../../Model/Master/yogaCousreModel.js";
+import {
+  deleteFileToBunny,
+  deleteVideoToBunny,
+  uploadFileToBunny,
+  uploadVideoThumbnailToBunny,
+  uploadVideoToBunny,
+} from "../../Util/bunny.js";
+import fs from "fs";
+const bunnyFolderName = process.env.INSTITUTE_FOLDER;
+const { INSTITUTE_LIBRARY_API_KEY, INSTITUTE_VIDEO_LIBRARY_ID } = process.env;
+
+const createYogaCourse = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateYogaCourse(req.body);
+    if (error) {
+      if (req.file) deleteSingleFile(req.file.path); // Delete file from server
+      return failureResponse(res, 400, error.details[0].message, null);
+    }
+    const { time_hours, description } = req.body;
+    const title = capitalizeFirstLetter(
+      req.body.title.replace(/\s+/g, " ").trim()
+    );
+    let image;
+    if (req.file) {
+      console.log("heree");
+      // Upload file to bunny
+      const fileStream = fs.createReadStream(req.file.path);
+      console.log(bunnyFolderName);
+      console.log(fileStream);
+      await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
+      image = {
+        fileName: req.file.filename,
+        url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
+      };
+      // Delete file from server
+      deleteSingleFile(req.file.path);
+    }
+    await MasterYogaCourse.create({
+      title,
+      time_hours,
+      description,
+      image,
+    });
+    // Send final success response
+    return successResponse(res, 201, "Created successfully!");
+  } catch (err) {
+    console.log(err);
+    failureResponse(res);
+  }
+};
+
+const updateYogaCourse = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateYogaCourse(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const { time_hours, description } = req.body;
+    const course = await MasterYogaCourse.findById(req.params.yCId)
+      .select("_id")
+      .lean();
+    if (!course)
+      return failureResponse(res, 400, "This Yoga Course is not present!");
+    await MasterYogaCourse.updateOne(
+      { _id: req.params.yCId },
+      { $set: { time_hours, description } }
+    );
+    // Send final success response
+    return successResponse(res, 201, "Successfully!");
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const updateYogaCourseImage = async (req, res) => {
+  try {
+    // File should be exist
+    if (!req.file)
+      return failureResponse(res, 400, "Please..upload an image!", null);
+
+    const course = await MasterYogaCourse.findById(req.params.yCId)
+      .select("_id image descriptive_video")
+      .lean();
+    if (!course) {
+      deleteSingleFile(req.file.path);
+      return failureResponse(res, 400, "This Yoga Course is not present!");
+    }
+
+    const fileStream = fs.createReadStream(req.file.path);
+    await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename); // Upload file to bunny
+    const image = {
+      fileName: req.file.filename,
+      url: `${process.env.SHOW_BUNNY_FILE_HOSTNAME}/${bunnyFolderName}/${req.file.filename}`,
+    };
+    deleteSingleFile(req.file.path); // Delete file from server
+    // Delete existing file from Bunny
+    if (course.image && course.image.fileName) {
+      await deleteFileToBunny(bunnyFolderName, course.image.fileName);
+    }
+    // Set as thumbnail
+    if (course.descriptive_video && course.descriptive_video.videoId) {
+      await uploadVideoThumbnailToBunny(
+        INSTITUTE_VIDEO_LIBRARY_ID,
+        INSTITUTE_LIBRARY_API_KEY,
+        course.descriptive_video.videoId,
+        image.url
+      );
+    }
+    await MasterYogaCourse.updateOne(
+      { _id: req.params.yCId },
+      { $set: { image } }
+    );
+    // Send final success response
+    return successResponse(res, 201, "Successfully!");
+  } catch (err) {
+    // console.log(err)
+    failureResponse(res);
+  }
+};
+
+const addUpdateYogaCourseDescriptiveVideo = async (req, res) => {
+  try {
+    // Velidation
+    if (!req.file) return failureResponse(res, 400, "Select a video file!");
+    if (req.file.mimetype.startsWith("video") === false) {
+      delete req.file.buffer;
+      return failureResponse(res, 400, "Select only a video file!");
+    }
+    // Find Course
+    const course = await MasterYogaCourse.findById(req.params.yCId)
+      .select("_id descriptive_video image")
+      .lean();
+    if (!course) {
+      delete req.file;
+      return failureResponse(res, 400, "This Yoga Course is not present!");
+    }
+
+    // upload video to bunny
+    const video = await uploadVideoToBunny(
+      INSTITUTE_VIDEO_LIBRARY_ID,
+      INSTITUTE_LIBRARY_API_KEY,
+      req.file
+    );
+    delete req.file;
+    const descriptive_video = {
+      videoId: video.video_id,
+      thumbnail_url: `https://vz-16239270-16c.b-cdn.net/${video.video_id}/thumbnail.jpg`,
+      web_url: `https://iframe.mediadelivery.net/embed/477560/${video.video_id}`,
+      hls_url: `https://vz-16239270-16c.b-cdn.net/${video.video_id}/playlist.m3u8`,
+    };
+    // Delete existing video if present
+    if (course.descriptive_video && course.descriptive_video.videoId) {
+      await deleteVideoToBunny(
+        INSTITUTE_VIDEO_LIBRARY_ID,
+        INSTITUTE_LIBRARY_API_KEY,
+        course.descriptive_video.videoId
+      );
+    }
+    // Set thumbnail
+    if (course.image && course.image.url) {
+      await uploadVideoThumbnailToBunny(
+        INSTITUTE_VIDEO_LIBRARY_ID,
+        INSTITUTE_LIBRARY_API_KEY,
+        descriptive_video.videoId,
+        course.image.url
+      );
+    }
+    // Update
+    await MasterYogaCourse.updateOne(
+      { _id: req.params.yCId },
+      { $set: { descriptive_video } }
+    );
+    // Send final success response
+    return successResponse(res, 201, "Successfully!");
+  } catch (err) {
+    delete req.file;
+    failureResponse(res);
+  }
+};
+
+const deleteYogaCourseDescriptiveVideo = async (req, res) => {
+  try {
+    // Find Course
+    const course = await MasterYogaCourse.findById(req.params.yCId)
+      .select("_id descriptive_video")
+      .lean();
+    if (!course) {
+      return failureResponse(res, 400, "This Yoga Course is not present!");
+    }
+
+    const descriptive_video = {
+      videoId: null,
+      thumbnail_url: null,
+      web_url: null,
+      hls_url: null,
+    };
+    // Delete existing video if present
+    if (course.descriptive_video && course.descriptive_video.videoId) {
+      await deleteVideoToBunny(
+        INSTITUTE_VIDEO_LIBRARY_ID,
+        INSTITUTE_LIBRARY_API_KEY,
+        course.descriptive_video.videoId
+      );
+    }
+    // Update
+    await MasterYogaCourse.updateOne(
+      { _id: req.params.yCId },
+      { $set: { descriptive_video } }
+    );
+    // Send final success response
+    return successResponse(res, 200, "Successfully!");
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const yogaCourseDetails = async (req, res) => {
+  try {
+    // Find Course
+    const course = await MasterYogaCourse.findOne({ slug: req.params.slug })
+      .select("-createdAt -updatedAt")
+      .lean();
+    if (!course) {
+      return failureResponse(res, 400, "This Yoga Course is not present!");
+    }
+
+    course.image = course.image ? course.image.url || null : null;
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", course);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const yogaCourse = async (req, res) => {
+  try {
+    // Find Course
+    const course = await MasterYogaCourse.find()
+      .select("title image slug time_hours averageRating")
+      .lean();
+    for (let i = 0; i < course.length; i++) {
+      course[i].image = course[i].image ? course[i].image.url || null : null;
+    }
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", course);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const yogaCourseForDropdown = async (req, res) => {
+  try {
+    // Find Course
+    const course = await MasterYogaCourse.find().select("title").lean();
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", course);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+export {
+  addUpdateYogaCourseDescriptiveVideo,
+  createYogaCourse,
+  updateYogaCourse,
+  updateYogaCourseImage,
+  deleteYogaCourseDescriptiveVideo,
+  yogaCourseDetails,
+  yogaCourseForDropdown,
+  yogaCourse,
+};

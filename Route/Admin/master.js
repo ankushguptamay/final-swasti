@@ -36,7 +36,19 @@ import {
 } from "../../Controller/Master/yTRules.controller.js";
 
 // MiddleWare
+import multer from "multer";
+const upload = multer();
 import { uploadImage } from "../../MiddleWare/uploadFile.js";
+import {
+  addUpdateYogaCourseDescriptiveVideo,
+  createYogaCourse,
+  deleteYogaCourseDescriptiveVideo,
+  updateYogaCourse,
+  updateYogaCourseImage,
+  yogaCourse,
+  yogaCourseDetails,
+  yogaCourseForDropdown,
+} from "../../Controller/Master/yogaCourse.controller.js";
 
 // specialization
 router.post("/specialization", addSpecialization);
@@ -71,4 +83,21 @@ router.post("/banner", uploadImage.single("bannerImage"), addBanner);
 router.get("/banner", getBanner);
 router.delete("/banner/:id", deleteBanner);
 
+// Course
+router.post("/yogacourse", uploadImage.single("image"), createYogaCourse);
+router.put(
+  "/yogacoursevideo/:yCId",
+  upload.single("video"),
+  addUpdateYogaCourseDescriptiveVideo
+);
+router.put("/yogacourse", updateYogaCourse);
+router.get("/yogacourse", yogaCourse);
+router.get("/yogacourse/:slug", yogaCourseDetails);
+router.get("/yc-dropdown", yogaCourseForDropdown);
+router.put(
+  "/yogacourseimage/:yCId",
+  uploadImage.single("image"),
+  updateYogaCourseImage
+);
+router.delete("/yogacoursevideo/:yCId", deleteYogaCourseDescriptiveVideo);
 export default router;

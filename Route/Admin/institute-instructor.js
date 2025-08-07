@@ -10,16 +10,16 @@ import {
   instituteInstructorDetailsForAdmin,
 } from "../../Controller/Institute/institute.instructor.controller.js";
 import {
-  courseDetails,
-  createYogaCourse,
-  getCourse,
-  getCourseForDropDown,
-  reAssignCourseToInstructor,
-} from "../../Controller/Institute/yogaCourses.controller.js";
+  batchDetails,
+  createYCBatch,
+  getCourseBatch,
+  getYCBtachForDropDown,
+  reAssignYCBatchToInstructor,
+} from "../../Controller/Institute/yCBatch.controller.js";
 import { reAssignCoursesToUser } from "../../Controller/User/Service/Course/payment.controller.js";
 import {
-  createYogaCourseLesson,
-  updateYogaCourseLesson,
+  createYCBatchLesson,
+  updateYCBatchLesson,
   updateLessonDocument,
   deleteLessonDocument,
   lessonDetails,
@@ -39,24 +39,20 @@ router.get("/instructor", getInstructor);
 router.get("/instructor/:id", instituteInstructorDetailsForAdmin);
 
 // Yoga Courses
-router.post("/yoga-course", createYogaCourse);
-router.get("/yoga-course", getCourse);
-router.get("/yoga-course-dd", getCourseForDropDown);
-router.get("/yoga-course/:id", courseDetails);
-router.put("/yoga-course-reassign-inst", reAssignCourseToInstructor);
-router.put("/yoga-course-reassign-user/:paymentId", reAssignCoursesToUser);
-router.post(
-  "/yoga-course-lesson",
-  uploadPDF.single("pdf"),
-  createYogaCourseLesson
-);
-router.get("/yoga-course-lesson/:yCLessonId", lessonDetails);
+router.post("/ycbatch", createYCBatch); // yoga-course
+router.get("/ycbatch", getCourseBatch); // yoga-course
+router.get("/ycbatch-dd", getYCBtachForDropDown); // yoga-course-dd
+router.get("/ycbatch/:id", batchDetails); // yoga-course
+router.put("/ycbatch-reassign-inst", reAssignYCBatchToInstructor); // yoga-course-reassign-inst
+router.put("/ycbatch-reassign-user/:paymentId", reAssignCoursesToUser); // yoga-course-reassign-user
+router.post("/ycbatch-lesson", uploadPDF.single("pdf"), createYCBatchLesson); // yoga-course-lesson
+router.get("/ycbatch-lesson/:yCLessonId", lessonDetails); // yoga-course-lesson
 router.put(
-  "/yoga-course-lesson-doc/:yCLessonId",
+  "/ycbatch-lesson-doc/:yCLessonId",
   uploadPDF.single("pdf"),
   updateLessonDocument
-);
-router.delete("/yoga-course-lesson-doc/:yCLessonId", deleteLessonDocument);
-router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
+); // yoga-course-lesson-doc
+router.delete("/ycbatch-lesson-doc/:yCLessonId", deleteLessonDocument); // yoga-course-lesson-doc
+router.put("/ycbatch-lesson/:yCLessonId", updateYCBatchLesson); //yoga-course-lesson
 
 export default router;

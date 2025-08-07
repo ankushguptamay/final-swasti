@@ -814,7 +814,7 @@ const getCoursePayment = async (req, res) => {
   }
 };
 
-const getMyCourses = async (req, res) => {
+const getMyYCBatchs = async (req, res) => {
   try {
     const coursePayment = await CoursePayment.find({
       status: "completed",
@@ -941,7 +941,7 @@ export {
   createCourseOrderByPhonepeAndRegisterUser,
   createCourseOrderByRazorpayAndRegisterUser,
   getCoursePayment,
-  getMyCourses,
+  getMyYCBatchs,
   reAssignCoursesToUser,
   razorpay_course_webhook,
 };

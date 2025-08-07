@@ -11,14 +11,14 @@ import {
 // Middleware
 import { verifyInstituteInstructorJWT } from "../../MiddleWare/verifyJWTToken.js";
 import {
-  myCourseForIInstructor,
+  myYCBatchesForIInstructor,
   courseBatchDetailsForInstructor,
-} from "../../Controller/Institute/yogaCourses.controller.js";
+} from "../../Controller/Institute/yCBatch.controller.js";
 import {
-  createYogaCourseLesson,
+  createYCBatchLesson,
   lessonDetails,
   updateLessonDocument,
-  updateYogaCourseLesson,
+  updateYCBatchLesson,
 } from "../../Controller/Institute/yCLesson.controller.js";
 import { uploadPDF } from "../../MiddleWare/uploadFile.js";
 
@@ -32,19 +32,17 @@ router.use(verifyInstituteInstructorJWT);
 router.get("/", instructorDetails);
 router.put("/logout", logout);
 
-router.get("/yoga-course", myCourseForIInstructor);
-router.get("/yoga-course/details/:slug", courseBatchDetailsForInstructor);
-router.post(
-  "/yoga-course-lesson",
-  uploadPDF.single("pdf"),
-  createYogaCourseLesson
-);
-router.get("/yoga-course-lesson/:yCLessonId", lessonDetails);
+router.get("/ycbatch", myYCBatchesForIInstructor); // yoga-course
+router.get("ycbatch/:slug", courseBatchDetailsForInstructor); // yoga-course/details
+router.post("/ycbatch-lesson", uploadPDF.single("pdf"), createYCBatchLesson); // yoga-course-lesson
+router.get("/ycbatch-lesson/:yCLessonId", lessonDetails); // yoga-course-lesson
 router.put(
-  "/yoga-course-lesson-doc/:yCLessonId",
+  "/ycbatch-lesson-doc/:yCLessonId",
   uploadPDF.single("pdf"),
   updateLessonDocument
-);
-router.put("/yoga-course-lesson/:yCLessonId", updateYogaCourseLesson);
+); // yoga-course-lesson-doc
+router.put("/ycbatch-lesson/:yCLessonId", updateYCBatchLesson); // yoga-course-lesson
+
+// Master Course
 
 export default router;

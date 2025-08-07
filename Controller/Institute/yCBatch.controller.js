@@ -4,17 +4,17 @@ import {
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
 import {
-  validateYogaCourse,
-  validateReAssignYogaCourse,
+  validateYCBatch,
+  validateReAssignYCBatch,
 } from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 import { CoursePayment } from "../../Model/User/Services/Course/coursePaymentModel.js";
 
-const createYogaCourse = async (req, res) => {
+const createYCBatch = async (req, res) => {
   try {
     // Body Validation
-    const { error } = validateYogaCourse(req.body);
+    const { error } = validateYCBatch(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { description, startDate, amount, assigned_to } = req.body;
     const name = capitalizeFirstLetter(
@@ -55,7 +55,7 @@ const createYogaCourse = async (req, res) => {
   }
 };
 
-const courseDetails = async (req, res) => {
+const batchDetails = async (req, res) => {
   try {
     const [course, lesson, user] = await Promise.all([
       YogaCourse.findById(req.params.id)
@@ -90,7 +90,7 @@ const courseDetails = async (req, res) => {
   }
 };
 
-const getCourse = async (req, res) => {
+const getCourseBatch = async (req, res) => {
   try {
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
@@ -133,10 +133,10 @@ const getCourse = async (req, res) => {
   }
 };
 
-const reAssignCourseToInstructor = async (req, res) => {
+const reAssignYCBatchToInstructor = async (req, res) => {
   try {
     // Body Validation
-    const { error } = validateReAssignYogaCourse(req.body);
+    const { error } = validateReAssignYCBatch(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseId, assigned_to } = req.body;
     const isAnyCourse = await YogaCourse.findById(courseId)
@@ -153,7 +153,7 @@ const reAssignCourseToInstructor = async (req, res) => {
   }
 };
 
-const myCourseForIInstructor = async (req, res) => {
+const myYCBatchesForIInstructor = async (req, res) => {
   try {
     const course = await YogaCourse.find({
       assigned_to: req.institute_instructor._id,
@@ -219,7 +219,7 @@ const courseBatchDetailsForInstructor = async (req, res) => {
   }
 };
 
-const getCourseForDropDown = async (req, res) => {
+const getYCBtachForDropDown = async (req, res) => {
   try {
     const yogaCourse = await YogaCourse.find({ endDate: { $gte: new Date() } })
       .sort({ createdAt: -1 })
@@ -237,11 +237,11 @@ const getCourseForDropDown = async (req, res) => {
 };
 
 export {
-  createYogaCourse,
-  courseDetails,
-  getCourse,
-  reAssignCourseToInstructor,
-  myCourseForIInstructor,
-  getCourseForDropDown,
+  createYCBatch,
+  batchDetails,
+  getCourseBatch,
+  reAssignYCBatchToInstructor,
+  myYCBatchesForIInstructor,
+  getYCBtachForDropDown,
   courseBatchDetailsForInstructor,
 };

@@ -12,7 +12,7 @@ import { contactUs } from "../../Controller/Admin/contactUs.controller.js";
 
 // User
 router.get("/", searchUser);
-router.get("/:id", userDetails);
+router.get("/detailes/:id", userDetails);
 router.get("/count", userCount);
 router.get("/referral", usersReferral);
 router.get("/refferalDetails/:rfC", getUserReferral);

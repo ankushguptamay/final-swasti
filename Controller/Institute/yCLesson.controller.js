@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { deleteSingleFile } from "../../Helper/fileHelper.js";
 import { capitalizeFirstLetter } from "../../Helper/formatChange.js";
 import {
@@ -13,7 +16,7 @@ import { deleteFileToBunny, uploadFileToBunny } from "../../Util/bunny.js";
 import fs from "fs";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
 
-const createYogaCourseLesson = async (req, res) => {
+const createYCBatchLesson = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateYogaCourseLesson(req.body);
@@ -61,7 +64,7 @@ const createYogaCourseLesson = async (req, res) => {
   }
 };
 
-const updateYogaCourseLesson = async (req, res) => {
+const updateYCBatchLesson = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateYogaCourseLessonUpdation(req.body);
@@ -102,7 +105,7 @@ const updateLessonDocument = async (req, res) => {
       return failureResponse(res, 400, "Please..upload an PDF", null);
 
     const lesson = await YCLesson.findById(req.params.yCLessonId)
-      .select("_id")
+      .select("_id document")
       .lean();
     if (!lesson) {
       deleteSingleFile(req.file.path);
@@ -179,8 +182,8 @@ const lessonDetails = async (req, res) => {
 };
 
 export {
-  createYogaCourseLesson,
-  updateYogaCourseLesson,
+  createYCBatchLesson,
+  updateYCBatchLesson,
   updateLessonDocument,
   deleteLessonDocument,
   lessonDetails,
