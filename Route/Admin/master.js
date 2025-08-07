@@ -34,11 +34,6 @@ import {
   updateYTRule,
   deleteYTRule,
 } from "../../Controller/Master/yTRules.controller.js";
-
-// MiddleWare
-import multer from "multer";
-const upload = multer();
-import { uploadImage } from "../../MiddleWare/uploadFile.js";
 import {
   addUpdateYogaCourseDescriptiveVideo,
   createYogaCourse,
@@ -49,6 +44,15 @@ import {
   yogaCourseDetails,
   yogaCourseForDropdown,
 } from "../../Controller/Master/yogaCourse.controller.js";
+import {
+  addYogaCourseReviewVideo,
+  deleteYCRevieweVideo,
+} from "../../Controller/Institute/yCVideoReview.controller.js";
+
+// MiddleWare
+import multer from "multer";
+const upload = multer();
+import { uploadImage } from "../../MiddleWare/uploadFile.js";
 
 // specialization
 router.post("/specialization", addSpecialization);
@@ -100,4 +104,11 @@ router.put(
   updateYogaCourseImage
 );
 router.delete("/yogacoursevideo/:yCId", deleteYogaCourseDescriptiveVideo);
+// Yoga course video review
+router.post(
+  "/yc-videoreview",
+  upload.single("video"),
+  addYogaCourseReviewVideo
+);
+router.delete("/yc-videoreview/:reviewId", deleteYCRevieweVideo);
 export default router;

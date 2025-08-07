@@ -17,6 +17,7 @@ import {
   uploadVideoToBunny,
 } from "../../Util/bunny.js";
 import fs from "fs";
+import { YCReviewVideo } from "../../Model/Institute/yogaCourseReviewVideoModel.js";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
 const { INSTITUTE_LIBRARY_API_KEY, INSTITUTE_VIDEO_LIBRARY_ID } = process.env;
 
@@ -235,9 +236,19 @@ const yogaCourseDetails = async (req, res) => {
       return failureResponse(res, 400, "This Yoga Course is not present!");
     }
 
+    const videoReview = await YCReviewVideo.find({
+      masterYogaCourse: course._id,
+    })
+      .select("-createdAt -updatedAt")
+      .lean();
+
     course.image = course.image ? course.image.url || null : null;
+
     // Send final success response
-    return successResponse(res, 200, "Successfully!", course);
+    return successResponse(res, 200, "Successfully!", {
+      ...course,
+      videoReview,
+    });
   } catch (err) {
     failureResponse(res);
   }
