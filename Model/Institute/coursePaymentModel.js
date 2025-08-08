@@ -7,6 +7,7 @@ const { Schema, model, models, Types } = mongoose;
 const schema = new Schema(
   {
     yogaCourse: { type: Types.ObjectId, ref: "YogaCourse", required: false },
+    courseName: { type: String },
     learner: { type: Types.ObjectId, ref: "User", required: true },
     couponName: { type: String },
     amount: { type: Number, required: true }, // Total amount in rupee

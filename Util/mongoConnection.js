@@ -3,7 +3,7 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { EmailCredential } from "../Model/User/emailCredentials.js";
-import { CoursePayment } from "../Model/User/Services/Course/coursePaymentModel.js";
+import { CoursePayment } from "../Model/Institute/coursePaymentModel.js";
 import { YogaCourse } from "../Model/Institute/yCBatchMode.js";
 import axios from "axios";
 import { MasterYogaCourse } from "../Model/Master/yogaCousreModel.js";
@@ -45,6 +45,10 @@ async function associateMasterCousreWithBatch() {
         { $set: { masterYC: course._id } }
       );
     }
+    // await CoursePayment.updateMany(
+    //   { courseName: { $exists: false } },
+    //   { $set: { courseName: "Yoga Volunteer Course" } }
+    // );
     console.log("Done.");
   } catch (err) {
     console.error("Error updating start dates:", err);

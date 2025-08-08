@@ -11,6 +11,10 @@ import {
   bookedClassTimesDetails,
 } from "../../../Controller/User/Service/YogaTutorClass/yogaTutor.controller.js";
 import { getMyYCBatchs } from "../../../Controller/User/Service/Course/payment.controller.js";
+import {
+  getYCReviews,
+  giveOrUpdateYCReviews,
+} from "../../../Controller/Institute/yCReview.controller.js";
 
 router.post("/createPayment", createPayment);
 router.post("/cancelOrder/:id", cancelOrder);
@@ -20,5 +24,7 @@ router.get("/ytc-booking", myClassTimesForUser);
 router.get("/ytc-booking/:id", bookedClassTimesDetails);
 
 router.get("/courses", getMyYCBatchs);
+router.post("/courses-review", giveOrUpdateYCReviews);
+router.get("/courses-review/:yCId", getYCReviews);
 
 export default router;

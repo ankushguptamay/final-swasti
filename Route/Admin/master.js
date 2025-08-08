@@ -53,6 +53,10 @@ import {
 import multer from "multer";
 const upload = multer();
 import { uploadImage } from "../../MiddleWare/uploadFile.js";
+import {
+  deleteYCReviewByAdmin,
+  getYCReviews,
+} from "../../Controller/Institute/yCReview.controller.js";
 
 // specialization
 router.post("/specialization", addSpecialization);
@@ -111,4 +115,7 @@ router.post(
   addYogaCourseReviewVideo
 );
 router.delete("/yc-videoreview/:reviewId", deleteYCRevieweVideo);
+// Yoga course user review
+router.get("/yc-userreview/:yCId", getYCReviews);
+router.delete("/yc-userreview/:yCId", deleteYCReviewByAdmin);
 export default router;

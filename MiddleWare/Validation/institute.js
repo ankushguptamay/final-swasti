@@ -112,7 +112,14 @@ const validateYogaCourseVideoReview = (data) => {
   });
   return schema.validate(data);
 };
-
+const validateYogaCourseReview = (data) => {
+  const schema = joi.object().keys({
+    rating: joi.number().greater(0).less(6).required(),
+    message: joi.string().optional(),
+    masterYC_id: joi.string().required(),
+  });
+  return schema.validate(data);
+};
 export {
   validateInstituteRegistration,
   validateInstituteLogin,
@@ -122,4 +129,5 @@ export {
   validateYogaCourseLesson,
   validateYogaCourseLessonUpdation,
   validateYogaCourseVideoReview,
+  validateYogaCourseReview,
 };

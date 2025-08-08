@@ -9,7 +9,7 @@ import {
 } from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
-import { CoursePayment } from "../../Model/User/Services/Course/coursePaymentModel.js";
+import { CoursePayment } from "../../Model/Institute/coursePaymentModel.js";
 import { MasterYogaCourse } from "../../Model/Master/yogaCousreModel.js";
 
 const createYCBatch = async (req, res) => {

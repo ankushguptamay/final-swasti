@@ -18,6 +18,7 @@ import {
 } from "../../Util/bunny.js";
 import fs from "fs";
 import { YCReviewVideo } from "../../Model/Institute/yogaCourseReviewVideoModel.js";
+import { YogaCourseReview } from "../../Model/Institute/yCReviewModel.js";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
 const { INSTITUTE_LIBRARY_API_KEY, INSTITUTE_VIDEO_LIBRARY_ID } = process.env;
 
@@ -236,20 +237,37 @@ const yogaCourseDetails = async (req, res) => {
       return failureResponse(res, 400, "This Yoga Course is not present!");
     }
 
-    const videoReview = await YCReviewVideo.find({
-      masterYogaCourse: course._id,
-    })
-      .select("-createdAt -updatedAt")
-      .lean();
+    const [videoReview, userReview] = await Promise.all([
+      YCReviewVideo.find({
+        masterYogaCourse: course._id,
+      })
+        .select("-createdAt -updatedAt")
+        .lean(),
+      YogaCourseReview.find({ masterYC: course._id })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select("rating message")
+        .populate("learner", "_id name profilePic")
+        .lean(),
+    ]);
 
     course.image = course.image ? course.image.url || null : null;
-
+    for (let i = 0; i < userReview.length; i++) {
+      userReview[i].learner = {
+        ...userReview[i].learner,
+        profilePic: userReview[i].learner.profilePic
+          ? userReview[i].learner.profilePic.url || null
+          : null,
+      };
+    }
     // Send final success response
     return successResponse(res, 200, "Successfully!", {
       ...course,
       videoReview,
+      userReview,
     });
   } catch (err) {
+    console.log(err.message);
     failureResponse(res);
   }
 };

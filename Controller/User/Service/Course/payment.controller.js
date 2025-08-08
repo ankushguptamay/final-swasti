@@ -14,7 +14,7 @@ import {
   validateCourseCoupon,
   verifyCoursePaymentByRazorpayValidation,
 } from "../../../../MiddleWare/Validation/course.js";
-import { CoursePayment } from "../../../../Model/User/Services/Course/coursePaymentModel.js";
+import { CoursePayment } from "../../../../Model/Institute/coursePaymentModel.js";
 import { generateReceiptNumber } from "../../../../Helper/generateOTP.js";
 import {
   createPhonepePayment,
@@ -127,6 +127,7 @@ const createCourseOrderByRazorpay = async (req, res) => {
     const { courseName, currency, startDate, couponName, amount } = req.body;
     const userId = req.user._id;
     // Capitalize name
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
     const courseId = await findBatch(req.body);
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ra`;
@@ -140,6 +141,7 @@ const createCourseOrderByRazorpay = async (req, res) => {
     await CoursePayment.create({
       yogaCourse: courseId,
       learner: userId,
+      courseName: name,
       couponName,
       startDate: new Date(startDate),
       paymentMethod: "razorpay",
@@ -178,7 +180,6 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
         "razorpayDetails.razorpayOrderId": orderId,
       })
         .populate("learner", "name email")
-        .populate("yogaCourse", "name")
         .lean();
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
@@ -215,7 +216,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
         )} (Indian Standard Time)`,
       };
       let emailHtml;
-      if (order.yogaCourse.name.toLowerCase() == "yoga volunteer course") {
+      if (order.courseName.toLowerCase() == "yoga volunteer course") {
         emailHtml = await yvcPaymentSuccessEmail(data);
       } else {
         emailHtml = null;
@@ -315,6 +316,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       // Create Wallet
       await Wallet.create({ userId: user._id });
     }
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
     const courseId = await findBatch({ courseName, startDate, amount });
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
@@ -330,6 +332,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
       yogaCourse: courseId,
       learner: user._id,
       couponName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "razorpay",
       amount: parseFloat(amount) / 100,
@@ -408,6 +411,7 @@ const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
       // Create Wallet
       await Wallet.create({ userId: user._id });
     }
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
     const courseId = await findBatch({ courseName, startDate, amount });
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
@@ -418,6 +422,7 @@ const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
       yogaCourse: courseId,
       learner: user._id,
       couponName,
+      courseName: name,
       startDate: new Date(startDate),
       paymentMethod: "phonepe",
       amount: parseFloat(amount) / 100,
@@ -437,6 +442,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { courseName, currency, startDate, couponName, amount } = req.body;
     const userId = req.user._id;
+    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
     const courseId = await findBatch(req.body);
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
@@ -446,6 +452,7 @@ const createCourseOrderByPhonepe = async (req, res) => {
     await CoursePayment.create({
       yogaCourse: courseId,
       learner: userId,
+      courseName: name,
       couponName,
       startDate: new Date(startDate),
       paymentMethod: "phonepe",
@@ -469,7 +476,6 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         "phonepeDetails.orderId": response.orderId,
       })
         .populate("learner", "name email")
-        .populate("yogaCourse", "name")
         .lean();
       if (!order) {
         return failureResponse(res, 400, "Order does not exist!");
@@ -495,7 +501,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         // Update enroll number
         if (order.yogaCourse && order.amount > 5) {
           await YogaCourse.updateOne(
-            { _id: order.yogaCourse._id },
+            { _id: order.yogaCourse },
             { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
           );
         }
@@ -509,7 +515,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         )} (Indian Standard Time)`,
       };
       let emailHtml;
-      if (order.yogaCourse.name.toLowerCase() == "yoga volunteer course") {
+      if (order.courseName.toLowerCase() == "yoga volunteer course") {
         emailHtml = await yvcPaymentSuccessEmail(data);
       } else {
         emailHtml = null;
@@ -557,6 +563,7 @@ const getCoursePayment = async (req, res) => {
     const query = { amount: { $gt: 5 } };
     if (search) {
       const withIn = new RegExp(search.toLowerCase(), "i");
+      query.courseName = withIn;
     }
     if (status) {
       if (status === "pending" || status === "failed") {
@@ -690,6 +697,7 @@ const getCoursePayment = async (req, res) => {
       {
         $project: {
           _id: "$result._id",
+          courseName: "$result.courseName",
           couponName: "$result.couponName",
           createdAt: "$result.createdAt",
           paymentMethod: "$result.paymentMethod",
@@ -712,6 +720,7 @@ const getCoursePayment = async (req, res) => {
       // Optionally project learner fields
       {
         $project: {
+          courseName: 1,
           couponName: 1,
           createdAt: 1,
           paymentMethod: 1,
