@@ -98,7 +98,7 @@ router.put(
   upload.single("video"),
   addUpdateYogaCourseDescriptiveVideo
 );
-router.put("/yogacourse", updateYogaCourse);
+router.put("/yogacourse/:yCId", updateYogaCourse);
 router.get("/yogacourse", yogaCourse);
 router.get("/yogacourse/:slug", yogaCourseDetails);
 router.get("/yc-dropdown", yogaCourseForDropdown);
