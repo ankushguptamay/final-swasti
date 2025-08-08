@@ -68,14 +68,21 @@ const validateBlogTag = (data) => {
   });
   return schema.validate(data);
 };
+
 const validateYogaCourse = (data) => {
-  const schema = joi
-    .object()
-    .keys({
-      title: joi.string().required(),
-      description: joi.string().required(),
-      time_hours: joi.number().required(),
-    });
+  const schema = joi.object().keys({
+    title: joi.string().required(),
+    description: joi.string().required(),
+    time_hours: joi.number().required(),
+  });
+  return schema.validate(data);
+};
+
+const validateUpdateYogaCourse = (data) => {
+  const schema = joi.object().keys({
+    description: joi.string().required(),
+    time_hours: joi.number().required(),
+  });
   return schema.validate(data);
 };
 
@@ -90,4 +97,5 @@ export {
   validateUpdateBlogSubCategory,
   validateBlogTag,
   validateYogaCourse,
+  validateUpdateYogaCourse,
 };

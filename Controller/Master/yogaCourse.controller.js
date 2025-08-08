@@ -7,7 +7,10 @@ import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
-import { validateYogaCourse } from "../../MiddleWare/Validation/master.js";
+import {
+  validateUpdateYogaCourse,
+  validateYogaCourse,
+} from "../../MiddleWare/Validation/master.js";
 import { MasterYogaCourse } from "../../Model/Master/yogaCousreModel.js";
 import {
   deleteFileToBunny,
@@ -66,7 +69,7 @@ const createYogaCourse = async (req, res) => {
 const updateYogaCourse = async (req, res) => {
   try {
     // Body Validation
-    const { error } = validateYogaCourse(req.body);
+    const { error } = validateUpdateYogaCourse(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     const { time_hours, description } = req.body;
     const course = await MasterYogaCourse.findById(req.params.yCId)
