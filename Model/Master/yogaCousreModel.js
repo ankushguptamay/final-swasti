@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
+import { YOGACOURSE } from "../../Config/class.const.js";
 const { Schema, model, models, Types } = mongoose;
 
-const course = ["Yoga Volunteer Course"];
+const course = YOGACOURSE;
 
 const schema = new Schema(
   {
@@ -16,7 +17,7 @@ const schema = new Schema(
         message: "{VALUE} is not supported",
       },
     },
-    time_hours: { type: Number, required: true },
+    time_hours: { type: Number },
     slug: { type: String, unique: true, trim: true },
     description: { type: String, trim: true },
     image: {

@@ -7,6 +7,11 @@ import {
   logout,
   refreshAccessToken,
 } from "../../Controller/Institute/institute.controller.js";
+import {
+  yogaCourse,
+  yogaCourseDetails,
+  yogaCourseForDropdown,
+} from "../../Controller/Master/yogaCourse.controller.js";
 import instructor from "./instructor.js";
 
 // Middleware
@@ -24,5 +29,10 @@ router.use(verifyInstituteJWT);
 
 router.get("/", instituteDetails);
 router.put("/logout", logout);
+
+// master yoga course
+router.get("/yogacourse", yogaCourse);
+router.get("/yogacourse/:slug", yogaCourseDetails);
+router.get("/yc-dropdown", yogaCourseForDropdown);
 
 export default router;

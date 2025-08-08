@@ -8,3 +8,16 @@ export const CLASS_BOOKING_TIME = 1; // class should be Booked before 24 hours
 export const PLATFROM_FEE = 12; // Plate form fee
 export const CANCELLATION_CHARGE = 20;
 export const CANCELLATION_BONUS_INSTRUCTOR = 8;
+
+export const YOGACOURSE = [
+  "Yoga Volunteer Course",
+  "Yoga Protocol Instructor",
+  "Yoga Wellness Instructor",
+  "Yoga Teacher And Evaluator",
+  "Yoga Master",
+  "Assistant Yoga Therapist",
+  "Yoga Therapist",
+  "Therapeutic Yoga Consultant",
+  "Primery-Elementary School Yoga Teachers",
+  "Secondary-Elementary School Yoga Teachers",
+];

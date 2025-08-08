@@ -6,6 +6,7 @@ import { EmailCredential } from "../Model/User/emailCredentials.js";
 import { CoursePayment } from "../Model/User/Services/Course/coursePaymentModel.js";
 import { YogaCourse } from "../Model/Institute/yCBatchMode.js";
 import axios from "axios";
+import { MasterYogaCourse } from "../Model/Master/yogaCousreModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -25,46 +26,24 @@ async function addBrevoEmail() {
   await EmailCredential.create({ email: "connect@swastibharat.com" });
 }
 
-async function associateCousreWithPayment() {
+async function associateMasterCousreWithBatch() {
   try {
-    const payment = await CoursePayment.find({ amount: { $gt: 5 } }).lean();
-    for (let i = 0; i < payment.length; i++) {
-      const yogaCourse = await YogaCourse.findOne({
-        name: payment[i].courseName,
-        startDate: new Date(payment[i].startDate),
-        totalEnroll: { $lt: 30 },
-      })
-        .select("_id")
-        .lean();
-      let courseId;
-      if (!yogaCourse) {
-        const endDate = new Date(payment[i].startDate);
-        endDate.setDate(endDate.getDate() + 45);
-        const courseDescription = await YogaCourse.findOne({
-          name: payment[i].courseName,
-        })
-          .select("_id description")
-          .lean();
-        const newCourse = await YogaCourse.create({
-          name: payment[i].courseName,
-          description: courseDescription?.description || undefined,
-          startDate: new Date(payment[i].startDate),
-          endDate,
-          amount: parseFloat(payment[i].amount),
-        });
-        courseId = newCourse._id;
-      } else {
-        courseId = yogaCourse._id;
-      }
-      await CoursePayment.updateOne(
-        { _id: payment[i]._id },
-        { $set: { yogaCourse: courseId } }
+    const course = await MasterYogaCourse.findOneAndUpdate(
+      { title: "Yoga Volunteer Course" },
+      { updatedAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    const batch = await YogaCourse.find({
+      name: "Yoga Volunteer Course",
+      masterYC: { $exists: false },
+    })
+      .select("_id")
+      .lean();
+    for (let i = 0; i < batch.length; i++) {
+      await YogaCourse.updateOne(
+        { _id: batch[i]._id },
+        { $set: { masterYC: course._id } }
       );
-      if (payment[i].status === "completed")
-        await YogaCourse.updateOne(
-          { _id: courseId },
-          { $inc: { totalEnroll: 1 } }
-        );
     }
     console.log("Done.");
   } catch (err) {
@@ -72,4 +51,4 @@ async function associateCousreWithPayment() {
   }
 }
 
-export { connectDB, addBrevoEmail };
+export { connectDB, addBrevoEmail, associateMasterCousreWithBatch };

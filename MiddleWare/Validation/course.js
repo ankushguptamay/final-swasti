@@ -1,4 +1,5 @@
 import joi from "joi";
+import { YOGACOURSE } from "../../Config/class.const.js";
 
 const validateCourseCoupon = (data) => {
   const schema = joi.object().keys({
@@ -13,7 +14,7 @@ const courseOrderValidation = (data) => {
   const schema = joi.object().keys({
     courseName: joi
       .string()
-      .valid("Yoga Volunteer Course", "Obesity Management")
+      .valid(...YOGACOURSE)
       .required(),
     couponName: joi.string().optional(),
     amount: joi.number().required(),
@@ -36,7 +37,7 @@ const courseOrderForNewUserValidation = (data) => {
   const schema = joi.object().keys({
     courseName: joi
       .string()
-      .valid("Yoga Volunteer Course", "Obesity Management")
+      .valid(...YOGACOURSE)
       .required(),
     couponName: joi.string().optional(),
     amount: joi.number().required(),

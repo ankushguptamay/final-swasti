@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
+import { YOGACOURSE } from "../../Config/class.const.js";
 const { Schema, model, models, Types } = mongoose;
 
-const course = ["Yoga Volunteer Course"];
+const course = YOGACOURSE;
 
 // Define the schema
 const schema = new Schema(
@@ -17,12 +18,12 @@ const schema = new Schema(
       },
     },
     slug: { type: String, unique: true, trim: true },
-    description: { type: String, trim: true },
     batchNumber: { type: Number, required: false },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     amount: { type: Number, required: true },
     totalEnroll: { type: Number, default: 0 },
+    masterYC: { type: Types.ObjectId, ref: "MasterYogaCourse", required: true },
     assigned_to: {
       type: Types.ObjectId,
       ref: "InstituteInstructor",

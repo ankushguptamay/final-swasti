@@ -10,16 +10,27 @@ import {
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 import { CoursePayment } from "../../Model/User/Services/Course/coursePaymentModel.js";
+import { MasterYogaCourse } from "../../Model/Master/yogaCousreModel.js";
 
 const createYCBatch = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateYCBatch(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { description, startDate, amount, assigned_to } = req.body;
+    const { startDate, amount, assigned_to } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
+    const masterYC = await MasterYogaCourse.findOne({ title: name })
+      .select("_id")
+      .lean();
+    if (!masterYC) {
+      return failureResponse(
+        res,
+        400,
+        `This course is not present in Swasti's Yoga Course!`
+      );
+    }
     if (new Date().getTime() > new Date(startDate).getTime()) {
       return failureResponse(res, 400, `Please select a start date in future!`);
     }
@@ -42,10 +53,10 @@ const createYCBatch = async (req, res) => {
     endDate.setDate(endDate.getDate() + 45);
     await YogaCourse.create({
       name,
-      description,
       startDate: new Date(startDate),
       endDate,
       amount,
+      masterYC: masterYC._id,
       assigned_to,
     });
     // Send final success response
@@ -110,9 +121,7 @@ const getCourseBatch = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(resultPerPage)
-        .select(
-          "_id name slug startDate description totalEnroll batchNumber createdAt"
-        )
+        .select("_id name slug startDate totalEnroll batchNumber createdAt")
         .populate("assigned_to", "name")
         .lean(),
       YogaCourse.countDocuments(query),
@@ -158,7 +167,7 @@ const myYCBatchesForIInstructor = async (req, res) => {
     const course = await YogaCourse.find({
       assigned_to: req.institute_instructor._id,
     })
-      .select("name startDate endDate description")
+      .select("name startDate endDate")
       .populate("assigned_to", "name email mobileNumber totalEnroll slug")
       .lean();
     for (let i = 0; i < course.length; i++) {
@@ -177,9 +186,7 @@ const courseBatchDetailsForInstructor = async (req, res) => {
   try {
     const [course, lesson, user] = await Promise.all([
       YogaCourse.findOne({ slug: req.params.slug })
-        .select(
-          "_id name slug startDate description totalEnroll batchNumber amount"
-        )
+        .select("_id name slug startDate totalEnroll batchNumber amount")
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
         .select(

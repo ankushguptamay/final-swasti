@@ -8,11 +8,9 @@ const schema = new Schema(
   {
     yogaCourse: { type: Types.ObjectId, ref: "YogaCourse", required: false },
     learner: { type: Types.ObjectId, ref: "User", required: true },
-    courseName: { type: String },
     couponName: { type: String },
     amount: { type: Number, required: true }, // Total amount in rupee
     startDate: { type: Date },
-    numberOfBooking: { type: Number, default: 1 }, // Booking for how many pepole like as learner can book for many people
     paymentMethod: {
       type: String,
       enum: ["razorpay", "phonepe"],
