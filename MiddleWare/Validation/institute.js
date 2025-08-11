@@ -35,6 +35,7 @@ const validateInstituteLoginOTP = (data) => {
   });
   return schema.validate(data);
 };
+
 const validateInstituteInstructorRegistration = (data) => {
   const schema = joi.object().keys({
     name: joi.string().min(3).max(30).required(),
@@ -44,14 +45,6 @@ const validateInstituteInstructorRegistration = (data) => {
       .length(10)
       .pattern(/^[0-9]+$/)
       .required(),
-    password: joi
-      .string()
-      .pattern(
-        new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d@$!%*?& ]{8,}$")
-      )
-      .required()
-      .min(8)
-      .max(20),
     institute: joi.string().required(),
   });
   return schema.validate(data);
@@ -110,6 +103,7 @@ const validateYogaCourseVideoReview = (data) => {
   });
   return schema.validate(data);
 };
+
 const validateYogaCourseReview = (data) => {
   const schema = joi.object().keys({
     rating: joi.number().greater(0).less(6).required(),
@@ -118,6 +112,7 @@ const validateYogaCourseReview = (data) => {
   });
   return schema.validate(data);
 };
+
 export {
   validateInstituteRegistration,
   validateInstituteLogin,

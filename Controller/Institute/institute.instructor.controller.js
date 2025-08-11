@@ -10,9 +10,6 @@ import {
   failureResponse,
   successResponse,
 } from "../../MiddleWare/responseMiddleware.js";
-
-const SALT = 10;
-import bcrypt from "bcryptjs";
 import {
   validateInstituteLogin,
   validateInstituteInstructorRegistration,
@@ -46,7 +43,7 @@ const registerIInstructorByAdmin = async (req, res) => {
     const { error } = validateInstituteInstructorRegistration(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
     // Find Institute
-    const { email, mobileNumber, password, institute } = req.body;
+    const { email, mobileNumber, institute } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -64,15 +61,11 @@ const registerIInstructorByAdmin = async (req, res) => {
     if (user) {
       instructor = user._id;
     }
-    // Hash password
-    const salt = await bcrypt.genSalt(SALT);
-    const hashedPassword = await bcrypt.hash(password, salt);
     // Save details
     await InstituteInstructor.create({
       email,
       mobileNumber,
       name,
-      password: hashedPassword,
       approvalByAdmin: "accepted",
       institute,
       instructor,
