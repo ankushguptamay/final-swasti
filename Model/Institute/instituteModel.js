@@ -7,7 +7,6 @@ const schema = new Schema(
     name: { type: String },
     email: { type: String, required: true, unique: true },
     mobileNumber: { type: String, required: true, unique: true },
-    password: { type: String, required: true, select: false },
     slug: { type: String, unique: true, trim: true },
     // Approval
     approvalByAdmin: {
