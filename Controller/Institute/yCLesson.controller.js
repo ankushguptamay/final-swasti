@@ -60,6 +60,7 @@ const createYCBatchLesson = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, "Created successfully!");
   } catch (err) {
+    console.log(err.message)
     failureResponse(res);
   }
 };
