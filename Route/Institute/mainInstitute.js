@@ -3,7 +3,8 @@ const router = express.Router();
 
 import {
   instituteDetails,
-  login,
+  loginByMobile,
+  verifyMobileOTP,
   logout,
   refreshAccessToken,
 } from "../../Controller/Institute/institute.controller.js";
@@ -18,7 +19,8 @@ import instructor from "./instructor.js";
 import { verifyInstituteJWT } from "../../MiddleWare/verifyJWTToken.js";
 
 // Auth
-router.post("/login", login);
+router.post("/login", loginByMobile);
+router.post("/verify-otp", verifyMobileOTP);
 router.post("/refresh", refreshAccessToken);
 
 // Instructor routes

@@ -3,7 +3,8 @@ const router = express.Router();
 
 import {
   instructorDetails,
-  login,
+  loginByMobile,
+  verifyMobileOTP,
   logout,
   refreshAccessToken,
 } from "../../Controller/Institute/institute.instructor.controller.js";
@@ -23,7 +24,8 @@ import {
 import { uploadPDF } from "../../MiddleWare/uploadFile.js";
 
 // Auth
-router.post("/login", login);
+router.post("/login", loginByMobile);
+router.post("/verify-otp", verifyMobileOTP);
 router.post("/refresh", refreshAccessToken);
 
 // Authantication

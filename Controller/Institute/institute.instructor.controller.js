@@ -16,10 +16,14 @@ import bcrypt from "bcryptjs";
 import {
   validateInstituteLogin,
   validateInstituteInstructorRegistration,
+  validateInstituteLoginOTP,
 } from "../../MiddleWare/Validation/institute.js";
 import jwt from "jsonwebtoken";
 import { InstituteInstructor } from "../../Model/Institute/instituteInstructorModel.js";
 import { User } from "../../Model/User/Profile/userModel.js";
+import { InstituteOTP } from "../../Model/Institute/instituteOtpModel.js";
+import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
+import { sendOTPToNumber } from "../../Util/sendOTP.js";
 
 const instructorDetails = async (req, res) => {
   try {
@@ -81,36 +85,93 @@ const registerIInstructorByAdmin = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+const loginByMobile = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateInstituteLogin(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { email, password } = req.body;
+    const { mobileNumber } = req.body;
     // Find Institute
-    const instructor = await InstituteInstructor.findOne({ email })
-      .select("+password -createdAt -isDelete -deleted_at -refreshToken")
+    const instructor = await InstituteInstructor.findOne({ mobileNumber })
+      .select("-createdAt -isDelete -deleted_at -refreshToken")
       .lean();
     if (!instructor) {
-      return failureResponse(res, 400, "Invalid email or password!", null);
+      return failureResponse(res, 400, "Invalid Mobile Number!", null);
     }
-    // Validate password
-    const validPassword = await bcrypt.compare(password, instructor.password);
-    if (!validPassword) {
-      return failureResponse(res, 400, "Invalid email or password!", null);
-    }
-    // Create token
-    const accessToken = createUserAccessToken({ _id: instructor._id, email });
-    const refreshToken = createUserRefreshToken({
-      _id: instructor._id,
-      email,
+    // Valid time
+    const oneHourAgo = new Date(new Date().getTime() - 30 * 60 * 1000);
+    const otpCount = await InstituteOTP.countDocuments({
+      receiverId: instructor._id,
+      createdAt: { $gte: oneHourAgo },
     });
+    if (otpCount > 2) {
+      return failureResponse(
+        res,
+        400,
+        "Too many attempt. Please try to login after 30 minute."
+      );
+    }
+    // Generate OTP for Email
+    const otp = await generateFixedLengthRandomNumber(
+      process.env.OTP_DIGITS_LENGTH
+    );
+    // Sending OTP to mobile number
+    await sendOTPToNumber(mobileNumber, otp);
+    //  Store OTP
+    await InstituteOTP.create({
+      validTill:
+        new Date().getTime() +
+        parseInt(process.env.OTP_VALIDITY_IN_MILLISECONDS),
+      otp: otp,
+      receiverId: instructor._id,
+    });
+    // Send final success response
+    return successResponse(
+      res,
+      201,
+      `OTP send to mobile number successfully! Valid for ${
+        process.env.OTP_VALIDITY_IN_MILLISECONDS / (60 * 1000)
+      } minutes!`,
+      { mobileNumber }
+    );
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const verifyMobileOTP = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateInstituteLoginOTP(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const { mobileNumber, otp } = req.body;
+    // Is Email Otp exist
+    const isOtp = await InstituteOTP.findOne({ otp }).lean();
+    if (!isOtp) {
+      return failureResponse(res, 401, `Invalid OTP. Try again`, null);
+    }
+    // Checking is user present or not
+    const instructor = await InstituteInstructor.findOne(
+      { $and: [{ mobileNumber }, { _id: isOtp.receiverId }] },
+      "_id name email mobileNumber"
+    ).lean();
+    if (!instructor) {
+      return failureResponse(res, 401, `Invalid OTP!`, null);
+    }
+    // is email otp expired?
+    const isOtpExpired = new Date().getTime() > parseInt(isOtp.validTill);
+    if (isOtpExpired) {
+      return failureResponse(res, 403, `OTP expired!`, null);
+    }
+    await InstituteOTP.deleteMany({ receiverId: isOtp.receiverId });
+    // Create token
+    const accessToken = createUserAccessToken({ _id: instructor._id });
+    const refreshToken = createUserRefreshToken({ _id: instructor._id });
     // Added refresh token in database
     await InstituteInstructor.updateOne(
       { _id: instructor._id },
       { $set: { refreshToken } }
     );
-    delete instructor.password;
     // Send final success response
     return successResponse(res, 201, `Welcome Back, ${instructor.name}.`, {
       instructor,
@@ -118,7 +179,6 @@ const login = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -221,9 +281,10 @@ const getInstructor = async (req, res) => {
 export {
   registerIInstructorByAdmin,
   instructorDetails,
-  login,
+  loginByMobile,
   logout,
   refreshAccessToken,
   instituteInstructorDetailsForAdmin,
   getInstructor,
+  verifyMobileOTP,
 };

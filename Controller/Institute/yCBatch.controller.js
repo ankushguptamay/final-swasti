@@ -167,7 +167,7 @@ const myYCBatchesForIInstructor = async (req, res) => {
     const course = await YogaCourse.find({
       assigned_to: req.institute_instructor._id,
     })
-      .select("name startDate endDate")
+      .select("name startDate slug endDate")
       .populate("assigned_to", "name email mobileNumber totalEnroll slug")
       .lean();
     for (let i = 0; i < course.length; i++) {
@@ -184,16 +184,16 @@ const myYCBatchesForIInstructor = async (req, res) => {
 
 const courseBatchDetailsForInstructor = async (req, res) => {
   try {
-    const [course, lesson, user] = await Promise.all([
-      YogaCourse.findOne({ slug: req.params.slug })
-        .select("_id name slug startDate totalEnroll batchNumber amount")
-        .lean(),
-      YCLesson.find({ yogaCourse: req.params.id })
+    const course = await YogaCourse.findOne({ slug: req.params.slug })
+      .select("_id name slug startDate totalEnroll batchNumber amount")
+      .lean();
+    const [lesson, user] = await Promise.all([
+      YCLesson.find({ yogaCourse: course._id })
         .select(
           "name video date hls_url videoTimeInMinute thumbNailUrl document"
         )
         .lean(),
-      CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
+      CoursePayment.find({ yogaCourse: course._id, status: "completed" })
         .select("_id")
         .populate("learner", "name profilePic")
         .lean(),

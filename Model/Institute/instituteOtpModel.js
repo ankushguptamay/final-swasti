@@ -5,9 +5,10 @@ const schema = new Schema(
   {
     otp: { type: Number },
     validTill: { type: String },
-    receiverId: { type: Types.ObjectId, ref: "User", required: true },
+    receiverId: { type: Types.ObjectId },
   },
   { timestamps: true }
 );
 
-export const OTP = models.OTP || model("OTP", schema);
+export const InstituteOTP =
+  models.InstituteOTP || model("InstituteOTP", schema);
