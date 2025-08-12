@@ -76,7 +76,7 @@ const loginByMobile = async (req, res) => {
       return failureResponse(res, 400, "Invalid Mobile Number!", null);
     }
     // Valid time
-    const oneHourAgo = new Date(now.getTime() - 30 * 60 * 1000);
+    const oneHourAgo = new Date(new Date().getTime() - 30 * 60 * 1000);
     const otpCount = await InstituteOTP.countDocuments({
       receiverId: isInstittute._id,
       createdAt: { $gte: oneHourAgo },
