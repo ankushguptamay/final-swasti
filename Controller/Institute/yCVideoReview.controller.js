@@ -9,7 +9,11 @@ import {
 import { deleteVideoToBunny, uploadVideoToBunny } from "../../Util/bunny.js";
 import { YCReviewVideo } from "../../Model/Institute/yogaCourseReviewVideoModel.js";
 import { validateYogaCourseVideoReview } from "../../MiddleWare/Validation/institute.js";
-const { INSTITUTE_LIBRARY_API_KEY, INSTITUTE_VIDEO_LIBRARY_ID } = process.env;
+const {
+  INSTITUTE_LIBRARY_API_KEY,
+  INSTITUTE_VIDEO_LIBRARY_ID,
+  INSTITUTE_CDN_HOST,
+} = process.env;
 
 const addYogaCourseReviewVideo = async (req, res) => {
   try {
@@ -36,9 +40,9 @@ const addYogaCourseReviewVideo = async (req, res) => {
     );
     delete req.file;
     const videoId = video.video_id;
-    const thumbnail_url = `https://vz-16239270-16c.b-cdn.net/${video.video_id}/thumbnail.jpg`;
-    const web_url = `https://iframe.mediadelivery.net/embed/477560/${video.video_id}`;
-    const hls_url = `https://vz-16239270-16c.b-cdn.net/${video.video_id}/playlist.m3u8`;
+    const thumbnail_url = `${INSTITUTE_CDN_HOST}/${video.video_id}/thumbnail.jpg`;
+    const web_url = `https://iframe.mediadelivery.net/embed/${INSTITUTE_VIDEO_LIBRARY_ID}/${video.video_id}`;
+    const hls_url = `${INSTITUTE_CDN_HOST}/${video.video_id}/playlist.m3u8`;
 
     // create
     await YCReviewVideo.create({

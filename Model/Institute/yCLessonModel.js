@@ -6,6 +6,7 @@ const schema = new Schema(
   {
     name: { type: String, required: true },
     date: { type: Date, required: true },
+    video_id: { type: String, required: false },
     video: { type: String, required: false },
     hls_url: { type: String, required: false },
     videoTimeInMinute: { type: Number, default: 60 },

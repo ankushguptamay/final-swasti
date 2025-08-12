@@ -23,7 +23,11 @@ import fs from "fs";
 import { YCReviewVideo } from "../../Model/Institute/yogaCourseReviewVideoModel.js";
 import { YogaCourseReview } from "../../Model/Institute/yCReviewModel.js";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
-const { INSTITUTE_LIBRARY_API_KEY, INSTITUTE_VIDEO_LIBRARY_ID } = process.env;
+const {
+  INSTITUTE_LIBRARY_API_KEY,
+  INSTITUTE_VIDEO_LIBRARY_ID,
+  INSTITUTE_CDN_HOST,
+} = process.env;
 
 const createYogaCourse = async (req, res) => {
   try {
@@ -160,9 +164,9 @@ const addUpdateYogaCourseDescriptiveVideo = async (req, res) => {
     delete req.file;
     const descriptive_video = {
       videoId: video.video_id,
-      thumbnail_url: `https://vz-16239270-16c.b-cdn.net/${video.video_id}/thumbnail.jpg`,
-      web_url: `https://iframe.mediadelivery.net/embed/477560/${video.video_id}`,
-      hls_url: `https://vz-16239270-16c.b-cdn.net/${video.video_id}/playlist.m3u8`,
+      thumbnail_url: `${INSTITUTE_CDN_HOST}/${video.video_id}/thumbnail.jpg`,
+      web_url: `https://iframe.mediadelivery.net/embed/${INSTITUTE_VIDEO_LIBRARY_ID}/${video.video_id}`,
+      hls_url: `${INSTITUTE_CDN_HOST}/${video.video_id}/playlist.m3u8`,
     };
     // Delete existing video if present
     if (course.descriptive_video && course.descriptive_video.videoId) {

@@ -4,7 +4,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import {
   addBrevoEmail,
-  associateMasterCousreWithBatch,
+  changeLessonVideo,
   connectDB,
 } from "./Util/mongoConnection.js";
 import { createServer } from "node:http";
@@ -26,7 +26,7 @@ const server = createServer(app);
   // Connect to database
   await connectDB(process.env.MONGO_URI);
   // await addBrevoEmail();
-  // await associateMasterCousreWithBatch();
+  // await changeLessonVideo();
 })();
 
 // Cors options

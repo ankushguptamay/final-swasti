@@ -15,6 +15,7 @@ import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { deleteFileToBunny, uploadFileToBunny } from "../../Util/bunny.js";
 import fs from "fs";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
+const { INSTITUTE_VIDEO_LIBRARY_ID, INSTITUTE_CDN_HOST } = process.env;
 
 const createYCBatchLesson = async (req, res) => {
   try {
@@ -24,14 +25,7 @@ const createYCBatchLesson = async (req, res) => {
       if (req.file) deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const {
-      date,
-      video,
-      yogaCourseId,
-      hls_url,
-      videoTimeInMinute,
-      thumbNailUrl,
-    } = req.body;
+    const { date, yogaCourseId, video_id, videoTimeInMinute } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -47,6 +41,12 @@ const createYCBatchLesson = async (req, res) => {
       // Delete file from server
       deleteSingleFile(req.file.path);
     }
+    let video, thumbNailUrl, hls_url;
+    if (video_id) {
+      video = `https://iframe.mediadelivery.net/embed/${INSTITUTE_VIDEO_LIBRARY_ID}/${video_id}`;
+      thumbNailUrl = `${INSTITUTE_CDN_HOST}/${video_id}/thumbnail.jpg`;
+      hls_url = `${INSTITUTE_CDN_HOST}/${video_id}/playlist.m3u8`;
+    }
     await YCLesson.create({
       name,
       video,
@@ -55,12 +55,13 @@ const createYCBatchLesson = async (req, res) => {
       hls_url,
       videoTimeInMinute,
       thumbNailUrl,
+      video_id,
       document,
     });
     // Send final success response
     return successResponse(res, 201, "Created successfully!");
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -70,7 +71,7 @@ const updateYCBatchLesson = async (req, res) => {
     // Body Validation
     const { error } = validateYogaCourseLessonUpdation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { date, video, hls_url, videoTimeInMinute, thumbNailUrl } = req.body;
+    const { date, videoTimeInMinute, video_id } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
@@ -79,12 +80,21 @@ const updateYCBatchLesson = async (req, res) => {
       .lean();
     if (!lesson)
       return failureResponse(res, 400, "This lesson is not present!");
+    let video = lesson.video,
+      thumbNailUrl = lesson.thumbNailUrl,
+      hls_url = lesson.hls_url;
+    if (video_id !== lesson.video_id) {
+      video = `https://iframe.mediadelivery.net/embed/${INSTITUTE_VIDEO_LIBRARY_ID}/${video_id}`;
+      thumbNailUrl = `${INSTITUTE_CDN_HOST}/${video_id}/thumbnail.jpg`;
+      hls_url = `${INSTITUTE_CDN_HOST}/${video_id}/playlist.m3u8`;
+    }
     await YCLesson.updateOne(
       { _id: req.params.yCLessonId },
       {
         $set: {
           name,
           video,
+          video_id,
           date: new Date(date),
           hls_url,
           videoTimeInMinute,
@@ -165,7 +175,7 @@ const deleteLessonDocument = async (req, res) => {
 const lessonDetails = async (req, res) => {
   try {
     const lesson = await YCLesson.findById(req.params.yCLessonId)
-      .select("name video date hls_url videoTimeInMinute thumbNailUrl document")
+      .select("name video date video_id  hls_url videoTimeInMinute thumbNailUrl document")
       .lean();
     if (!lesson) {
       return failureResponse(res, 400, "This lesson is not present!");

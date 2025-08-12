@@ -74,7 +74,7 @@ const batchDetails = async (req, res) => {
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
         .select(
-          "name video date hls_url videoTimeInMinute thumbNailUrl document"
+          "name video video_id date hls_url videoTimeInMinute thumbNailUrl document"
         )
         .lean(),
       CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })

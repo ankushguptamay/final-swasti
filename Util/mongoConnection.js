@@ -3,10 +3,10 @@ dotenv.config();
 
 import mongoose from "mongoose";
 import { EmailCredential } from "../Model/User/emailCredentials.js";
-import { CoursePayment } from "../Model/Institute/coursePaymentModel.js";
 import { YogaCourse } from "../Model/Institute/yCBatchMode.js";
-import axios from "axios";
 import { MasterYogaCourse } from "../Model/Master/yogaCousreModel.js";
+import { YOGACOURSE } from "../Config/class.const.js";
+import { YCLesson } from "../Model/Institute/yCLessonModel.js";
 
 const connectDB = async (uri) => {
   try {
@@ -26,33 +26,30 @@ async function addBrevoEmail() {
   await EmailCredential.create({ email: "connect@swastibharat.com" });
 }
 
-async function associateMasterCousreWithBatch() {
+async function changeLessonVideo() {
   try {
-    const course = await MasterYogaCourse.findOneAndUpdate(
-      { title: "Yoga Volunteer Course" },
-      { updatedAt: new Date() },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    const batch = await YogaCourse.find({
-      name: "Yoga Volunteer Course",
-      masterYC: { $exists: false },
-    })
-      .select("_id")
-      .lean();
-    for (let i = 0; i < batch.length; i++) {
-      await YogaCourse.updateOne(
-        { _id: batch[i]._id },
-        { $set: { masterYC: course._id } }
-      );
+    const yogaCourse = YOGACOURSE;
+    for (let i = 0; i < yogaCourse.length; i++) {
+      const course = await MasterYogaCourse.findOne({
+        title: yogaCourse[i],
+      }).lean();
+      if (!course) {
+        await MasterYogaCourse.create({ title: yogaCourse[i] });
+      }
     }
-    // await CoursePayment.updateMany(
-    //   { courseName: { $exists: false } },
-    //   { $set: { courseName: "Yoga Volunteer Course" } }
-    // );
+    const lesson = await YCLesson.find({
+      video: { $exists: true },
+      yogaCourse: { $ne: "688a107e7811309aa986bc59" },
+    }).lean();
+    for (let i = 0; i < lesson.length; i++) {
+      const arr = lesson[i].video.split("/");
+      const video_id = arr[arr.length - 1];
+      await YCLesson.updateOne({ _id: lesson[i]._id }, { $set: { video_id } });
+    }
     console.log("Done.");
   } catch (err) {
     console.error("Error updating start dates:", err);
   }
 }
 
-export { connectDB, addBrevoEmail, associateMasterCousreWithBatch };
+export { connectDB, addBrevoEmail, changeLessonVideo };
