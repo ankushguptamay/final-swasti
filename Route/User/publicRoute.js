@@ -55,16 +55,16 @@ router.post("/verifyPayment", verifyPayment);
 router.get("/yogacourse", yogaCourse);
 router.get("/yogacourse/:slug", yogaCourseDetails);
 // Yoga Course payment Route
-router.post(
-  "/createCourseOrder-newUser-ph",
-  createCourseOrderByPhonepeAndRegisterUser
-);
+// router.post(
+//   "/createCourseOrder-newUser-ph",
+//   createCourseOrderByPhonepeAndRegisterUser
+// );
 router.post(
   "/createCourseOrder-newUser-ra",
   createCourseOrderByRazorpayAndRegisterUser
 );
 router.post("/verifyCoursePayment-ra", verifyCoursePaymentByRazorpay);
-router.get("/verifyCoursePayment-ph/:receipt", verifyCoursePaymentByPhonepe);
+// router.get("/verifyCoursePayment-ph/:receipt", verifyCoursePaymentByPhonepe);
 router.post("/applyCourseCoupon", applyCourseCoupon);
 router.post("/course-webhook", razorpay_course_webhook);
 

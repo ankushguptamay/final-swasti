@@ -21,3 +21,8 @@ export const YOGACOURSE = [
   "Primery-Elementary School Yoga Teachers",
   "Secondary-Elementary School Yoga Teachers",
 ];
+
+export const YOGACOURSETIMES = [
+  { name: "Yoga Volunteer Course", expireDay: 45 },
+  { name: "Yoga Wellness Instructor", expireDay: 120 },
+];

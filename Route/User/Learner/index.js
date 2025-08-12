@@ -26,7 +26,7 @@ router.use((req, res, next) => {
 
 // Course
 router.post("/createCourseOrder-ra", createCourseOrderByRazorpay);
-router.post("/createCourseOrder-ph", createCourseOrderByPhonepe);
+// router.post("/createCourseOrder-ph", createCourseOrderByPhonepe);
 
 router.use("/profile", profile);
 router.use("/inst", instructor);

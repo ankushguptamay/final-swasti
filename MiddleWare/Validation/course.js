@@ -5,20 +5,16 @@ const validateCourseCoupon = (data) => {
   const schema = joi.object().keys({
     courseName: joi.string().required(),
     couponName: joi.string().required(),
-    courseAmount: joi.number().required(),
+    // courseAmount: joi.number().required(),
   });
   return schema.validate(data);
 };
 
 const courseOrderValidation = (data) => {
   const schema = joi.object().keys({
-    courseName: joi
-      .string()
-      .valid(...YOGACOURSE)
-      .required(),
     couponName: joi.string().optional(),
     amount: joi.number().required(),
-    startDate: joi.string().required(),
+    batchId: joi.string().required(),
     currency: joi.string().required(),
   });
   return schema.validate(data);

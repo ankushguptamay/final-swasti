@@ -28,24 +28,14 @@ async function addBrevoEmail() {
 
 async function changeLessonVideo() {
   try {
-    const yogaCourse = YOGACOURSE;
-    for (let i = 0; i < yogaCourse.length; i++) {
-      const course = await MasterYogaCourse.findOne({
-        title: yogaCourse[i],
-      }).lean();
-      if (!course) {
-        await MasterYogaCourse.create({ title: yogaCourse[i] });
-      }
-    }
-    const lesson = await YCLesson.find({
-      video: { $exists: true },
-      yogaCourse: { $ne: "688a107e7811309aa986bc59" },
-    }).lean();
-    for (let i = 0; i < lesson.length; i++) {
-      const arr = lesson[i].video.split("/");
-      const video_id = arr[arr.length - 1];
-      await YCLesson.updateOne({ _id: lesson[i]._id }, { $set: { video_id } });
-    }
+    await MasterYogaCourse.updateOne(
+      { title: "Yoga Volunteer Course" },
+      { $set: { amount: 1500 } }
+    );
+    await MasterYogaCourse.updateOne(
+      { title: "Yoga Wellness Instructor" },
+      { $set: { amount: 18000 } }
+    );
     console.log("Done.");
   } catch (err) {
     console.error("Error updating start dates:", err);

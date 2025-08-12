@@ -24,6 +24,7 @@ const schema = new Schema(
       fileName: { type: String },
       url: { type: String },
     },
+    amount: { type: Number },
     averageRating: {
       type: Number,
       default: 0,

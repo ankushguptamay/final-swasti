@@ -58,7 +58,6 @@ const validateYCBatch = (data) => {
       .required(),
     assigned_to: joi.string().optional(),
     startDate: joi.string().required(),
-    amount: joi.number().required(),
   });
   return schema.validate(data);
 };

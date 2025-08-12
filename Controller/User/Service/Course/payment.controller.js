@@ -30,6 +30,7 @@ import { YogaCourse } from "../../../../Model/Institute/yCBatchMode.js";
 import { YCLesson } from "../../../../Model/Institute/yCLessonModel.js";
 import { InstituteInstructor } from "../../../../Model/Institute/instituteInstructorModel.js";
 import { MasterYogaCourse } from "../../../../Model/Master/yogaCousreModel.js";
+import { YOGACOURSETIMES } from "../../../../Config/class.const.js";
 
 const {
   RAZORPAY_KEY_ID,
@@ -65,31 +66,8 @@ function generateAcronym(phrase) {
     .toLowerCase(); // Optional: convert to lowercase
 }
 
-const applyCourseCoupon = async (req, res) => {
-  try {
-    // Validate body
-    const { error } = validateCourseCoupon(req.body);
-    if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { courseName, couponName, courseAmount } = req.body;
-
-    const offer = await getOfferedAmount(
-      courseName.trim().toLowerCase(),
-      couponName,
-      courseAmount
-    );
-    return successResponse(res, 201, `Successfully!`, {
-      courseAmount,
-      savedAmount: offer,
-      payableAmount: parseFloat(courseAmount) - parseFloat(offer),
-    });
-  } catch (err) {
-    return failureResponse(res);
-  }
-};
-
-// Find Course
 async function findBatch(data) {
-  const { courseName, startDate, amount } = data;
+  const { courseName, startDate } = data;
   const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
   const yogaCourse = await YogaCourse.findOne({
     name,
@@ -101,16 +79,23 @@ async function findBatch(data) {
   let courseId;
   if (!yogaCourse) {
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 45);
+    const courseTime = YOGACOURSETIMES.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase()
+    );
+    if (!courseTime) {
+      endDate.setDate(endDate.getDate() + 120);
+    } else {
+      endDate.setDate(endDate.getDate() + courseTime.expireDay);
+    }
     const masterCourse = await MasterYogaCourse.findOne({ title: name })
-      .select("_id")
+      .select("_id amount")
       .lean();
     const newCourse = await YogaCourse.create({
       name,
       masterYC: masterCourse._id,
       startDate: new Date(startDate),
       endDate,
-      amount: parseFloat(amount) / 100,
+      amount: masterCourse.amount,
     });
     courseId = newCourse._id;
   } else {
@@ -119,18 +104,51 @@ async function findBatch(data) {
   return courseId;
 }
 
+const applyCourseCoupon = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = validateCourseCoupon(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const { courseName, couponName } = req.body;
+    // Find Course
+    const course = await MasterYogaCourse.findOne({ title: courseName })
+      .select("amount")
+      .lean();
+    if (!course)
+      return failureResponse(res, 400, "This course is not available!", null);
+    const offer = await getOfferedAmount(
+      courseName.trim().toLowerCase(),
+      couponName,
+      course.amount
+    );
+    return successResponse(res, 201, `Successfully!`, {
+      courseAmount: course.amount,
+      savedAmount: offer,
+      payableAmount: parseFloat(course.amount) - parseFloat(offer),
+    });
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
 const createCourseOrderByRazorpay = async (req, res) => {
   try {
     // Validate body
     const { error } = courseOrderValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { courseName, currency, startDate, couponName, amount } = req.body;
+    const { batchId, currency, couponName, amount } = req.body;
     const userId = req.user._id;
-    // Capitalize name
-    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
-    const courseId = await findBatch(req.body);
+    // Find batch
+    const batch = await YogaCourse.findOne({
+      _id: batchId,
+      startDate: { $gt: new Date() },
+    })
+      .select("name startDate")
+      .lean();
+    if (!batch)
+      return failureResponse(res, 400, "This batch is not available!", null);
     // Receipt
-    const prefix = `${generateAcronym(courseName)}-ra`;
+    const prefix = `${generateAcronym(batch.name)}-ra`;
     const receipt = await generateReceiptNumber(prefix);
     // initiate payment
     const order = await razorpayInstance.orders.create({
@@ -139,11 +157,11 @@ const createCourseOrderByRazorpay = async (req, res) => {
       receipt,
     });
     await CoursePayment.create({
-      yogaCourse: courseId,
+      yogaCourse: batchId,
       learner: userId,
-      courseName: name,
+      courseName: batch.name,
       couponName,
-      startDate: new Date(startDate),
+      startDate: new Date(batch.startDate),
       paymentMethod: "razorpay",
       amount: parseFloat(amount) / 100,
       razorpayDetails: { razorpayOrderId: order.id },
@@ -203,7 +221,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
         if (order.yogaCourse && order.amount > 5) {
           await YogaCourse.updateOne(
             { _id: order.yogaCourse },
-            { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
+            { $inc: { totalEnroll: 1 } }
           );
         }
       }
@@ -440,21 +458,28 @@ const createCourseOrderByPhonepe = async (req, res) => {
     // Validate body
     const { error } = courseOrderValidation(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { courseName, currency, startDate, couponName, amount } = req.body;
+    const { batchId, currency, couponName, amount } = req.body;
     const userId = req.user._id;
-    const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
-    const courseId = await findBatch(req.body);
+    // Find batch
+    const batch = await YogaCourse.findOne({
+      _id: batchId,
+      startDate: { $gt: new Date() },
+    })
+      .select("name startDate")
+      .lean();
+    if (!batch)
+      return failureResponse(res, 400, "This batch is not available!", null);
     // Receipt
-    const prefix = `${generateAcronym(courseName)}-ph`;
+    const prefix = `${generateAcronym(batch.name)}-ph`;
     const receipt = await generateReceiptNumber(prefix);
     // initiate payment
     const order = await createPhonepePayment(amount, receipt);
     await CoursePayment.create({
-      yogaCourse: courseId,
+      yogaCourse: batchId,
       learner: userId,
-      courseName: name,
+      courseName: batch.name,
       couponName,
-      startDate: new Date(startDate),
+      startDate: new Date(batch.startDate),
       paymentMethod: "phonepe",
       amount: parseFloat(amount) / 100,
       phonepeDetails: { orderId: order.orderId },
@@ -502,7 +527,7 @@ const verifyCoursePaymentByPhonepe = async (req, res) => {
         if (order.yogaCourse && order.amount > 5) {
           await YogaCourse.updateOne(
             { _id: order.yogaCourse },
-            { $inc: { totalEnroll: 1 } } // Increment `viewCount` by 1
+            { $inc: { totalEnroll: 1 } }
           );
         }
       }

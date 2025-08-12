@@ -22,6 +22,7 @@ import {
 import fs from "fs";
 import { YCReviewVideo } from "../../Model/Institute/yogaCourseReviewVideoModel.js";
 import { YogaCourseReview } from "../../Model/Institute/yCReviewModel.js";
+import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 const bunnyFolderName = process.env.INSTITUTE_FOLDER;
 const {
   INSTITUTE_LIBRARY_API_KEY,
@@ -37,7 +38,7 @@ const createYogaCourse = async (req, res) => {
       if (req.file) deleteSingleFile(req.file.path); // Delete file from server
       return failureResponse(res, 400, error.details[0].message, null);
     }
-    const { time_hours, description } = req.body;
+    const { time_hours, description, amount } = req.body;
     const title = capitalizeFirstLetter(
       req.body.title.replace(/\s+/g, " ").trim()
     );
@@ -61,6 +62,7 @@ const createYogaCourse = async (req, res) => {
       time_hours,
       description,
       image,
+      amount,
     });
     // Send final success response
     return successResponse(res, 201, "Created successfully!");
@@ -244,7 +246,7 @@ const yogaCourseDetails = async (req, res) => {
       return failureResponse(res, 400, "This Yoga Course is not present!");
     }
 
-    const [videoReview, userReview] = await Promise.all([
+    const [videoReview, userReview, batch] = await Promise.all([
       YCReviewVideo.find({
         masterYogaCourse: course._id,
       })
@@ -255,6 +257,10 @@ const yogaCourseDetails = async (req, res) => {
         .limit(10)
         .select("rating message")
         .populate("learner", "_id name profilePic")
+        .lean(),
+      YogaCourse.find({ masterYC: course._id, startDate: { $gt: new Date() } })
+        .sort({ startDate: 1 })
+        .select("_id name slug startDate totalEnroll batchNumber")
         .lean(),
     ]);
 
@@ -267,11 +273,17 @@ const yogaCourseDetails = async (req, res) => {
           : null,
       };
     }
+    for (let i = 0; i < batch.length; i++) {
+      batch[i].startDateInIST = new Date(
+        new Date(batch[i].startDate).getTime() + 330 * 60 * 1000
+      );
+    }
     // Send final success response
     return successResponse(res, 200, "Successfully!", {
       ...course,
       videoReview,
       userReview,
+      batch,
     });
   } catch (err) {
     console.log(err.message);

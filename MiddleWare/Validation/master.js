@@ -74,6 +74,7 @@ const validateYogaCourse = (data) => {
     title: joi.string().required(),
     description: joi.string().required(),
     time_hours: joi.number().required(),
+    amount: joi.number().required(),
   });
   return schema.validate(data);
 };

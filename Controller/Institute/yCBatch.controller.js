@@ -11,18 +11,19 @@ import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 import { CoursePayment } from "../../Model/Institute/coursePaymentModel.js";
 import { MasterYogaCourse } from "../../Model/Master/yogaCousreModel.js";
+import { YOGACOURSETIMES } from "../../Config/class.const.js";
 
 const createYCBatch = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateYCBatch(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { startDate, amount, assigned_to } = req.body;
+    const { startDate, assigned_to } = req.body;
     const name = capitalizeFirstLetter(
       req.body.name.replace(/\s+/g, " ").trim()
     );
     const masterYC = await MasterYogaCourse.findOne({ title: name })
-      .select("_id")
+      .select("_id amount")
       .lean();
     if (!masterYC) {
       return failureResponse(
@@ -49,14 +50,24 @@ const createYCBatch = async (req, res) => {
         null
       );
     }
+    // End Date
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 45);
+    const courseTime = YOGACOURSETIMES.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase()
+    );
+    if (!courseTime)
+      return failureResponse(
+        res,
+        400,
+        `Currently this course is not provide by Swasti!`
+      );
+    endDate.setDate(endDate.getDate() + courseTime.expireDay);
     await YogaCourse.create({
       name,
       startDate: new Date(startDate),
       endDate,
-      amount,
       masterYC: masterYC._id,
+      amount: masterYC.amount,
       assigned_to,
     });
     // Send final success response

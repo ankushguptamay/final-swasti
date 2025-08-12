@@ -1,8 +1,8 @@
 export const courseCoupons = [
   {
-    couponName: "NEWJOIN",
-    offerPercent: 10,
-    maximumOfferInRupee: 100,
-    appliedTo:["yoga volunteer course"]
+    couponName: "15AUGUST",
+    offerPercent: 15,
+    maximumOfferInRupee: 2700,
+    appliedTo: ["yoga wellness instructor"],
   },
 ];
