@@ -37,6 +37,7 @@ const {
   RAZORPAY_SECRET_ID,
   COURSE_THANK_YOU_URL,
   COURSE_FAIL_YOU_URL,
+  COURSE_THANK_YOU_URL_YWI,
 } = process.env;
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
@@ -234,7 +235,9 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
         )} (Indian Standard Time)`,
       };
       let emailHtml;
+      let redirectUrl = COURSE_THANK_YOU_URL_YWI;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
+        redirectUrl = COURSE_THANK_YOU_URL;
         emailHtml = await yvcPaymentSuccessEmail(data);
       } else {
         emailHtml = null;
@@ -263,7 +266,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
           ],
         });
       }
-      return successResponse(res, 201, { redirectUrl: COURSE_THANK_YOU_URL });
+      return successResponse(res, 201, { redirectUrl});
     } else {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }
