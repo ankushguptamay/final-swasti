@@ -228,45 +228,42 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
       }
       // send Email
       const data = {
+        courseName: order.courseName,
         userName: order.learner.name,
         amount: order.amount,
         timeSlote: `${await conertInIST(
           order.startDate
         )} (Indian Standard Time)`,
       };
-      let emailHtml;
+      let emailHtml = await yvcPaymentSuccessEmail(data);
       let redirectUrl = COURSE_THANK_YOU_URL_YWI;
       if (order.courseName.toLowerCase() == "yoga volunteer course") {
         redirectUrl = COURSE_THANK_YOU_URL;
-        emailHtml = await yvcPaymentSuccessEmail(data);
-      } else {
-        emailHtml = null;
       }
-      if (emailHtml) {
-        const options = {
-          senderMail: "office@swastibharat.com",
-          senderName: "Swasti Bharat",
-          receiver: [
-            {
-              receiverEmail: order.learner.email,
-              receiverName: order.learner.name,
-            },
-          ],
-          subject: "Enrollment Confirmed:",
-          htmlbody: emailHtml,
-        };
-        await sendEmailViaZeptoZoho(options);
-        await sendEmailViaZeptoZoho({
-          ...options,
-          receiver: [
-            {
-              receiverEmail: "ankushgupta9675@gmail.com",
-              receiverName: "Ankush Gupta",
-            },
-          ],
-        });
-      }
-      return successResponse(res, 201, { redirectUrl});
+      const options = {
+        senderMail: "office@swastibharat.com",
+        senderName: "Swasti Bharat",
+        receiver: [
+          {
+            receiverEmail: order.learner.email,
+            receiverName: order.learner.name,
+          },
+        ],
+        subject: "Enrollment Confirmed:",
+        htmlbody: emailHtml,
+      };
+      await sendEmailViaZeptoZoho(options);
+      await sendEmailViaZeptoZoho({
+        ...options,
+        receiver: [
+          {
+            receiverEmail: "ankushgupta9675@gmail.com",
+            receiverName: "Ankush Gupta",
+          },
+        ],
+      });
+
+      return successResponse(res, 201, { redirectUrl });
     } else {
       return failureResponse(res, 400, "Payment failed. Please try again.");
     }

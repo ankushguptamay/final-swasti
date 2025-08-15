@@ -415,11 +415,11 @@ async function yvcPaymentSuccessEmail(data) {
       <img src="https://swasi-bharat.b-cdn.net/logo-media/Swasth%20Bharat%20with%201.png" alt="Swasti Bharat Logo"/>
     </div>
     <div class="content">
-      <h2>Enrollment Confirmed : Yoga Volunteer Course</h2>
+      <h2>Enrollment Confirmed : ${data.courseName}</h2>
       <p>Hey <strong>${data.userName}</strong></p>
-      <p>Thank you for enrolling in the Yoga Volunteer Course offered by Jagriti Yoga & Naturopathy Sansthan.</p>
+      <p>Thank you for enrolling in the ${data.courseName} offered by Jagriti Yoga & Naturopathy Sansthan.</p>
       <p><strong>Payment Received:</strong> ₹${data.amount}</p>
-      <p><strong>Course Enrolled:</strong> Yoga Volunteer Course</p>
+      <p><strong>Course Enrolled:</strong> ${data.courseName}</p>
       <p><strong>Class Time:</strong> ${data.timeSlote}</p>
       <p><strong>Certificate:</strong> Issued by Jagriti Yoga & Naturopathy Sansthan, an accredited Yoga Training Center recognized by the Yoga Certification Board, Ministry of AYUSH, Government of India.</p>
       <p><a href="#">Stay connected for updates. Welcome to your yoga journey!</a></p>
