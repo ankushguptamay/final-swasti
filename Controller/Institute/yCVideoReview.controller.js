@@ -51,7 +51,7 @@ const addYogaCourseReviewVideo = async (req, res) => {
       thumbnail_url,
       web_url,
       hls_url,
-      masterYogaCourse,
+      masterYogaCourse: req.body.masterYogaCourse,
     });
     // Send final success response
     return successResponse(res, 201, "Successfully!");
