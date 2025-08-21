@@ -35,7 +35,7 @@ router.get("/", instructorDetails);
 router.put("/logout", logout);
 
 router.get("/ycbatch", myYCBatchesForIInstructor); // yoga-course
-router.get("ycbatch/:slug", courseBatchDetailsForInstructor); // yoga-course/details
+router.get("/ycbatch/:slug", courseBatchDetailsForInstructor); // yoga-course/details
 router.post("/ycbatch-lesson", uploadPDF.single("pdf"), createYCBatchLesson); // yoga-course-lesson
 router.get("/ycbatch-lesson/:yCLessonId", lessonDetails); // yoga-course-lesson
 router.put(

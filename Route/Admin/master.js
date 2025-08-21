@@ -117,5 +117,5 @@ router.post(
 router.delete("/yc-videoreview/:reviewId", deleteYCRevieweVideo);
 // Yoga course user review
 router.get("/yc-userreview/:yCId", getYCReviews);
-router.delete("/yc-userreview/:yCId", deleteYCReviewByAdmin);
+router.delete("/yc-userreview/:reviewId", deleteYCReviewByAdmin);
 export default router;
