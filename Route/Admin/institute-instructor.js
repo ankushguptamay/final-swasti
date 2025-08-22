@@ -5,8 +5,8 @@ import {
   registerInstituteByAdmin,
 } from "../../Controller/Institute/institute.controller.js";
 import {
-  getInstructor,
-  registerIInstructorByAdmin,
+  getInstructorForAdmin,
+  registerIInstructor,
   instituteInstructorDetailsForAdmin,
 } from "../../Controller/Institute/institute.instructor.controller.js";
 import {
@@ -15,8 +15,9 @@ import {
   getCourseBatch,
   getYCBtachForDropDown,
   reAssignYCBatchToInstructor,
+  deletebatch,
 } from "../../Controller/Institute/yCBatch.controller.js";
-import { reAssignCoursesToUser } from "../../Controller/User/Service/Course/payment.controller.js";
+import { reAssignBatchToUser } from "../../Controller/User/Service/Course/payment.controller.js";
 import {
   createYCBatchLesson,
   updateYCBatchLesson,
@@ -34,17 +35,18 @@ router.get("/", getInstitute);
 router.get("/details/:id", instituteDetailsForAdmin);
 
 // Instructor
-router.post("/instructor", registerIInstructorByAdmin);
-router.get("/instructor", getInstructor);
+router.post("/instructor", registerIInstructor);
+router.get("/instructor", getInstructorForAdmin);
 router.get("/instructor/:id", instituteInstructorDetailsForAdmin);
 
 // Yoga Courses
 router.post("/ycbatch", createYCBatch); // yoga-course
 router.get("/ycbatch", getCourseBatch); // yoga-course
 router.get("/ycbatch-dd", getYCBtachForDropDown); // yoga-course-dd
+router.delete("/ycbatch/:id", deletebatch);
 router.get("/ycbatch/:id", batchDetails); // yoga-course
 router.put("/ycbatch-reassign-inst", reAssignYCBatchToInstructor); // yoga-course-reassign-inst
-router.put("/ycbatch-reassign-user/:paymentId", reAssignCoursesToUser); // yoga-course-reassign-user
+router.put("/ycbatch-reassign-user/:paymentId", reAssignBatchToUser); // yoga-course-reassign-user
 router.post("/ycbatch-lesson", uploadPDF.single("pdf"), createYCBatchLesson); // yoga-course-lesson
 router.get("/ycbatch-lesson/:yCLessonId", lessonDetails); // yoga-course-lesson
 router.put(

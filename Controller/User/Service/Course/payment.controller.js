@@ -879,28 +879,33 @@ const getMyYCBatchs = async (req, res) => {
   }
 };
 
-const reAssignCoursesToUser = async (req, res) => {
+const reAssignBatchToUser = async (req, res) => {
   try {
-    const courseId = req.body.courseId;
-    if (!courseId) return failureResponse(res, 400, "Please select a course!");
+    const batchId = req.body.courseId;
+    if (!batchId) return failureResponse(res, 400, "Please select a course!");
+    // find Batch
+    const batch = await YogaCourse.findById(batchId).select("startDate").lean();
+    if (!batch)
+      return failureResponse(res, 400, "Selected batch is not present!");
+    // Find paymnet
     const coursePayment = await CoursePayment.findById(req.params.paymentId)
       .select("_id yogaCourse")
       .lean();
     if (!coursePayment) {
       return failureResponse(res, 400, "This course payment is not present!");
     }
+    // Update payment
     await CoursePayment.updateOne(
       { _id: req.params.paymentId },
-      { $set: { yogaCourse: courseId } }
+      { $set: { yogaCourse: batchId, startDate: batch.startDate } }
     );
+    // Decrease a enroll count of previous batch
     await YogaCourse.updateOne(
       { _id: coursePayment.yogaCourse },
-      { $inc: { totalEnroll: -1 } } // Decrease by 1
+      { $inc: { totalEnroll: -1 } }
     );
-    await YogaCourse.updateOne(
-      { _id: courseId },
-      { $inc: { totalEnroll: 1 } } // Increment by 1
-    );
+    // Increase a enroll count of previous batch
+    await YogaCourse.updateOne({ _id: batchId }, { $inc: { totalEnroll: 1 } });
     return successResponse(res, 200, `Successfully reassigned!`);
   } catch (err) {
     failureResponse(res);
@@ -965,7 +970,7 @@ export {
   createCourseOrderByRazorpayAndRegisterUser,
   getCoursePayment,
   getMyYCBatchs,
-  reAssignCoursesToUser,
+  reAssignBatchToUser,
   razorpay_course_webhook,
 };
 

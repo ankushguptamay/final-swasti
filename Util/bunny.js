@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
-
+import crypto from "crypto";
 import axios from "axios";
 const { BUNNY_HOSTNAME, BUNNY_STORAGE_ACCESS_KEY } = process.env;
 
@@ -122,6 +122,46 @@ const deleteFileToBunny = async (bunnyFolderName, filename) => {
         }
       );
   });
+};
+
+const getVideoIdFromBunny = async (
+  BUNNY_VIDEO_LIBRARY_ID,
+  BUNNY_LIBRARY_API_KEY,
+  title
+) => {
+  try {
+    const optionsToCreateVideo = {
+      method: "POST",
+      url: `http://video.bunnycdn.com/library/${BUNNY_VIDEO_LIBRARY_ID}/videos/`,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        AccessKey: BUNNY_LIBRARY_API_KEY,
+      },
+      data: JSON.stringify({ title }),
+    };
+    const createFolder = await axios.request(optionsToCreateVideo);
+    const video_id = createFolder.data.guid;
+
+    const expireTime = Math.floor(Date.now() / 1000) + 7200; // 2 hour
+    // Concatenate: libraryId + apiKey + expirationTime + videoId
+    const rawString = `${BUNNY_VIDEO_LIBRARY_ID}${BUNNY_LIBRARY_API_KEY}${expireTime}${video_id}`;
+    // SHA256 hash
+    const signature = crypto
+      .createHash("sha256")
+      .update(rawString)
+      .digest("hex");
+    return {
+      AuthorizationSignature: signature,
+      AuthorizationExpire: expireTime,
+      LibraryId: BUNNY_LIBRARY_ID,
+      videoId: video_id,
+      title,
+    };
+  } catch (err) {
+    console.error("Error", err);
+    throw err;
+  }
 };
 
 export {

@@ -295,7 +295,7 @@ const yogaCourse = async (req, res) => {
   try {
     // Find Course
     const course = await MasterYogaCourse.find()
-      .select("title image slug time_hours averageRating")
+      .select("title image amount slug time_hours averageRating")
       .lean();
     for (let i = 0; i < course.length; i++) {
       course[i].image = course[i].image ? course[i].image.url || null : null;

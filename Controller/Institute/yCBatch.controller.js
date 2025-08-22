@@ -224,6 +224,7 @@ const courseBatchDetailsForInstructor = async (req, res) => {
         profilePic: user[i].learner.profilePic
           ? user[i].learner.profilePic.url || null
           : null,
+        paymentId: user[i]._id,
       });
     }
     // Send final success response
@@ -254,6 +255,54 @@ const getYCBtachForDropDown = async (req, res) => {
   }
 };
 
+const deletebatch = async (req, res) => {
+  try {
+    const batchId = req.params.id;
+    const [batch, payment] = await Promise.all([
+      YogaCourse.findById(batchId).select("totalEnroll startDate").lean(),
+      CoursePayment.find({ yogaCourse: batchId }).select("_id").lean(),
+    ]);
+    if (!batch) return failureResponse(res, 400, "This batch is not present!");
+    if (batch.totalEnroll > 0)
+      return failureResponse(
+        res,
+        400,
+        `This batch have ${batch.totalEnroll} enrolled learner. First assign them to another batch!`
+      );
+    // Reassign payment to nearestbatch
+    if (payment.length > 1) {
+      const nearestBatch = await YogaCourse.aggregate([
+        {
+          $addFields: {
+            diff: { $abs: { $subtract: ["$startDate", batch.startDate] } },
+          },
+        },
+        { $sort: { diff: 1 } },
+        { $limit: 1 },
+        { $project: { _id: 1, startDate: 1 } },
+      ]);
+      for (let i = 0; i < payment.length; i++) {
+        await CoursePayment.updateOne(
+          { _id: payment[i]._id },
+          {
+            $set: {
+              yogaCourse: nearestBatch._id,
+              startDate: nearestBatch.startDate,
+            },
+          }
+        );
+      }
+    }
+    // Delete batch
+    await YogaCourse.deleteOne({ _id: batchId });
+    // Send final success response
+    return successResponse(res, 200, "Batch deleted successfully!");
+  } catch (err) {
+    console.log(err.message);
+    failureResponse(res);
+  }
+};
+
 export {
   createYCBatch,
   batchDetails,
@@ -262,4 +311,5 @@ export {
   myYCBatchesForIInstructor,
   getYCBtachForDropDown,
   courseBatchDetailsForInstructor,
+  deletebatch,
 };

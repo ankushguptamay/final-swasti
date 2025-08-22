@@ -21,6 +21,7 @@ import { User } from "../../Model/User/Profile/userModel.js";
 import { InstituteOTP } from "../../Model/Institute/instituteOtpModel.js";
 import { generateFixedLengthRandomNumber } from "../../Helper/generateOTP.js";
 import { sendOTPToNumber } from "../../Util/sendOTP.js";
+import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
 
 const instructorDetails = async (req, res) => {
   try {
@@ -37,7 +38,7 @@ const instructorDetails = async (req, res) => {
   }
 };
 
-const registerIInstructorByAdmin = async (req, res) => {
+const registerIInstructor = async (req, res) => {
   try {
     // Body Validation
     const { error } = validateInstituteInstructorRegistration(req.body);
@@ -233,7 +234,7 @@ const instituteInstructorDetailsForAdmin = async (req, res) => {
   }
 };
 
-const getInstructor = async (req, res) => {
+const getInstructorForAdmin = async (req, res) => {
   try {
     const search = req.query.search?.trim();
     const resultPerPage = req.query.resultPerPage
@@ -266,18 +267,63 @@ const getInstructor = async (req, res) => {
       currentPage: page,
     });
   } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const getInstructorForInstitute = async (req, res) => {
+  try {
+    const search = req.query.search?.trim();
+    //Search
+    const query = { instructor: req.instructor._id };
+    if (search) {
+      const withIn = new RegExp(search.toLowerCase(), "i");
+      query.name = withIn;
+    }
+    const instructor = await InstituteInstructor.find(query)
+      .sort({ name: 1 })
+      .select("_id name slug email mobileNumber createdAt")
+      .lean();
+
+    return successResponse(res, 200, `Successfully!`, instructor);
+  } catch (err) {
+    console.log(err.message);
+    failureResponse(res);
+  }
+};
+
+const instituteInstructorDetailsForInstitute = async (req, res) => {
+  try {
+    const instructor = await InstituteInstructor.findOne({
+      slug: req.params.slug,
+    })
+      .select("_id name slug email mobileNumber")
+      .lean();
+    if (!instructor)
+      return failureResponse(res, 400, "This instructor is not present!");
+    const assignedBatch = await YogaCourse.find({ assigned_to: instructor._id })
+      .select("name slug startDate totalEnroll batchNumber")
+      .lean();
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", {
+      ...instructor,
+      assignedBatch,
+    });
+  } catch (err) {
     console.log(err.message);
     failureResponse(res);
   }
 };
 
 export {
-  registerIInstructorByAdmin,
+  registerIInstructor,
   instructorDetails,
   loginByMobile,
   logout,
   refreshAccessToken,
   instituteInstructorDetailsForAdmin,
-  getInstructor,
+  getInstructorForAdmin,
   verifyMobileOTP,
+  getInstructorForInstitute,
+  instituteInstructorDetailsForInstitute,
 };
