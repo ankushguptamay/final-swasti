@@ -272,6 +272,7 @@ const deletebatch = async (req, res) => {
     // Reassign payment to nearestbatch
     if (payment.length > 1) {
       const nearestBatch = await YogaCourse.aggregate([
+        { $match: { startDate: { $ne: batch.startDate } } },
         {
           $addFields: {
             diff: { $abs: { $subtract: ["$startDate", batch.startDate] } },
@@ -281,6 +282,7 @@ const deletebatch = async (req, res) => {
         { $limit: 1 },
         { $project: { _id: 1, startDate: 1 } },
       ]);
+      console.log(nearestBatch);
       for (let i = 0; i < payment.length; i++) {
         await CoursePayment.updateOne(
           { _id: payment[i]._id },
