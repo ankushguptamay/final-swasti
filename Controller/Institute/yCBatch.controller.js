@@ -6,6 +6,7 @@ import {
 import {
   validateYCBatch,
   validateReAssignYCBatch,
+  validateAssignYCBatchIntitute,
 } from "../../MiddleWare/Validation/institute.js";
 import { YCLesson } from "../../Model/Institute/yCLessonModel.js";
 import { YogaCourse } from "../../Model/Institute/yCBatchMode.js";
@@ -178,8 +179,7 @@ const myYCBatchesForIInstructor = async (req, res) => {
     const course = await YogaCourse.find({
       assigned_to: req.institute_instructor._id,
     })
-      .select("name startDate slug endDate")
-      .populate("assigned_to", "name email mobileNumber totalEnroll slug")
+      .select("name startDate slug totalEnroll endDate")
       .lean();
     for (let i = 0; i < course.length; i++) {
       course[i].startDateInIST = new Date(
@@ -193,10 +193,11 @@ const myYCBatchesForIInstructor = async (req, res) => {
   }
 };
 
-const courseBatchDetailsForInstructor = async (req, res) => {
+const courseBatchDetailsForII = async (req, res) => {
   try {
     const course = await YogaCourse.findOne({ slug: req.params.slug })
       .select("_id name slug startDate totalEnroll batchNumber amount")
+      .populate("assigned_to", "name email mobileNumber slug")
       .lean();
     const [lesson, user] = await Promise.all([
       YCLesson.find({ yogaCourse: course._id })
@@ -226,6 +227,9 @@ const courseBatchDetailsForInstructor = async (req, res) => {
           : null,
         paymentId: user[i]._id,
       });
+    }
+    if (req.institute_instructor) {
+      delete course.assigned_to;
     }
     // Send final success response
     return successResponse(res, 200, "Successfully!", {
@@ -305,6 +309,49 @@ const deletebatch = async (req, res) => {
   }
 };
 
+const assignYCBatchToInstitute = async (req, res) => {
+  try {
+    // Body Validation
+    const { error } = validateAssignYCBatchIntitute(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const { courseId, assigned_to_instructor } = req.body;
+    const isAnyCourse = await YogaCourse.findById(courseId)
+      .select("_id")
+      .lean();
+    if (!isAnyCourse) {
+      return failureResponse(res, 400, `This course in not present`);
+    }
+    await YogaCourse.updateOne(
+      { _id: courseId },
+      { $set: { assigned_to_instructor, assigned_to: null } }
+    );
+    // Send final success response
+    return successResponse(res, 201, "Successfully assigned!");
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
+const myYCBatchesForInstitute = async (req, res) => {
+  try {
+    const course = await YogaCourse.find({
+      assigned_to_institute: req.institute._id,
+    })
+      .select("name startDate slug totalEnroll endDate")
+      .populate("assigned_to", "name email mobileNumber slug")
+      .lean();
+    for (let i = 0; i < course.length; i++) {
+      course[i].startDateInIST = new Date(
+        new Date(course[i].startDate).getTime() + 330 * 60 * 1000
+      );
+    }
+    // Send final success response
+    return successResponse(res, 200, "Successfully!", course);
+  } catch (err) {
+    failureResponse(res);
+  }
+};
+
 export {
   createYCBatch,
   batchDetails,
@@ -312,6 +359,8 @@ export {
   reAssignYCBatchToInstructor,
   myYCBatchesForIInstructor,
   getYCBtachForDropDown,
-  courseBatchDetailsForInstructor,
+  courseBatchDetailsForII,
   deletebatch,
+  assignYCBatchToInstitute,
+  myYCBatchesForInstitute,
 };

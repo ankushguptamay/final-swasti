@@ -24,6 +24,11 @@ const schema = new Schema(
     amount: { type: Number, required: true },
     totalEnroll: { type: Number, default: 0 },
     masterYC: { type: Types.ObjectId, ref: "MasterYogaCourse", required: true },
+    assigned_to_instructor: {
+      type: Types.ObjectId,
+      ref: "Institute",
+      required: false,
+    },
     assigned_to: {
       type: Types.ObjectId,
       ref: "InstituteInstructor",

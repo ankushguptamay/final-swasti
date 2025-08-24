@@ -23,7 +23,11 @@ import instructor from "./instructor.js";
 
 // Middleware
 import { verifyInstituteJWT } from "../../MiddleWare/verifyJWTToken.js";
-import { reAssignYCBatchToInstructor } from "../../Controller/Institute/yCBatch.controller.js";
+import {
+  courseBatchDetailsForII,
+  myYCBatchesForInstitute,
+  reAssignYCBatchToInstructor,
+} from "../../Controller/Institute/yCBatch.controller.js";
 
 // Auth
 router.post("/login", loginByMobile);
@@ -51,5 +55,7 @@ router.get("/my-instructor/:slug", instituteInstructorDetailsForInstitute);
 
 // Course Batches
 router.put("/ycbatch-reassign-inst", reAssignYCBatchToInstructor);
+router.get("/ycbatch", myYCBatchesForInstitute);
+router.get("/ycbatch/:slug", courseBatchDetailsForII);
 
 export default router;

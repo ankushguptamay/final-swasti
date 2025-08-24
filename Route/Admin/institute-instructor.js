@@ -16,6 +16,7 @@ import {
   getYCBtachForDropDown,
   reAssignYCBatchToInstructor,
   deletebatch,
+  assignYCBatchToInstitute,
 } from "../../Controller/Institute/yCBatch.controller.js";
 import { reAssignBatchToUser } from "../../Controller/User/Service/Course/payment.controller.js";
 import {
@@ -47,6 +48,7 @@ router.delete("/ycbatch/:id", deletebatch);
 router.get("/ycbatch/:id", batchDetails); // yoga-course
 router.put("/ycbatch-reassign-inst", reAssignYCBatchToInstructor); // yoga-course-reassign-inst
 router.put("/ycbatch-reassign-user/:paymentId", reAssignBatchToUser); // yoga-course-reassign-user
+router.put("/ycbatch-assign-institute", assignYCBatchToInstitute);
 router.post("/ycbatch-lesson", uploadPDF.single("pdf"), createYCBatchLesson); // yoga-course-lesson
 router.get("/ycbatch-lesson/:yCLessonId", lessonDetails); // yoga-course-lesson
 router.put(

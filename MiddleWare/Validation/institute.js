@@ -70,6 +70,14 @@ const validateReAssignYCBatch = (data) => {
   return schema.validate(data);
 };
 
+const validateAssignYCBatchIntitute = (data) => {
+  const schema = joi.object().keys({
+    courseId: joi.string().required(),
+    assigned_to_institute: joi.string().required(),
+  });
+  return schema.validate(data);
+};
+
 const validateYogaCourseLesson = (data) => {
   const schema = joi.object().keys({
     name: joi.string().required(),
@@ -119,4 +127,5 @@ export {
   validateYogaCourseVideoReview,
   validateYogaCourseReview,
   validateInstituteLoginOTP,
+  validateAssignYCBatchIntitute,
 };
