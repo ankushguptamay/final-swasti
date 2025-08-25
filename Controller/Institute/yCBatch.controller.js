@@ -83,6 +83,7 @@ const batchDetails = async (req, res) => {
     const [course, lesson, user] = await Promise.all([
       YogaCourse.findById(req.params.id)
         .populate("assigned_to", "name email mobileNumber")
+        .populate("assigned_to_institute", "name email mobileNumber")
         .lean(),
       YCLesson.find({ yogaCourse: req.params.id })
         .select(
