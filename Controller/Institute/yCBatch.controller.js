@@ -314,7 +314,7 @@ const assignYCBatchToInstitute = async (req, res) => {
     // Body Validation
     const { error } = validateAssignYCBatchIntitute(req.body);
     if (error) return failureResponse(res, 400, error.details[0].message, null);
-    const { courseId, assigned_to_instructor } = req.body;
+    const { courseId, assigned_to_institute } = req.body;
     const isAnyCourse = await YogaCourse.findById(courseId)
       .select("_id")
       .lean();
@@ -323,7 +323,7 @@ const assignYCBatchToInstitute = async (req, res) => {
     }
     await YogaCourse.updateOne(
       { _id: courseId },
-      { $set: { assigned_to_instructor, assigned_to: null } }
+      { $set: { assigned_to_institute, assigned_to: null } }
     );
     // Send final success response
     return successResponse(res, 201, "Successfully assigned!");
