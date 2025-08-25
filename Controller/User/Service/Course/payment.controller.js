@@ -70,19 +70,19 @@ function generateAcronym(phrase) {
 async function findBatch(data) {
   const { courseName, startDate } = data;
   const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
+  const courseTime = YOGACOURSETIMES.find(
+    (c) => c.name.toLowerCase() === name.toLowerCase()
+  );
   const yogaCourse = await YogaCourse.findOne({
     name,
     startDate: new Date(startDate),
-    totalEnroll: { $lt: 30 },
+    totalEnroll: { $lt: parseInt(courseTime.batchSize) },
   })
     .select("_id")
     .lean();
   let courseId;
   if (!yogaCourse) {
     const endDate = new Date(startDate);
-    const courseTime = YOGACOURSETIMES.find(
-      (c) => c.name.toLowerCase() === name.toLowerCase()
-    );
     if (!courseTime) {
       endDate.setDate(endDate.getDate() + 120);
     } else {
@@ -132,6 +132,7 @@ const applyCourseCoupon = async (req, res) => {
   }
 };
 
+// Main Route
 const createCourseOrderByRazorpay = async (req, res) => {
   try {
     // Validate body
@@ -272,6 +273,7 @@ const verifyCoursePaymentByRazorpay = async (req, res) => {
   }
 };
 
+// For landing page
 const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
   try {
     // Validate body
@@ -368,6 +370,7 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
   }
 };
 
+// For landing page
 const createCourseOrderByPhonepeAndRegisterUser = async (req, res) => {
   try {
     // Validate body
@@ -914,7 +917,6 @@ const reAssignBatchToUser = async (req, res) => {
 
 const razorpay_course_webhook = async (req, res) => {
   try {
-    // console.log(req.body.payload.payment.entity);
     const response = req.body.payload.payment.entity;
     const order = await CoursePayment.findOne({
       "razorpayDetails.razorpayOrderId": response.order_id,

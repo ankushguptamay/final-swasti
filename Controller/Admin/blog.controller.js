@@ -403,7 +403,6 @@ const getBlogBySlugForUser = async (req, res) => {
       similarBlogs: transform,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

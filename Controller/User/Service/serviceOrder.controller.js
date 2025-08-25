@@ -63,13 +63,7 @@ const createPayment = async (req, res) => {
         );
       }
       // Validate time
-      const classDatesTimeInUTC = await convertGivenTimeZoneToUTC(
-        `${ytc.startDate.toISOString().split("T")[0]}T${ytc.time}:00.000`,
-        ytc.instructorTimeZone
-      );
-      const dateObject = new Date(
-        classDatesTimeInUTC.replace(" ", "T") + ".000Z"
-      ).getTime();
+      const dateObject = new Date(ytc.classStartTimeInUTC).getTime();
       if (
         new Date().getTime() + parseInt(CLASS_BOOKING_TIME) * 60 * 60 * 1000 >
         dateObject

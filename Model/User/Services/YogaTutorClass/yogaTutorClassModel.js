@@ -38,6 +38,7 @@ const schema = new Schema(
     ],
     price: { type: Number, required: true }, // price for all class combined per person
     description: { type: String },
+    meetingLink: { type: String, default: null },
     // Approval
     approvalByAdmin: {
       type: String,

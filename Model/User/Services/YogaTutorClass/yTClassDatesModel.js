@@ -7,7 +7,6 @@ const schema = new Schema(
     startDateTimeUTC: { type: Date },
     endDateTimeUTC: { type: Date },
     date: { type: Date },
-    meetingLink: { type: String, default: null },
     joinedBy: [{ type: Types.ObjectId, ref: "User" }],
     password: { type: Number, required: true },
     classStatus: {

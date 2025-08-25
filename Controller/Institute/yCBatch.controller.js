@@ -287,7 +287,6 @@ const deletebatch = async (req, res) => {
         { $limit: 1 },
         { $project: { _id: 1, startDate: 1 } },
       ]);
-      console.log(nearestBatch);
       for (let i = 0; i < payment.length; i++) {
         await CoursePayment.updateOne(
           { _id: payment[i]._id },
@@ -305,7 +304,6 @@ const deletebatch = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Batch deleted successfully!");
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

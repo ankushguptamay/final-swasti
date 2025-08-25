@@ -23,6 +23,6 @@ export const YOGACOURSE = [
 ];
 
 export const YOGACOURSETIMES = [
-  { name: "Yoga Volunteer Course", expireDay: 45 },
-  { name: "Yoga Wellness Instructor", expireDay: 120 },
+  { name: "Yoga Volunteer Course", expireDay: 45, batchSize: 40 },
+  { name: "Yoga Wellness Instructor", expireDay: 120, batchSize: 30 },
 ];

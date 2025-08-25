@@ -33,7 +33,6 @@ const instructorDetails = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Successfully!", instructor);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -74,7 +73,6 @@ const registerIInstructor = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, "Instructor created!");
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -202,7 +200,6 @@ const refreshAccessToken = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -215,7 +212,6 @@ const logout = async (req, res) => {
     );
     return successResponse(res, 200, "Loged out successfully");
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -229,7 +225,6 @@ const instituteInstructorDetailsForAdmin = async (req, res) => {
     // Send final success response
     return successResponse(res, 200, "Successfully!", instructor);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -275,7 +270,7 @@ const getInstructorForInstitute = async (req, res) => {
   try {
     const search = req.query.search?.trim();
     //Search
-    const query = { instructor: req.instructor._id };
+    const query = { institute: req.institute._id };
     if (search) {
       const withIn = new RegExp(search.toLowerCase(), "i");
       query.name = withIn;
@@ -287,7 +282,6 @@ const getInstructorForInstitute = async (req, res) => {
 
     return successResponse(res, 200, `Successfully!`, instructor);
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
@@ -310,7 +304,6 @@ const instituteInstructorDetailsForInstitute = async (req, res) => {
       assignedBatch,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

@@ -185,7 +185,6 @@ const refreshAccessToken = async (req, res) => {
       refreshToken,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

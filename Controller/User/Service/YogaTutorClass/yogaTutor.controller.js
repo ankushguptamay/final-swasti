@@ -358,7 +358,6 @@ const addNewClassTimes = async (req, res) => {
         );
         return {
           date: new Date(dates),
-          meetingLink: null,
           password,
           startDateTimeUTC,
           endDateTimeUTC,
@@ -797,6 +796,8 @@ const joinMeeting = async (req, res) => {
     } else {
       return failureResponse(res);
     }
+    if (ytc.modeOfClass !== "online")
+      return failureResponse(res, 400, "This yoga class is not online mode.");
     // Is this class booked
     if (!ytc.isBooked)
       return failureResponse(res, 400, "This yoga class is not booked.");
@@ -822,11 +823,16 @@ const joinMeeting = async (req, res) => {
       );
     } else {
       const newClassDate = min5.classDate;
-      let generateMeet = newClassDate.meetingLink;
+      let generateMeet = ytc.meetingLink;
       if (!generateMeet) {
         generateMeet = await createGoogleMeet(
           min5.joinWindowStart,
           min5.joinWindowEnd
+        );
+        // Save meeting
+        await YogaTutorClass.updateOne(
+          { _id: ytcId },
+          { $set: { meetingLink: generateMeet } }
         );
       }
       const existingJoiner =
@@ -834,11 +840,8 @@ const joinMeeting = async (req, res) => {
       const joinedBy = [
         ...new Set([...existingJoiner, req.user._id.toString()]),
       ];
-      // Update YTC
-      await YTClassDate.updateOne(
-        { _id: dateId },
-        { $set: { joinedBy, meetingLink: generateMeet } }
-      );
+      // Update
+      await YTClassDate.updateOne({ _id: dateId }, { $set: { joinedBy } });
       // Send final success response
       return successResponse(res, 200, "Successfully", { data: generateMeet });
     }

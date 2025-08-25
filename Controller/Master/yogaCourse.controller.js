@@ -44,11 +44,8 @@ const createYogaCourse = async (req, res) => {
     );
     let image;
     if (req.file) {
-      console.log("heree");
       // Upload file to bunny
       const fileStream = fs.createReadStream(req.file.path);
-      console.log(bunnyFolderName);
-      console.log(fileStream);
       await uploadFileToBunny(bunnyFolderName, fileStream, req.file.filename);
       image = {
         fileName: req.file.filename,
@@ -67,7 +64,6 @@ const createYogaCourse = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, "Created successfully!");
   } catch (err) {
-    console.log(err);
     failureResponse(res);
   }
 };
@@ -135,7 +131,6 @@ const updateYogaCourseImage = async (req, res) => {
     // Send final success response
     return successResponse(res, 201, "Successfully!");
   } catch (err) {
-    // console.log(err)
     failureResponse(res);
   }
 };
@@ -286,7 +281,6 @@ const yogaCourseDetails = async (req, res) => {
       batch,
     });
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };

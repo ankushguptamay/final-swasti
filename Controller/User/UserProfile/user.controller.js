@@ -564,7 +564,6 @@ const rolePage = async (req, res) => {
       { ...req.user._doc, role, accessToken }
     );
   } catch (err) {
-    console.log(err.message);
     failureResponse(res);
   }
 };
