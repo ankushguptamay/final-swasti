@@ -116,6 +116,50 @@ const validateYogaCourseReview = (data) => {
   return schema.validate(data);
 };
 
+const validateYCBRegistrationForm = (data) => {
+  const schema = joi.object().keys({
+    country: joi.string().required(),
+    title: joi.string().required(),
+    firstName: joi.string().required(),
+    middleName: joi.string().optional(),
+    lastName: joi.string().optional(),
+    gender: joi.string().required(),
+    dateOfBirth: joi.string().required(),
+    nationality: joi.string().required(),
+    fatherName: joi.string().optional(),
+    motherName: joi.string().required(),
+    spouseName: joi.string().optional(),
+    category: joi.string().required(),
+    pwd_certificate: joi.string().optional(),
+    typeOfPhotoId: joi.string().required(),
+    id_number: joi.string().required(),
+    contactNumber: joi.string().required(),
+    email: joi.string().email().required().label("Email"),
+    password: joi.string().required(),
+    correspondenseAddress: joi.object({
+      address: joi.string().required(),
+      state: joi.string().optional(),
+      district: joi.string().optional(),
+      pinCode: joi
+        .string()
+        .pattern(/^\d{6}$/)
+        .required()
+        .label("Pincode"),
+    }),
+    permanentAddress: joi.object({
+      address: joi.string().required(),
+      country: joi.string().required(),
+      state: joi.string().optional(),
+      district: joi.string().optional(),
+      pinCode: joi
+        .string()
+        .pattern(/^\d{6}$/)
+        .required()
+        .label("Pincode"),
+    }),
+  });
+  return schema.validate(data, { abortEarly: false });
+};
 export {
   validateInstituteRegistration,
   validateInstituteLogin,
@@ -128,4 +172,5 @@ export {
   validateYogaCourseReview,
   validateInstituteLoginOTP,
   validateAssignYCBatchIntitute,
+  validateYCBRegistrationForm,
 };
