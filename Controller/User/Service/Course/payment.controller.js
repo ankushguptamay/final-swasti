@@ -338,7 +338,6 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
     }
     const name = capitalizeFirstLetter(courseName.replace(/\s+/g, " ").trim());
     const courseId = await findBatch({ courseName, startDate, amount });
-    return;
     // Receipt
     const prefix = `${generateAcronym(courseName)}-ph`;
     const receipt = await generateReceiptNumber(prefix);
