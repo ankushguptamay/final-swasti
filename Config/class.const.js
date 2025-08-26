@@ -26,3 +26,7 @@ export const YOGACOURSETIMES = [
   { name: "Yoga Volunteer Course", expireDay: 45, batchSize: 40 },
   { name: "Yoga Wellness Instructor", expireDay: 120, batchSize: 30 },
 ];
+
+// export const YOGACOURSEINSTALLMENT = [
+//   { installmentType: "", },
+// ];
