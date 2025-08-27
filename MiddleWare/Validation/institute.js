@@ -135,7 +135,6 @@ const validateYCBRegistrationForm = (data) => {
     id_number: joi.string().required(),
     contactNumber: joi.string().required(),
     email: joi.string().email().required().label("Email"),
-    password: joi.string().required(),
     correspondenseAddress: joi.object({
       address: joi.string().required(),
       state: joi.string().optional(),

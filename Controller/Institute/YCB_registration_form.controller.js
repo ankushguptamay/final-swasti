@@ -47,7 +47,7 @@ const createYCBRegistrationForm = async (req, res) => {
     deleteSingleFile(facePic.path);
     await YCBRegistrationForm.create({
       ...req.body,
-      dateOfBirth: new Date(dateOfBirth),
+      dateOfBirth: new Date(req.body.dateOfBirth),
       id_image,
       face_pic,
       learner: req.user._id,

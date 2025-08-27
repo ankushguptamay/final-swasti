@@ -41,7 +41,6 @@ const schema = new Schema(
       pinCode: { type: Number },
     },
     email: { type: String },
-    password: { type: String },
     learner: { type: Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
