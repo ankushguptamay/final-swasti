@@ -90,7 +90,11 @@ const batchDetails = async (req, res) => {
           "name video video_id date hls_url videoTimeInMinute thumbNailUrl document"
         )
         .lean(),
-      CoursePayment.find({ yogaCourse: req.params.id, status: "completed" })
+      CoursePayment.find({
+        yogaCourse: req.params.id,
+        status: "completed",
+        amount: { $gt: 5 },
+      })
         .select("amount status")
         .populate("learner", "name email mobileNumber")
         .lean(),
@@ -206,7 +210,11 @@ const courseBatchDetailsForII = async (req, res) => {
           "name video date hls_url videoTimeInMinute thumbNailUrl document"
         )
         .lean(),
-      CoursePayment.find({ yogaCourse: course._id, status: "completed" })
+      CoursePayment.find({
+        yogaCourse: course._id,
+        status: "completed",
+        amount: { $gt: 5 },
+      })
         .select("_id")
         .populate("learner", "name profilePic")
         .lean(),

@@ -22,7 +22,7 @@ const createYCBRegistrationForm = async (req, res) => {
       if (idImage) deleteSingleFile(idImage.path);
       if (facePic) deleteSingleFile(facePic.path);
       return failureResponse(res, 400, "Both file is madnatory");
-    }hi
+    }
     // Body Validation
     const { error } = validateYCBRegistrationForm(req.body);
     if (error) {

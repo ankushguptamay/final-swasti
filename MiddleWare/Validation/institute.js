@@ -158,7 +158,7 @@ const validateYCBRegistrationForm = (data) => {
         .label("Pincode"),
     }),
   });
-  return schema.validate(data, { abortEarly: false });
+  return schema.validate(data);
 };
 export {
   validateInstituteRegistration,
