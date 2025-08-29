@@ -13,7 +13,10 @@ import { ServiceOrder } from "../../../Model/User/Services/serviceOrderModel.js"
 import { YogaTutorClass } from "../../../Model/User/Services/YogaTutorClass/yogaTutorClassModel.js";
 const { RAZORPAY_KEY_ID, RAZORPAY_SECRET_ID } = process.env;
 import Razorpay from "razorpay";
-import { purchaseServiceValidation } from "../../../MiddleWare/Validation/slots.js";
+import {
+  purchaseServiceForNewUserValidation,
+  purchaseServiceValidation,
+} from "../../../MiddleWare/Validation/slots.js";
 import crypto from "crypto";
 import { Wallet } from "../../../Model/User/Profile/walletModel.js";
 import { UserTransaction } from "../../../Model/User/Profile/transactionModel.js";
@@ -26,6 +29,8 @@ import {
   CLASS_BOOKING_TIME,
 } from "../../../Config/class.const.js";
 import { YTClassDate } from "../../../Model/User/Services/YogaTutorClass/yTClassDatesModel.js";
+import { generateUserCode } from "../UserProfile/user.controller.js";
+import { capitalizeFirstLetter } from "../../../Helper/formatChange.js";
 const razorpayInstance = new Razorpay({
   key_id: RAZORPAY_KEY_ID,
   key_secret: RAZORPAY_SECRET_ID,
@@ -407,4 +412,140 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-export { createPayment, verifyPayment, cancelOrder };
+const createClassPaymentByRazorpayAndRegisterUser = async (req, res) => {
+  try {
+    // Validate body
+    const { error } = purchaseServiceForNewUserValidation(req.body);
+    if (error) return failureResponse(res, 400, error.details[0].message, null);
+    const {
+      service = "yogatutorclass",
+      serviceId,
+      currency,
+      numberOfPeople = 1,
+      email,
+      mobileNumber,
+      referralCode,
+      term_condition_accepted,
+    } = req.body;
+    const amount = req.body.amount / 100;
+    if (!term_condition_accepted)
+      return failureResponse(res, 401, "Please accept term and condition.");
+    // Is user already present
+    let user = await User.findOne({ $or: [{ email }, { mobileNumber }] })
+      .select("role name email mobileNumber")
+      .lean();
+    if (user) {
+      if (!user.role) {
+        await User.updateOne({ _id: user._id }, { $set: { role: "learner" } });
+      } else if (user.role === "instructor") {
+        return failureResponse(
+          res,
+          400,
+          "You are already register as instructor."
+        );
+      }
+    } else {
+      const name = capitalizeFirstLetter(req.body.name);
+      const timezone = req.headers["time-zone"] || req.headers["x-timezone"]; // User Time Zone
+      const chakraBreakNumber = Math.floor(Math.random() * 7) + 1;
+      // generate User code
+      const userCode = await generateUserCode("SWL");
+      user = await User.create({
+        userTimeZone: timezone,
+        name,
+        email,
+        mobileNumber,
+        chakraBreakNumber,
+        referralCode,
+        userCode,
+        role: "learner",
+        term_condition_accepted,
+      });
+      await Wallet.create({ userId: user._id });
+    }
+    // Check Availablity
+    let instructor;
+    if (service.toLowerCase() === "yogatutorclass") {
+      const ytc = await YogaTutorClass.findOne({
+        _id: serviceId,
+        isDelete: false,
+        approvalByAdmin: "accepted",
+      }).lean();
+      if (!ytc)
+        return failureResponse(
+          res,
+          400,
+          "This yoga tutor class is not present."
+        );
+      if (ytc.classType === "individual") {
+        // Individual
+        if (ytc.isBooked) {
+          return failureResponse(res, 400, "This slot is already booked");
+        } else {
+          // Amount Verification
+          if (amount !== parseInt(ytc.price)) {
+            return failureResponse(res, 400, "Unsufficient amount.");
+          } else {
+            instructor = ytc.instructor;
+          }
+        }
+        // Group
+      } else {
+        // Check How much seat available
+        const totalAvailableSeats =
+          parseInt(ytc.numberOfSeats) - parseInt(ytc.totalBookedSeat);
+        if (numberOfPeople > totalAvailableSeats) {
+          return failureResponse(
+            res,
+            400,
+            `Only ${totalAvailableSeats} seat are available.`
+          );
+        }
+        // Amount Verification
+        if (amount / numberOfPeople !== parseInt(ytc.price)) {
+          return failureResponse(res, 400, "Unsufficient amount.");
+        } else {
+          instructor = ytc.instructor;
+        }
+      }
+    } else {
+      return failureResponse(
+        res,
+        400,
+        "This service is not supported by Swasti Bharat."
+      );
+    }
+    const receipt = await generateReceiptNumber("ytc");
+    // initiate payment
+    const order = await razorpayInstance.orders.create({
+      amount: amount * 100,
+      currency,
+      receipt,
+    });
+    await ServiceOrder.create({
+      learner: user._id,
+      instructor,
+      service,
+      serviceId,
+      amount,
+      razorpayOrderId: order.id,
+      numberOfBooking: numberOfPeople,
+      receipt,
+    });
+    return successResponse(res, 201, `Order craeted successfully!`, {
+      ...order,
+      name: user.name,
+      email: user.email,
+      mobileNumber: user.mobileNumber,
+    });
+  } catch (err) {
+    return failureResponse(res);
+  }
+};
+
+export {
+  createPayment,
+  verifyPayment,
+  cancelOrder,
+  createClassPaymentByRazorpayAndRegisterUser,
+};

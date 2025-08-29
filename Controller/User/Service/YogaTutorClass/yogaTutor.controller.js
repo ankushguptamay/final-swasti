@@ -336,7 +336,9 @@ const addNewClassTimes = async (req, res) => {
       price,
       description,
       timeDurationInMin,
-      classStartTimeInUTC,
+      classStartTimeInUTC:new Date(
+          `${classStartTimeInUTC.replace(" ", "T")}.000Z`
+        ),
       instructor: req.user._id,
     });
     // Insert dates

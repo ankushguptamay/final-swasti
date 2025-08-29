@@ -14,7 +14,10 @@ import {
   getYogaCategoryWithImage,
   yogaCategoryDetailsForUser,
 } from "../../Controller/Master/yogaCategory.controller.js";
-import { verifyPayment } from "../../Controller/User/Service/serviceOrder.controller.js";
+import {
+  createClassPaymentByRazorpayAndRegisterUser,
+  verifyPayment,
+} from "../../Controller/User/Service/serviceOrder.controller.js";
 import { getBanner } from "../../Controller/Master/banner.controller.js";
 import {
   applyCourseCoupon,
@@ -49,6 +52,10 @@ router.get("/banner", getBanner);
 router.get("/heroRecord", recordForHero);
 router.post("/subscrib", createSubscribedUser);
 
+router.post(
+  "/createClassOrder-newUser-ra",
+  createClassPaymentByRazorpayAndRegisterUser
+);
 router.post("/verifyPayment", verifyPayment);
 
 // Yoga Course

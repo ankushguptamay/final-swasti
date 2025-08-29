@@ -351,7 +351,7 @@ const getBlogBySlugForUser = async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug })
       .lean()
-      .populate("category", "name slug image description");
+      .populate("category", "name slug image description subCategory tag");
     if (!blog) {
       return failureResponse(res, 400, `This blog is not present!`);
     }
@@ -359,6 +359,7 @@ const getBlogBySlugForUser = async (req, res) => {
     blog.category = blog.category.map((cat) => {
       return { ...cat, image: cat.image ? cat.image.url || null : null };
     });
+    const category_id = blog.category.map((cat) => cat._id);
     // Similar blog
     const similarBlogs = await Blog.aggregate([
       {
@@ -367,7 +368,7 @@ const getBlogBySlugForUser = async (req, res) => {
           $or: [
             { subCategory: { $in: blog.subCategory } },
             { tag: { $in: blog.tag } },
-            { category: { $in: blog.category } },
+            { category: { $in: category_id } },
           ],
         },
       },
@@ -381,7 +382,7 @@ const getBlogBySlugForUser = async (req, res) => {
         },
       },
     ]);
-
+    console.log(similarBlogs);
     const transform = similarBlogs.map((blo) => {
       const category = Array.isArray(blo.category)
         ? blo.category.map((cat) => {
@@ -398,6 +399,8 @@ const getBlogBySlugForUser = async (req, res) => {
         additionalPic,
       };
     });
+    delete blog.subCategory;
+    delete blog.tag;
     return successResponse(res, 200, "Blog fetched successfully!", {
       ...blog,
       similarBlogs: transform,

@@ -299,7 +299,6 @@ const createCourseOrderByRazorpayAndRegisterUser = async (req, res) => {
         null
       );
     // User Registration Process
-    // Is user already present
     let user = await User.findOne({ $or: [{ email }, { mobileNumber }] });
     if (user) {
       if (!user.role) {
