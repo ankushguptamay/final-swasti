@@ -241,7 +241,7 @@ const yogaCourseDetails = async (req, res) => {
       return failureResponse(res, 400, "This Yoga Course is not present!");
     }
 
-    const [videoReview, userReview, batch] = await Promise.all([
+    const [videoReview, userReview, batch, result] = await Promise.all([
       YCReviewVideo.find({
         masterYogaCourse: course._id,
       })
@@ -257,6 +257,15 @@ const yogaCourseDetails = async (req, res) => {
         .sort({ startDate: 1 })
         .select("_id name slug startDate totalEnroll batchNumber")
         .lean(),
+      YogaCourse.aggregate([
+        { $match: { masterYC: course._id } },
+        {
+          $group: {
+            _id: null,
+            totalEnrolledUser: { $sum: "$totalEnroll" },
+          },
+        },
+      ]),
     ]);
 
     course.image = course.image ? course.image.url || null : null;
@@ -273,12 +282,15 @@ const yogaCourseDetails = async (req, res) => {
         new Date(batch[i].startDate).getTime() + 330 * 60 * 1000
       );
     }
+    const totalEnrolledUser =
+      result.length > 0 ? result[0].totalEnrolledUser : 0;
     // Send final success response
     return successResponse(res, 200, "Successfully!", {
       ...course,
       videoReview,
       userReview,
       batch,
+      totalEnrolledUser,
     });
   } catch (err) {
     failureResponse(res);
@@ -293,6 +305,20 @@ const yogaCourse = async (req, res) => {
       .lean();
     for (let i = 0; i < course.length; i++) {
       course[i].image = course[i].image ? course[i].image.url || null : null;
+    }
+    for (let i = 0; i < course.length; i++) {
+      const result = await YogaCourse.aggregate([
+        { $match: { masterYC: course[i]._id } },
+        {
+          $group: {
+            _id: null,
+            totalEnrolledUser: { $sum: "$totalEnroll" },
+          },
+        },
+      ]);
+      const totalEnrolledUser =
+        result.length > 0 ? result[0].totalEnrolledUser : 0;
+      course[i].totalEnrolledUser = totalEnrolledUser;
     }
     // Send final success response
     return successResponse(res, 200, "Successfully!", course);
