@@ -381,8 +381,18 @@ const getBlogBySlugForUser = async (req, res) => {
           as: "category",
         },
       },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          image: 1,
+          description: 1,
+          category: 1,
+        },
+      },
     ]);
-    console.log(similarBlogs);
+
     const transform = similarBlogs.map((blo) => {
       const category = Array.isArray(blo.category)
         ? blo.category.map((cat) => {
