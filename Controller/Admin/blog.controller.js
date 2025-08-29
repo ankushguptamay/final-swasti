@@ -351,7 +351,7 @@ const getBlogBySlugForUser = async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug })
       .lean()
-      .populate("category", "name slug image description subCategory tag");
+      .populate("category", "name slug image description");
     if (!blog) {
       return failureResponse(res, 400, `This blog is not present!`);
     }
@@ -384,10 +384,12 @@ const getBlogBySlugForUser = async (req, res) => {
       {
         $project: {
           _id: 1,
-          name: 1,
+          title: 1,
           slug: 1,
-          image: 1,
-          description: 1,
+          featuredPic: 1,
+          tag: 1,
+          readTime: 1,
+          publishDate: 1,
           category: 1,
         },
       },
@@ -399,18 +401,12 @@ const getBlogBySlugForUser = async (req, res) => {
             return { ...cat, image: cat?.image?.url || null };
           })
         : [];
-      const additionalPic = Array.isArray(blo.additionalPic)
-        ? blo.additionalPic.map((pic) => pic.url)
-        : [];
       return {
         ...blo,
         featuredPic: blo?.featuredPic?.url || null,
         category,
-        additionalPic,
       };
     });
-    delete blog.subCategory;
-    delete blog.tag;
     return successResponse(res, 200, "Blog fetched successfully!", {
       ...blog,
       similarBlogs: transform,
